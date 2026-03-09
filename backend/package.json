@@ -8,7 +8,7 @@
     "install": "npm install && npx prisma generate"
   },
   "engines": {
-    "node": "18"
+    "node": "22.x"
   },
   "dependencies": {
     "@prisma/client": "^6.19.2",
