@@ -1,22 +1,17 @@
 {
   "name": "playmysong-backend",
-  "version": "0.1.0",
-  "private": true,
-  "type": "module",
+  "version": "1.0.0",
+  "description": "PlayMySong Backend API",
   "main": "src/server.js",
   "scripts": {
     "start": "node src/server.js",
-    "build": "npm install && npx prisma generate",
-    "test": "vitest run",
-    "test:watch": "vitest",
-    "test:coverage": "vitest run --coverage",
-    "prisma:migrate": "prisma migrate dev --name init",
-    "prisma:generate": "prisma generate",
-    "seed": "node prisma/seed.js"
+    "install": "npm install && npx prisma generate"
+  },
+  "engines": {
+    "node": "18"
   },
   "dependencies": {
     "@prisma/client": "^6.19.2",
-    "bcrypt": "^6.0.0",
     "bcryptjs": "^3.0.3",
     "cookie-parser": "^1.4.7",
     "cors": "^2.8.6",
@@ -25,14 +20,10 @@
     "jsonwebtoken": "^9.0.3",
     "multer": "^2.1.0",
     "music-metadata": "^11.12.1",
-    "node-fetch": "^3.3.2",
     "qrcode": "^1.5.4",
     "socket.io": "^4.7.1"
   },
   "devDependencies": {
-    "@vitest/coverage-v8": "^4.0.18",
-    "nodemon": "^3.1.11",
-    "prisma": "^6.19.2",
-    "vitest": "^4.0.18"
+    "prisma": "^6.19.2"
   }
 }
