@@ -1,0 +1,13 @@
+{
+  "version": 1,
+  "name": "playmysong-backend",
+  "build": {
+    "builder": "npm",
+    "buildCommand": "npm install && npx prisma generate",
+    "startCommand": "npm start"
+  },
+  "env": {
+    "NODE_ENV": "production",
+    "PORT": "3000"
+  }
+}
