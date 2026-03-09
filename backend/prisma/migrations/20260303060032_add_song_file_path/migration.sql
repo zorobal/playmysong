@@ -1,0 +1,4 @@
+-- AlterTable
+ALTER TABLE "Song" ADD COLUMN     "duration" INTEGER NOT NULL DEFAULT 0,
+ADD COLUMN     "filePath" TEXT,
+ALTER COLUMN "artist" DROP NOT NULL;

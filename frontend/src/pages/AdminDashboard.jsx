@@ -1,0 +1,695 @@
+import React, { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { io } from "socket.io-client";
+
+const API_URL = "http://localhost:4000";
+
+function AdminDashboard() {
+  const [admin, setAdmin] = useState(null);
+  const [activeTab, setActiveTab] = useState("requests");
+  const [pendingRequests, setPendingRequests] = useState([]);
+  const [validatedRequests, setValidatedRequests] = useState([]);
+  const [users, setUsers] = useState([]);
+  const [playlists, setPlaylists] = useState([]);
+  const [nowPlaying, setNowPlaying] = useState(null);
+  const [stats, setStats] = useState({ total: 0, validated: 0, rejected: 0 });
+  const [newUser, setNewUser] = useState({ name: "", email: "", password: "", phoneNumber: "" });
+  const [newPlaylist, setNewPlaylist] = useState({ name: "" });
+  const [newMusic, setNewMusic] = useState({ title: "", artist: "" });
+  const [rejectModal, setRejectModal] = useState({ open: false, requestId: null, reason: "" });
+  const [loading, setLoading] = useState(true);
+  const navigate = useNavigate();
+  
+  const accessToken = localStorage.getItem("token");
+  const establishmentId = admin?.establishmentId;
+
+  useEffect(() => {
+    if (!accessToken) {
+      navigate("/login");
+      return;
+    }
+    loadInitialData();
+  }, [accessToken, navigate]);
+
+  useEffect(() => {
+    if (!establishmentId) return;
+
+    const socket = io(API_URL, {
+      transports: ["websocket"],
+      reconnection: true
+    });
+
+    socket.on("connect", () => {
+      socket.emit("join_establishment", establishmentId);
+    });
+
+    socket.on("new_request", (data) => {
+      setPendingRequests(prev => [...prev, data.request || data]);
+      setStats(prev => ({ ...prev, total: prev.total + 1 }));
+    });
+
+    socket.on("request_validated", ({ requestId }) => {
+      const request = pendingRequests.find(r => r.id === requestId);
+      if (request) {
+        setPendingRequests(prev => prev.filter(r => r.id !== requestId));
+        setValidatedRequests(prev => [...prev, { ...request, status: "VALIDATED" }]);
+        setStats(prev => ({ ...prev, validated: prev.validated + 1 }));
+      }
+    });
+
+    socket.on("request_rejected", ({ requestId }) => {
+      setPendingRequests(prev => prev.filter(r => r.id !== requestId));
+      setStats(prev => ({ ...prev, rejected: prev.rejected + 1 }));
+    });
+
+    socket.on("now_playing_updated", (song) => {
+      setNowPlaying(song);
+    });
+
+    socket.on("playlist_updated", () => {
+      loadPlaylist();
+    });
+
+    return () => socket.disconnect();
+  }, [establishmentId, pendingRequests]);
+
+  async function loadInitialData() {
+    try {
+      setLoading(true);
+      const token = localStorage.getItem("token");
+      const headers = { Authorization: `Bearer ${token}` };
+
+      const adminRes = await fetch(`${API_URL}/admins/me`, { headers });
+      const adminData = await adminRes.json();
+      
+      if (!adminData || adminData.error) {
+        setLoading(false);
+        return;
+      }
+
+      setAdmin(adminData);
+
+      const usersRes = await fetch(`${API_URL}/users`, { headers });
+      const usersData = await usersRes.json();
+      setUsers(Array.isArray(usersData) ? usersData : []);
+
+      const playlistsRes = await fetch(`${API_URL}/playlists`, { headers });
+      const playlistsData = await playlistsRes.json();
+      setPlaylists(Array.isArray(playlistsData) ? playlistsData : []);
+
+      const requestsRes = await fetch(`${API_URL}/request/pending`, { headers });
+      const requestsData = await requestsRes.json();
+      setPendingRequests(Array.isArray(requestsData) ? requestsData : []);
+
+      if (adminData.establishmentId) {
+        const playlistRes = await fetch(`${API_URL}/request/playlist/current?establishmentId=${adminData.establishmentId}`);
+        const playlistData = await playlistRes.json();
+        setNowPlaying(playlistData.nowPlaying);
+        setValidatedRequests(playlistData.queue || []);
+      }
+    } catch (err) {
+      console.error("Erreur chargement:", err);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function loadPlaylist() {
+    if (!establishmentId) return;
+    try {
+      const res = await fetch(`${API_URL}/request/playlist/current?establishmentId=${establishmentId}`);
+      const data = await res.json();
+      setNowPlaying(data.nowPlaying);
+      setValidatedRequests(data.queue || []);
+    } catch (err) {
+      console.error("Erreur playlist:", err);
+    }
+  }
+
+  async function validateRequest(requestId) {
+    try {
+      const token = localStorage.getItem("token");
+      await fetch(`${API_URL}/request/${requestId}/validate`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      const request = pendingRequests.find(r => r.id === requestId);
+      setPendingRequests(prev => prev.filter(r => r.id !== requestId));
+      if (request) {
+        setValidatedRequests(prev => [...prev, { ...request, status: "VALIDATED" }]);
+      }
+    } catch (err) {
+      alert("Erreur lors de la validation");
+    }
+  }
+
+  async function rejectRequest() {
+    const { requestId, reason } = rejectModal;
+    const token = localStorage.getItem("token");
+    try {
+      await fetch(`${API_URL}/request/${requestId}/reject`, {
+        method: "POST",
+        headers: { 
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ reason })
+      });
+      setPendingRequests(prev => prev.filter(r => r.id !== requestId));
+      setRejectModal({ open: false, requestId: null, reason: "" });
+    } catch (err) {
+      alert("Erreur lors du rejet");
+    }
+  }
+
+  async function setNowPlayingSong(song) {
+    setNowPlaying(song);
+  }
+
+  async function handleFileSelect(playlistId) {
+    const token = localStorage.getItem("token");
+    if (!token) {
+      alert("Session expirée. Veuillez vous reconnecter.");
+      navigate("/login");
+      return;
+    }
+    
+    // Create a hidden file input
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = 'audio/*,.mp3,.flac,.wav,.ogg,.m4a,.aac';
+    
+    input.onchange = async (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+      
+      const formData = new FormData();
+      formData.append('audio', file);
+      
+      try {
+        const res = await fetch(`${API_URL}/playlists/${playlistId}/upload`, {
+          method: "POST",
+          headers: { 
+            Authorization: `Bearer ${token}`
+          },
+          body: formData
+        });
+        
+        if (res.ok) {
+          loadInitialData();
+        } else {
+          const err = await res.json();
+          alert(err.error || "Erreur lors de l'upload du fichier");
+        }
+      } catch (err) {
+        alert("Erreur lors de l'upload du fichier");
+      }
+    };
+    
+    input.click();
+  }
+
+  function logout() {
+    localStorage.removeItem("token");
+    localStorage.removeItem("user");
+    navigate("/login");
+  }
+
+  if (loading) return <div className="loading">Chargement...</div>;
+
+  return (
+    <div className="admin-dashboard">
+      <header className="dashboard-header">
+        <div className="header-left">
+          <h1>PlayMySong Admin</h1>
+          <span className="establishment-name">{admin?.establishment?.name || "Établissement"}</span>
+        </div>
+        <div className="header-right">
+          <button className="btn-logout" onClick={logout}>Déconnexion</button>
+        </div>
+      </header>
+
+      <nav className="dashboard-tabs">
+        <button 
+          className={`tab ${activeTab === "requests" ? "active" : ""}`}
+          onClick={() => setActiveTab("requests")}
+        >
+          📩 Demandes ({pendingRequests.length})
+        </button>
+        <button 
+          className={`tab ${activeTab === "playlist" ? "active" : ""}`}
+          onClick={() => setActiveTab("playlist")}
+        >
+          🎵 Playlist
+        </button>
+        <button 
+          className={`tab ${activeTab === "users" ? "active" : ""}`}
+          onClick={() => setActiveTab("users")}
+        >
+          👥 Utilisateurs
+        </button>
+        <button 
+          className={`tab ${activeTab === "stats" ? "active" : ""}`}
+          onClick={() => setActiveTab("stats")}
+        >
+          📊 Statistiques
+        </button>
+      </nav>
+
+      <main className="dashboard-content">
+        {activeTab === "requests" && (
+          <div className="requests-panel">
+            <div className="now-playing-bar">
+              <h3>🎶 En cours</h3>
+              {nowPlaying ? (
+                <div className="now-playing-info">
+                  <strong>{nowPlaying.title}</strong>
+                  <span>{nowPlaying.artist}</span>
+                </div>
+              ) : (
+                <span className="no-music">Aucune chanson</span>
+              )}
+            </div>
+
+            <h2>Demandes en attente ({pendingRequests.length})</h2>
+            {pendingRequests.length === 0 ? (
+              <p className="empty-message">Aucune demande en attente</p>
+            ) : (
+              <div className="requests-list">
+                {pendingRequests.map((req, index) => (
+                  <div key={req.id} className="request-card">
+                    <div className="request-position">#{index + 1}</div>
+                    <div className="request-info">
+                      <h4>{req.title}</h4>
+                      <p>{req.artist}</p>
+                      {req.message && <p className="message">💬 {req.message}</p>}
+                      {req.selfieUrl && (
+                        <img src={req.selfieUrl} alt="Selfie" className="selfie-thumb" />
+                      )}
+                    </div>
+                    <div className="request-actions">
+                      <button 
+                        className="btn-validate"
+                        onClick={() => validateRequest(req.id)}
+                      >
+                        ✅ Valider
+                      </button>
+                      <button 
+                        className="btn-reject"
+                        onClick={() => setRejectModal({ open: true, requestId: req.id, reason: "" })}
+                      >
+                        ❌ Rejeter
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {activeTab === "playlist" && (
+          <div className="playlist-panel">
+            <h2>Gestion des playlists</h2>
+            
+            <div className="create-playlist">
+              <input 
+                placeholder="Nom de la playlist"
+                value={newPlaylist.name}
+                onChange={e => setNewPlaylist({ name: e.target.value })}
+              />
+              <button onClick={async () => {
+                const token = localStorage.getItem("token");
+                if (!token) {
+                  alert("Session expirée. Veuillez vous reconnecter.");
+                  navigate("/login");
+                  return;
+                }
+                const res = await fetch(`${API_URL}/playlists`, {
+                  method: "POST",
+                  headers: { 
+                    Authorization: `Bearer ${token}`,
+                    "Content-Type": "application/json"
+                  },
+                  body: JSON.stringify(newPlaylist)
+                });
+                if (res.ok) {
+                  setNewPlaylist({ name: "" });
+                  loadInitialData();
+                } else {
+                  const err = await res.json();
+                  alert("Erreur: " + (err.error || "Inconnu"));
+                }
+              }}>Créer</button>
+            </div>
+
+            <div className="playlists-list">
+              {playlists.map(pl => (
+                <div key={pl.id} className="playlist-card">
+                  <div className="playlist-header">
+                    <h4>🎶 {pl.name} {pl.createdBy && <span className="created-by">par: {pl.createdBy}</span>}</h4>
+                    <button onClick={async () => {
+                      const token = localStorage.getItem("token");
+                      await fetch(`${API_URL}/playlists/${pl.id}`, {
+                        method: "DELETE",
+                        headers: { Authorization: `Bearer ${token}` }
+                      });
+                      loadInitialData();
+                    }}>Supprimer</button>
+                  </div>
+                  <ul className="songs-list">
+                    {(pl.songs || []).map(song => (
+                      <li key={song.id}>
+                        {song.title} - {song.artist}
+                        <button onClick={async () => {
+                          const token = localStorage.getItem("token");
+                          await fetch(`${API_URL}/playlists/${pl.id}/musics/${song.id}`, {
+                            method: "DELETE",
+                            headers: { Authorization: `Bearer ${token}` }
+                          });
+                          loadInitialData();
+                        }}>×</button>
+                      </li>
+                    ))}
+                  </ul>
+                  <div className="add-song">
+                    <input 
+                      placeholder="Titre"
+                      onChange={e => setNewMusic({ ...newMusic, title: e.target.value })}
+                    />
+                    <input 
+                      placeholder="Artiste"
+                      onChange={e => setNewMusic({ ...newMusic, artist: e.target.value })}
+                    />
+                    <button onClick={async () => {
+                      const token = localStorage.getItem("token");
+                      await fetch(`${API_URL}/playlists/${pl.id}/musics`, {
+                        method: "POST",
+                        headers: { 
+                          Authorization: `Bearer ${token}`,
+                          "Content-Type": "application/json"
+                        },
+                        body: JSON.stringify(newMusic)
+                      });
+                      setNewMusic({ title: "", artist: "" });
+                      loadInitialData();
+                    }}>+</button>
+                    <button onClick={() => handleFileSelect(pl.id)} title="Ajouter un fichier local">
+                      📁 Parcourir
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {activeTab === "users" && (
+          <div className="users-panel">
+            <h2>Utilisateurs ({users.length})</h2>
+            
+            <div className="add-user-form">
+              <input placeholder="Nom" value={newUser.name} onChange={e => setNewUser({ ...newUser, name: e.target.value })} />
+              <input placeholder="Email" value={newUser.email} onChange={e => setNewUser({ ...newUser, email: e.target.value })} />
+              <input placeholder="Mot de passe" type="password" value={newUser.password} onChange={e => setNewUser({ ...newUser, password: e.target.value })} />
+              <input placeholder="Téléphone" value={newUser.phoneNumber} onChange={e => setNewUser({ ...newUser, phoneNumber: e.target.value })} />
+              <button onClick={async () => {
+                const token = localStorage.getItem("token");
+                const res = await fetch(`${API_URL}/users`, {
+                  method: "POST",
+                  headers: { 
+                    Authorization: `Bearer ${token}`,
+                    "Content-Type": "application/json"
+                  },
+                  body: JSON.stringify(newUser)
+                });
+                const data = await res.json();
+                console.log("Create user response:", data);
+                if (res.ok) {
+                  setNewUser({ name: "", email: "", password: "", phoneNumber: "" });
+                  loadInitialData();
+                } else {
+                  alert("Erreur: " + (data.error || "Inconnu"));
+                }
+              }}>Ajouter</button>
+            </div>
+
+            <ul className="users-list">
+              {users.map(u => (
+                <li key={u.id}>
+                  <span>👤 {u.name} ({u.email}) {u.createdBy && <span className="created-by">Créé par: {u.createdBy}</span>}</span>
+                  <button onClick={async () => {
+                    const token = localStorage.getItem("token");
+                    await fetch(`${API_URL}/users/${u.id}`, {
+                      method: "DELETE",
+                      headers: { Authorization: `Bearer ${token}` }
+                    });
+                    loadInitialData();
+                  }}>Supprimer</button>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+
+        {activeTab === "stats" && (
+          <div className="stats-panel">
+            <h2>Statistiques</h2>
+            <div className="stats-grid">
+              <div className="stat-card">
+                <div className="stat-value">{pendingRequests.length + validatedRequests.length}</div>
+                <div className="stat-label">Total demandes</div>
+              </div>
+              <div className="stat-card validated">
+                <div className="stat-value">{validatedRequests.length}</div>
+                <div className="stat-label">Validées</div>
+              </div>
+              <div className="stat-card pending">
+                <div className="stat-value">{pendingRequests.length}</div>
+                <div className="stat-label">En attente</div>
+              </div>
+              <div className="stat-card">
+                <div className="stat-value">{playlists.length}</div>
+                <div className="stat-label">Playlists</div>
+              </div>
+            </div>
+          </div>
+        )}
+      </main>
+
+      {rejectModal.open && (
+        <div className="modal-overlay">
+          <div className="modal">
+            <h3>Rejeter la demande</h3>
+            <textarea
+              placeholder="Motif du rejet (optionnel)"
+              value={rejectModal.reason}
+              onChange={e => setRejectModal({ ...rejectModal, reason: e.target.value })}
+            />
+            <div className="modal-actions">
+              <button onClick={() => setRejectModal({ open: false, requestId: null, reason: "" })}>
+                Annuler
+              </button>
+              <button className="btn-reject" onClick={rejectRequest}>
+                Confirmer le rejet
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      <style>{`
+        .admin-dashboard {
+          min-height: 100vh;
+          background: #f5f5f5;
+        }
+        .dashboard-header {
+          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+          color: white;
+          padding: 20px 30px;
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+        }
+        .header-left h1 {
+          margin: 0;
+          font-size: 1.5rem;
+        }
+        .establishment-name {
+          opacity: 0.9;
+        }
+        .btn-logout {
+          background: rgba(255,255,255,0.2);
+          border: none;
+          color: white;
+          padding: 8px 16px;
+          border-radius: 6px;
+          cursor: pointer;
+        }
+        .dashboard-tabs {
+          display: flex;
+          background: white;
+          border-bottom: 1px solid #ddd;
+          padding: 0 20px;
+        }
+        .tab {
+          padding: 15px 20px;
+          border: none;
+          background: none;
+          cursor: pointer;
+          border-bottom: 3px solid transparent;
+          font-size: 0.95rem;
+        }
+        .tab.active {
+          border-bottom-color: #667eea;
+          color: #667eea;
+          font-weight: bold;
+        }
+        .dashboard-content {
+          padding: 30px;
+        }
+        .now-playing-bar {
+          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+          color: white;
+          padding: 20px;
+          border-radius: 12px;
+          margin-bottom: 30px;
+        }
+        .now-playing-bar h3 { margin: 0 0 10px 0; }
+        .now-playing-info strong { font-size: 1.2rem; }
+        .no-music { opacity: 0.7; }
+        .request-card {
+          background: white;
+          padding: 20px;
+          border-radius: 12px;
+          margin-bottom: 15px;
+          display: flex;
+          align-items: center;
+          gap: 20px;
+          box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        .request-position {
+          width: 40px;
+          height: 40px;
+          background: #667eea;
+          color: white;
+          border-radius: 50%;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-weight: bold;
+        }
+        .request-info { flex: 1; }
+        .request-info h4 { margin: 0 0 5px 0; }
+        .request-info p { margin: 0; color: #666; }
+        .request-info .message {
+          margin-top: 10px;
+          padding: 10px;
+          background: #fff9e6;
+          border-radius: 8px;
+          font-style: italic;
+        }
+        .selfie-thumb {
+          width: 60px;
+          height: 60px;
+          border-radius: 50%;
+          object-fit: cover;
+          margin-top: 10px;
+        }
+        .request-actions {
+          display: flex;
+          flex-direction: column;
+          gap: 10px;
+        }
+        .btn-validate {
+          background: #4caf50;
+          color: white;
+          border: none;
+          padding: 10px 20px;
+          border-radius: 8px;
+          cursor: pointer;
+        }
+        .btn-reject {
+          background: #f44336;
+          color: white;
+          border: none;
+          padding: 10px 20px;
+          border-radius: 8px;
+          cursor: pointer;
+        }
+        .playlist-card, .users-panel, .stats-panel {
+          background: white;
+          padding: 25px;
+          border-radius: 12px;
+          box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        .stats-grid {
+          display: grid;
+          grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+          gap: 20px;
+          margin-top: 20px;
+        }
+        .stat-card {
+          background: #f8f9fa;
+          padding: 25px;
+          border-radius: 12px;
+          text-align: center;
+        }
+        .stat-value {
+          font-size: 2.5rem;
+          font-weight: bold;
+          color: #667eea;
+        }
+        .stat-card.validated .stat-value { color: #4caf50; }
+        .stat-card.pending .stat-value { color: #ff9800; }
+        .modal-overlay {
+          position: fixed;
+          top: 0;
+          left: 0;
+          right: 0;
+          bottom: 0;
+          background: rgba(0,0,0,0.5);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        }
+        .modal {
+          background: white;
+          padding: 30px;
+          border-radius: 12px;
+          width: 90%;
+          max-width: 500px;
+        }
+        .modal textarea {
+          width: 100%;
+          height: 100px;
+          margin: 15px 0;
+          padding: 10px;
+          border: 1px solid #ddd;
+          border-radius: 8px;
+        }
+        .modal-actions {
+          display: flex;
+          gap: 10px;
+          justify-content: flex-end;
+        }
+        .empty-message {
+          text-align: center;
+          color: #999;
+          padding: 40px;
+        }
+        .created-by { font-size: 0.8em; color: #888; margin-left: 8px; }
+        .loading {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          height: 100vh;
+          font-size: 1.2rem;
+          color: #666;
+        }
+      `}</style>
+    </div>
+  );
+}
+
+export default AdminDashboard;

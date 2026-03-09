@@ -1,0 +1,9 @@
+{
+  "name": "PlayMySong",
+  "short_name": "PlayMySong",
+  "description": "Demandez vos chansons préférées dans votre établissement",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#1a1a2e",
+  "theme_color": "#e94560"
+}
