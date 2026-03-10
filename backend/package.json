@@ -2,7 +2,8 @@
   "name": "playmysong-backend",
   "version": "1.0.0",
   "description": "PlayMySong Backend API",
-  "main": "src/server.js",
+  "main": "src/api/index.js",
+  "type": "commonjs",
   "scripts": {
     "start": "node src/server.js",
     "postinstall": "npx prisma generate"
