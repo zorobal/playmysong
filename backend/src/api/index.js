@@ -38,6 +38,52 @@ app.get('/api/establishments', async (req, res) => {
   }
 });
 
+app.post('/api/establishments', async (req, res) => {
+  try {
+    const { name, city, district, phoneNumber, additionalInfo, ownerId, type } = req.body;
+    const establishment = await prisma.establishment.create({
+      data: {
+        name,
+        city,
+        district,
+        phoneNumber,
+        additionalInfo,
+        ownerId,
+        type
+      }
+    });
+    res.json(establishment);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.get('/api/establishments/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const establishment = await prisma.establishment.findUnique({
+      where: { id },
+      include: { users: true }
+    });
+    if (!establishment) {
+      return res.status(404).json({ error: "Établissement non trouvé" });
+    }
+    res.json(establishment);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.delete('/api/establishments/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    await prisma.establishment.delete({ where: { id } });
+    res.json({ message: "Établissement supprimé" });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 app.post('/api/seed', async (req, res) => {
   try {
     const email = "SuperAdmin@playmysong.local";
