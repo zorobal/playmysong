@@ -1,8 +1,7 @@
 import { useState, useEffect } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { io } from "socket.io-client";
-
-const API_URL = "http://localhost:4000";
+import API_URL from "../config";
 
 export default function ClientRequest() {
   const [searchParams] = useSearchParams();

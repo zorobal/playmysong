@@ -1,10 +1,11 @@
 // src/services/establishmentService.js
+import BASE_URL from "../config";
 
-const API_URL = "http://localhost:4000/establishments";
+const BASE_URL = `${BASE_URL}/establishments`;
 
 // Récupérer la liste des établissements
 export async function getEstablishments(token) {
-  const res = await fetch(API_URL, {
+  const res = await fetch(BASE_URL, {
     headers: { Authorization: `Bearer ${token}` }
   });
   if (!res.ok) throw new Error("Erreur lors de la récupération des établissements");
@@ -13,7 +14,7 @@ export async function getEstablishments(token) {
 
 // Créer un établissement
 export async function createEstablishment(token, data) {
-  const res = await fetch(API_URL, {
+  const res = await fetch(BASE_URL, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -27,7 +28,7 @@ export async function createEstablishment(token, data) {
 
 // Modifier un établissement
 export async function updateEstablishment(token, id, data) {
-  const res = await fetch(`${API_URL}/${id}`, {
+  const res = await fetch(`${BASE_URL}/${id}`, {
     method: "PUT",
     headers: {
       "Content-Type": "application/json",
@@ -41,7 +42,7 @@ export async function updateEstablishment(token, id, data) {
 
 // Supprimer un établissement
 export async function deleteEstablishment(token, id) {
-  const res = await fetch(`${API_URL}/${id}`, {
+  const res = await fetch(`${BASE_URL}/${id}`, {
     method: "DELETE",
     headers: { Authorization: `Bearer ${token}` }
   });
@@ -51,7 +52,7 @@ export async function deleteEstablishment(token, id) {
 
 // Ajouter des administrateurs à un établissement
 export async function addAdmins(token, establishmentId, admins) {
-  const res = await fetch(`${API_URL}/${establishmentId}/admins`, {
+  const res = await fetch(`${BASE_URL}/${establishmentId}/admins`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",

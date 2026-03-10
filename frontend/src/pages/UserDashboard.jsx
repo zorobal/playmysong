@@ -1,8 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { io } from "socket.io-client";
-
-const API_URL = "http://localhost:4000";
+import API_URL from "../config";
 
 function UserDashboard() {
   const [user, setUser] = useState(null);
