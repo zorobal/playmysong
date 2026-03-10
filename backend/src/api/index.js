@@ -81,7 +81,13 @@ app.get('/api/establishments/:id', async (req, res) => {
 app.delete('/api/establishments/:id', async (req, res) => {
   try {
     const { id } = req.params;
+    
+    await prisma.songRequest.deleteMany({ where: { establishmentId: id } });
+    await prisma.song.deleteMany({ where: { playlist: { establishmentId: id } } });
+    await prisma.playlist.deleteMany({ where: { establishmentId: id } });
+    await prisma.user.deleteMany({ where: { establishmentId: id } });
     await prisma.establishment.delete({ where: { id } });
+    
     res.json({ message: "Établissement supprimé" });
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -138,6 +144,26 @@ app.post('/api/users', async (req, res) => {
       }
     });
     res.json(user);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.delete('/api/users/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    await prisma.user.delete({ where: { id } });
+    res.json({ message: "Utilisateur supprimé" });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.delete('/api/admins/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    await prisma.user.delete({ where: { id } });
+    res.json({ message: "Administrateur supprimé" });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }

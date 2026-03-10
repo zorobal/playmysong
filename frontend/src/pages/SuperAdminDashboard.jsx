@@ -128,7 +128,7 @@ function SuperAdminDashboard() {
   async function deleteAdmin(adminId) {
     if (!confirm("Supprimer cet administrateur?")) return;
     try {
-      await fetch(`${API_URL}/admins/${adminId}`, {
+      await fetch(`${API_URL}/users/${adminId}`, {
         method: "DELETE",
         headers: { Authorization: `Bearer ${accessToken}` }
       });
