@@ -40,7 +40,7 @@ app.get('/api/establishments', async (req, res) => {
 
 app.post('/api/establishments', async (req, res) => {
   try {
-    const { name, city, district, phoneNumber, additionalInfo, ownerId, type } = req.body;
+    const { name, city, district, phoneNumber, additionalInfo, ownerId } = req.body;
     const establishment = await prisma.establishment.create({
       data: {
         name,
@@ -48,8 +48,7 @@ app.post('/api/establishments', async (req, res) => {
         district,
         phoneNumber,
         additionalInfo,
-        ownerId,
-        type
+        ownerId
       }
     });
     res.json(establishment);
