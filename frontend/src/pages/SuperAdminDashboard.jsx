@@ -113,6 +113,12 @@ function SuperAdminDashboard() {
       alert("Administrateur ajouté!");
       setShowAdminModal(false);
       setNewAdmin({ name: "", email: "", password: "", phoneNumber: "" });
+      
+      const estRes = await fetch(`${API_URL}/establishments/${establishmentId}`, {
+        headers: { Authorization: `Bearer ${accessToken}` }
+      });
+      const estData = await estRes.json();
+      setSelectedEstablishment(estData);
       loadData();
     } catch (err) {
       alert("Erreur lors de l'ajout");

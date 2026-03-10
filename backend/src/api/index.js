@@ -190,7 +190,39 @@ app.get('/api/playlists/:id/songs', async (req, res) => {
   }
 });
 
+app.get('/api/playlists/:id/musics', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const songs = await prisma.song.findMany({
+      where: { playlistId: id }
+    });
+    res.json(songs);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 app.post('/api/playlists/:id/songs', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { title, artist, youtubeId, filePath, duration } = req.body;
+    const song = await prisma.song.create({
+      data: {
+        title,
+        artist,
+        youtubeId,
+        filePath,
+        duration: duration || 0,
+        playlistId: id
+      }
+    });
+    res.json(song);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.post('/api/playlists/:id/musics', async (req, res) => {
   try {
     const { id } = req.params;
     const { title, artist, youtubeId, filePath, duration } = req.body;
@@ -215,6 +247,16 @@ app.delete('/api/songs/:id', async (req, res) => {
     const { id } = req.params;
     await prisma.song.delete({ where: { id } });
     res.json({ message: "Song supprimée" });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.delete('/api/playlists/:playlistId/musics/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    await prisma.song.delete({ where: { id } });
+    res.json({ message: "Musique supprimée" });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
