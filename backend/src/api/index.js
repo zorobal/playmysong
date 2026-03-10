@@ -29,6 +29,87 @@ app.get('/api/health', async (req, res) => {
   }
 });
 
+// Auth
+app.post('/api/auth/login', async (req, res) => {
+  try {
+    const { email, password } = req.body;
+    
+    const user = await prisma.user.findUnique({ where: { email } });
+    if (!user) {
+      return res.status(401).json({ error: "Email ou mot de passe incorrect" });
+    }
+    
+    const validPassword = await bcrypt.compare(password, user.password);
+    if (!validPassword) {
+      return res.status(401).json({ error: "Email ou mot de passe incorrect" });
+    }
+    
+    const token = jwt.sign(
+      { id: user.id, email: user.email, role: user.role },
+      JWT_SECRET,
+      { expiresIn: '7d' }
+    );
+    
+    res.json({ token, user: { id: user.id, email: user.email, name: user.name, role: user.role } });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Seed
+app.post('/api/seed', async (req, res) => {
+  try {
+    const email = "SuperAdmin@playmysong.local";
+    const password = "Vito";
+    const hashedPassword = await bcrypt.hash(password, 12);
+    
+    const existing = await prisma.user.findUnique({ where: { email } });
+    if (existing) {
+      return res.json({ message: "SuperAdmin already exists", email });
+    }
+    
+    const user = await prisma.user.create({
+      data: {
+        email,
+        password: hashedPassword,
+        name: "Super Admin",
+        role: "SUPER_ADMIN",
+        isActive: true
+      }
+    });
+    
+    res.json({ message: "SuperAdmin created", email: user.email });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Get current admin
+app.get('/api/admins/me', async (req, res) => {
+  try {
+    const authHeader = req.headers.authorization;
+    if (!authHeader) {
+      return res.status(401).json({ error: "Non autorisé" });
+    }
+    
+    const token = authHeader.replace('Bearer ', '');
+    const decoded = jwt.verify(token, JWT_SECRET);
+    
+    const user = await prisma.user.findUnique({
+      where: { id: decoded.id }
+    });
+    
+    if (!user) {
+      return res.status(404).json({ error: "Utilisateur non trouvé" });
+    }
+    
+    res.json(user);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Establishments
 app.get('/api/establishments', async (req, res) => {
   try {
     const establishments = await prisma.establishment.findMany({
@@ -121,6 +202,7 @@ app.post('/api/establishments/:id/admins', async (req, res) => {
   }
 });
 
+// Users
 app.get('/api/users', async (req, res) => {
   try {
     const users = await prisma.user.findMany();
@@ -169,6 +251,7 @@ app.delete('/api/admins/:id', async (req, res) => {
   }
 });
 
+// Playlists
 app.get('/api/playlists', async (req, res) => {
   try {
     const { establishmentId } = req.query;
@@ -202,6 +285,7 @@ app.post('/api/playlists', async (req, res) => {
 app.delete('/api/playlists/:id', async (req, res) => {
   try {
     const { id } = req.params;
+    await prisma.song.deleteMany({ where: { playlistId: id } });
     await prisma.playlist.delete({ where: { id } });
     res.json({ message: "Playlist supprimée" });
   } catch (error) {
@@ -209,6 +293,7 @@ app.delete('/api/playlists/:id', async (req, res) => {
   }
 });
 
+// Songs
 app.get('/api/playlists/:id/songs', async (req, res) => {
   try {
     const { id } = req.params;
@@ -293,12 +378,29 @@ app.delete('/api/playlists/:playlistId/musics/:id', async (req, res) => {
   }
 });
 
+// Requests
 app.get('/api/requests', async (req, res) => {
   try {
     const { establishmentId, status } = req.query;
     const where = {};
     if (establishmentId) where.establishmentId = establishmentId;
     if (status) where.status = status;
+    
+    const requests = await prisma.songRequest.findMany({
+      where,
+      orderBy: { createdAt: 'desc' }
+    });
+    res.json(requests);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.get('/api/request/pending', async (req, res) => {
+  try {
+    const { establishmentId } = req.query;
+    const where = { status: 'PENDING' };
+    if (establishmentId) where.establishmentId = establishmentId;
     
     const requests = await prisma.songRequest.findMany({
       where,
@@ -350,54 +452,60 @@ app.patch('/api/requests/:id', async (req, res) => {
   }
 });
 
-app.post('/api/seed', async (req, res) => {
+app.post('/api/request/:id/validate', async (req, res) => {
   try {
-    const email = "SuperAdmin@playmysong.local";
-    const password = "Vito";
-    const hashedPassword = await bcrypt.hash(password, 12);
-    
-    const existing = await prisma.user.findUnique({ where: { email } });
-    if (existing) {
-      return res.json({ message: "SuperAdmin already exists", email });
-    }
-    
-    const user = await prisma.user.create({
-      data: {
-        email,
-        password: hashedPassword,
-        name: "Super Admin",
-        role: "SUPER_ADMIN",
-        isActive: true
-      }
+    const { id } = req.params;
+    const request = await prisma.songRequest.update({
+      where: { id },
+      data: { status: 'VALIDATED' }
     });
-    
-    res.json({ message: "SuperAdmin created", email: user.email });
+    res.json(request);
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
 });
 
-app.post('/api/auth/login', async (req, res) => {
+app.post('/api/request/:id/reject', async (req, res) => {
   try {
-    const { email, password } = req.body;
-    
-    const user = await prisma.user.findUnique({ where: { email } });
-    if (!user) {
-      return res.status(401).json({ error: "Email ou mot de passe incorrect" });
+    const { id } = req.params;
+    const { reason } = req.body;
+    const request = await prisma.songRequest.update({
+      where: { id },
+      data: { 
+        status: 'REJECTED',
+        rejectionReason: reason
+      }
+    });
+    res.json(request);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.get('/api/request/playlist/current', async (req, res) => {
+  try {
+    const { establishmentId } = req.query;
+    if (!establishmentId) {
+      return res.json({ nowPlaying: null, queue: [] });
     }
     
-    const validPassword = await bcrypt.compare(password, user.password);
-    if (!validPassword) {
-      return res.status(401).json({ error: "Email ou mot de passe incorrect" });
-    }
+    const nowPlaying = await prisma.songRequest.findFirst({
+      where: { 
+        establishmentId,
+        status: 'PLAYING'
+      },
+      orderBy: { createdAt: 'desc' }
+    });
     
-    const token = jwt.sign(
-      { id: user.id, email: user.email, role: user.role },
-      JWT_SECRET,
-      { expiresIn: '7d' }
-    );
+    const queue = await prisma.songRequest.findMany({
+      where: { 
+        establishmentId,
+        status: 'VALIDATED'
+      },
+      orderBy: { createdAt: 'asc' }
+    });
     
-    res.json({ token, user: { id: user.id, email: user.email, name: user.name, role: user.role } });
+    res.json({ nowPlaying, queue });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
