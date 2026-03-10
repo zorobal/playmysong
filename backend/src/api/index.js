@@ -28,9 +28,7 @@ app.get('/api/health', async (req, res) => {
 
 app.get('/api/establishments', async (req, res) => {
   try {
-    const establishments = await prisma.establishment.findMany({
-      where: { isActive: true }
-    });
+    const establishments = await prisma.establishment.findMany();
     res.json(establishments);
   } catch (error) {
     res.status(500).json({ error: error.message });
