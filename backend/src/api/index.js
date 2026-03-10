@@ -83,6 +83,200 @@ app.delete('/api/establishments/:id', async (req, res) => {
   }
 });
 
+app.post('/api/establishments/:id/admins', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { admins } = req.body;
+    
+    const createdAdmins = [];
+    for (const admin of admins) {
+      const hashedPassword = await bcrypt.hash(admin.password || 'password123', 12);
+      const user = await prisma.user.create({
+        data: {
+          email: admin.email,
+          password: hashedPassword,
+          name: admin.name,
+          role: 'ADMIN',
+          establishmentId: id,
+          isActive: true
+        }
+      });
+      createdAdmins.push(user);
+    }
+    
+    res.json(createdAdmins);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.get('/api/users', async (req, res) => {
+  try {
+    const users = await prisma.user.findMany();
+    res.json(users);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.post('/api/users', async (req, res) => {
+  try {
+    const { email, password, name, role, establishmentId } = req.body;
+    const hashedPassword = await bcrypt.hash(password, 12);
+    const user = await prisma.user.create({
+      data: {
+        email,
+        password: hashedPassword,
+        name,
+        role: role || 'USER',
+        establishmentId
+      }
+    });
+    res.json(user);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.get('/api/playlists', async (req, res) => {
+  try {
+    const { establishmentId } = req.query;
+    const where = establishmentId ? { establishmentId } : {};
+    const playlists = await prisma.playlist.findMany({
+      where,
+      include: { songs: true }
+    });
+    res.json(playlists);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.post('/api/playlists', async (req, res) => {
+  try {
+    const { name, establishmentId, createdBy } = req.body;
+    const playlist = await prisma.playlist.create({
+      data: {
+        name,
+        establishmentId,
+        createdBy
+      }
+    });
+    res.json(playlist);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.delete('/api/playlists/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    await prisma.playlist.delete({ where: { id } });
+    res.json({ message: "Playlist supprimée" });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.get('/api/playlists/:id/songs', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const songs = await prisma.song.findMany({
+      where: { playlistId: id }
+    });
+    res.json(songs);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.post('/api/playlists/:id/songs', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { title, artist, youtubeId, filePath, duration } = req.body;
+    const song = await prisma.song.create({
+      data: {
+        title,
+        artist,
+        youtubeId,
+        filePath,
+        duration: duration || 0,
+        playlistId: id
+      }
+    });
+    res.json(song);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.delete('/api/songs/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    await prisma.song.delete({ where: { id } });
+    res.json({ message: "Song supprimée" });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.get('/api/requests', async (req, res) => {
+  try {
+    const { establishmentId, status } = req.query;
+    const where = {};
+    if (establishmentId) where.establishmentId = establishmentId;
+    if (status) where.status = status;
+    
+    const requests = await prisma.songRequest.findMany({
+      where,
+      orderBy: { createdAt: 'desc' }
+    });
+    res.json(requests);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.post('/api/requests', async (req, res) => {
+  try {
+    const { establishmentId, youtubeId, title, artist, message, selfieUrl, filePath, createdByUserId } = req.body;
+    const request = await prisma.songRequest.create({
+      data: {
+        establishmentId,
+        youtubeId,
+        title,
+        artist,
+        message,
+        selfieUrl,
+        filePath,
+        createdByUserId,
+        status: 'PENDING'
+      }
+    });
+    res.json(request);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.patch('/api/requests/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { status, rejectionReason, handledByUserId } = req.body;
+    const request = await prisma.songRequest.update({
+      where: { id },
+      data: {
+        status,
+        rejectionReason,
+        handledByUserId
+      }
+    });
+    res.json(request);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 app.post('/api/seed', async (req, res) => {
   try {
     const email = "SuperAdmin@playmysong.local";
