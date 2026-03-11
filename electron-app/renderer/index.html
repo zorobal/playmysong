@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PlayMySong - Écran Géant</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+      color: white;
+      min-height: 100vh;
+      overflow: hidden;
+    }
+
+    .container {
+      display: grid;
+      grid-template-rows: auto 1fr auto;
+      min-height: 100vh;
+      padding: 20px;
+    }
+
+    header {
+      text-align: center;
+      padding: 20px;
+    }
+
+    header h1 {
+      font-size: 2.5rem;
+      background: linear-gradient(90deg, #e94560, #ff6b6b);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      text-shadow: 0 0 30px rgba(233, 69, 96, 0.5);
+    }
+
+    .now-playing {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      flex: 1;
+      padding: 40px;
+    }
+
+    .now-playing-card {
+      background: rgba(255, 255, 255, 0.1);
+      backdrop-filter: blur(10px);
+      border-radius: 30px;
+      padding: 60px;
+      text-align: center;
+      max-width: 800px;
+      width: 100%;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .now-playing-label {
+      font-size: 1.2rem;
+      color: #e94560;
+      text-transform: uppercase;
+      letter-spacing: 4px;
+      margin-bottom: 30px;
+    }
+
+    .song-title {
+      font-size: 3.5rem;
+      font-weight: bold;
+      margin-bottom: 15px;
+      text-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
+    }
+
+    .song-artist {
+      font-size: 2rem;
+      color: #aaa;
+      margin-bottom: 40px;
+    }
+
+    .selfie-container {
+      width: 200px;
+      height: 200px;
+      margin: 0 auto 30px;
+      border-radius: 50%;
+      overflow: hidden;
+      border: 4px solid #e94560;
+      box-shadow: 0 0 30px rgba(233, 69, 96, 0.5);
+    }
+
+    .selfie-container img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .message {
+      font-size: 1.5rem;
+      font-style: italic;
+      color: #ffd700;
+      padding: 20px;
+      background: rgba(255, 215, 0, 0.1);
+      border-radius: 15px;
+      max-width: 600px;
+      margin: 0 auto;
+    }
+
+    .queue {
+      padding: 20px;
+      background: rgba(0, 0, 0, 0.3);
+      border-radius: 20px;
+      margin-top: 30px;
+    }
+
+    .queue h3 {
+      font-size: 1.3rem;
+      margin-bottom: 15px;
+      color: #e94560;
+    }
+
+    .queue-list {
+      display: flex;
+      gap: 20px;
+      overflow-x: auto;
+      padding-bottom: 10px;
+    }
+
+    .queue-item {
+      min-width: 200px;
+      background: rgba(255, 255, 255, 0.05);
+      padding: 15px;
+      border-radius: 15px;
+      text-align: center;
+    }
+
+    .queue-item .title {
+      font-weight: bold;
+      margin-bottom: 5px;
+    }
+
+    .queue-item .artist {
+      font-size: 0.9rem;
+      color: #aaa;
+    }
+
+    .waiting {
+      text-align: center;
+      padding: 100px;
+    }
+
+    .waiting h2 {
+      font-size: 2.5rem;
+      margin-bottom: 20px;
+    }
+
+    .waiting p {
+      font-size: 1.5rem;
+      color: #aaa;
+    }
+
+    .pulse {
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
+    }
+
+    .fade-in {
+      animation: fadeIn 0.5s ease-in;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>🎵 PlayMySong</h1>
+    </header>
+
+    <main id="content">
+      <div class="waiting">
+        <h2 class="pulse">En attente de musique...</h2>
+        <p>Scannez le QR Code pour proposer une chanson</p>
+      </div>
+    </main>
+
+    <footer>
+      <div class="queue" id="queue" style="display: none;">
+        <h3>À venir</h3>
+        <div class="queue-list" id="queue-list"></div>
+      </div>
+    </footer>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+  <script>
+    const BACKEND_URL = 'https://playmysong-mu.vercel.app';
+    
+    let currentSong = null;
+    let queue = [];
+    let audioPlayer = new Audio();
+    let isAnimating = false;
+
+    // When song ends, mark as complete and play next
+    audioPlayer.addEventListener('ended', () => {
+      console.log('Song ended, completing...');
+      if (window.electronAPI && currentSong) {
+        window.electronAPI.completeSong(currentSong.id);
+      }
+    });
+
+    audioPlayer.addEventListener('error', (e) => {
+      console.error('Audio error:', e);
+      // Try to play next on error too
+      if (window.electronAPI && currentSong) {
+        window.electronAPI.completeSong(currentSong.id);
+      }
+    });
+
+    function animateNewSong() {
+      if (isAnimating) return;
+      isAnimating = true;
+      
+      gsap.fromTo('.now-playing-card', 
+        { scale: 0.8, opacity: 0, rotationX: -30 },
+        { scale: 1, opacity: 1, rotationX: 0, duration: 0.8, ease: 'back.out(1.7)' }
+      );
+      
+      gsap.fromTo('.song-title',
+        { y: -50, opacity: 0 },
+        { y: 0, opacity: 1, duration: 0.6, delay: 0.3, ease: 'power2.out' }
+      );
+      
+      gsap.fromTo('.song-artist',
+        { y: 30, opacity: 0 },
+        { y: 0, opacity: 1, duration: 0.6, delay: 0.5, ease: 'power2.out' }
+      );
+      
+      gsap.fromTo('.selfie-container',
+        { scale: 0, rotation: -180 },
+        { scale: 1, rotation: 0, duration: 0.8, delay: 0.6, ease: 'elastic.out(1, 0.5)' }
+      );
+      
+      gsap.fromTo('.message',
+        { x: -100, opacity: 0 },
+        { x: 0, opacity: 1, duration: 0.5, delay: 0.9, ease: 'power2.out' }
+      );
+      
+      setTimeout(() => { isAnimating = false; }, 1500);
+    }
+
+    function animateQueueItem() {
+      gsap.fromTo('.queue-item:last-child',
+        { x: 100, opacity: 0 },
+        { x: 0, opacity: 1, duration: 0.4, ease: 'power2.out' }
+      );
+    }
+
+    function renderNowPlaying() {
+      const content = document.getElementById('content');
+      const queueDiv = document.getElementById('queue');
+
+      if (!currentSong) {
+        content.innerHTML = `
+          <div class="waiting">
+            <h2 class="pulse">En attente de musique...</h2>
+            <p>Scannez le QR Code pour proposer une chanson</p>
+          </div>
+        `;
+        queueDiv.style.display = 'none';
+        audioPlayer.pause();
+        return;
+      }
+
+      const selfieHtml = currentSong.selfieUrl 
+        ? `<div class="selfie-container"><img src="${currentSong.selfieUrl}" alt="Selfie" onerror="this.style.display='none'"></div>` 
+        : `<div class="selfie-container" style="display:flex;align-items:center;justify-content:center;background:rgba(255,255,255,0.1);">
+            <span style="font-size:4rem;">🎤</span>
+          </div>`;
+
+      const messageHtml = currentSong.message 
+        ? `<div class="message">"${currentSong.message}"</div>` 
+        : '';
+
+      content.innerHTML = `
+        <div class="now-playing fade-in">
+          <div class="now-playing-card">
+            <div class="now-playing-label">🎶 En cours de lecture</div>
+            <div class="song-title">${currentSong.title}</div>
+            <div class="song-artist">${currentSong.artist || 'Artiste inconnu'}</div>
+            ${selfieHtml}
+            ${messageHtml}
+          </div>
+        </div>
+      `;
+
+      // Play the song
+      if (currentSong.filePath) {
+        playLocalFile(currentSong.filePath);
+        setTimeout(animateNewSong, 100);
+      } else if (currentSong.youtubeId) {
+        // YouTube playback would require yt-dlp or similar
+        console.log('YouTube playback not implemented yet');
+        animateNewSong();
+      } else {
+        animateNewSong();
+      }
+
+      renderQueue();
+    }
+
+    function playLocalFile(filePath) {
+      // Check if it's an uploaded file (starts with 'uploads/')
+      if (filePath.startsWith('uploads/') || filePath.startsWith('/uploads/')) {
+        // It's an uploaded file served by the backend
+        const url = `${BACKEND_URL}/${filePath.replace(/^\//, '')}`;
+        console.log('Lecture fichier uploadé:', url);
+        audioPlayer.src = url;
+        audioPlayer.play().catch(err => console.error('Erreur lecture:', err));
+      } else if (window.electronAPI && window.electronAPI.getFileUrl) {
+        // It's a local file path - use Electron API
+        const fileUrl = window.electronAPI.getFileUrl(filePath);
+        audioPlayer.src = fileUrl;
+        audioPlayer.play().catch(err => console.error('Erreur lecture:', err));
+      } else {
+        // Fallback for local files
+        audioPlayer.src = 'file:///' + filePath.replace(/\\/g, '/');
+        audioPlayer.play().catch(err => console.error('Erreur lecture:', err));
+      }
+    }
+
+    function renderQueue() {
+      const queueDiv = document.getElementById('queue');
+      const queueList = document.getElementById('queue-list');
+
+      if (queue.length === 0) {
+        queueDiv.style.display = 'none';
+        return;
+      }
+
+      queueDiv.style.display = 'block';
+      const prevLength = queueList.children.length;
+      queueList.innerHTML = queue.map((item, index) => `
+        <div class="queue-item">
+          <div class="title">${index + 1}. ${item.title}</div>
+          <div class="artist">${item.artist || ''}</div>
+        </div>
+      `).join('');
+      
+      if (queue.length > prevLength) {
+        animateQueueItem();
+      }
+    }
+
+    if (window.electronAPI) {
+      window.electronAPI.onNowPlaying((data) => {
+        console.log('now_playing event:', data);
+        if (data && data.song) {
+          currentSong = data.song;
+          if (data.action === 'stop') {
+            currentSong = null;
+          }
+        } else if (data && data.action === 'stop') {
+          currentSong = null;
+        }
+        renderNowPlaying();
+      });
+
+      window.electronAPI.onNewRequest((data) => {
+        queue.push(data);
+        renderQueue();
+      });
+
+      window.electronAPI.onRequestValidated((data) => {
+        const index = queue.findIndex(r => r.requestId === data.requestId);
+        if (index > -1) {
+          queue.splice(index, 1);
+          renderQueue();
+        }
+      });
+
+      window.electronAPI.onPlaylistUpdated(() => {
+        fetchPlaylist();
+      });
+    }
+
+    async function fetchPlaylist() {
+      try {
+        const params = new URLSearchParams(window.location.search);
+        const estId = params.get('establishmentId') || 'default';
+        const res = await fetch(`${BACKEND_URL}/request/playlist/current?establishmentId=${estId}`);
+        const data = await res.json();
+        
+        if (data.nowPlaying) {
+          currentSong = data.nowPlaying;
+        }
+        queue = data.queue || [];
+        renderNowPlaying();
+      } catch (err) {
+        console.error('Erreur lors du chargement de la playlist:', err);
+      }
+    }
+
+    fetchPlaylist();
+  </script>
+</body>
+</html>
