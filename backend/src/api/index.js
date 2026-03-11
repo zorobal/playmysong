@@ -216,7 +216,8 @@ app.post('/api/users', async (req, res) => {
   try {
     const { email, password, name, role, establishmentId } = req.body;
     
-    if (!establishmentId) {
+    // SUPER_ADMIN doesn't need establishment
+    if (role !== 'SUPER_ADMIN' && !establishmentId) {
       return res.status(400).json({ error: "establishmentId est requis" });
     }
     
@@ -227,7 +228,7 @@ app.post('/api/users', async (req, res) => {
         password: hashedPassword,
         name,
         role: role || 'USER',
-        establishmentId
+        establishmentId: role === 'SUPER_ADMIN' ? undefined : establishmentId
       }
     });
     res.json(user);

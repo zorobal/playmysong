@@ -29,12 +29,12 @@ model User {
   role            Role     @default(OPERATOR)
   name            String?
   phoneNumber     String?
-  establishmentId String
+  establishmentId String?
   createdBy       String?
   isActive        Boolean  @default(true)
   createdAt       DateTime @default(now())
   updatedAt       DateTime @default(now()) @updatedAt
-  establishment Establishment @relation(fields: [establishmentId], references: [id])
+  establishment   Establishment? @relation(fields: [establishmentId], references: [id])
 }
 
 model Establishment {
