@@ -158,32 +158,23 @@ export default function ClientPage() {
     setError("");
 
     try {
-      const formData = new FormData();
-      formData.append("establishmentId", establishmentId);
-      formData.append("title", selectedSong.title);
-      formData.append("artist", selectedSong.artist || "");
-      
-      if (selectedSong.youtubeId) {
-        formData.append("youtubeId", selectedSong.youtubeId);
-      }
-      if (selectedSong.filePath) {
-        formData.append("filePath", selectedSong.filePath);
-      }
-      if (selectedSong.duration) {
-        formData.append("durationSec", selectedSong.duration);
-      }
-      
-      if (message.trim()) {
-        formData.append("message", message.trim());
-      }
-      
-      if (selfieFile) {
-        formData.append("selfie", selfieFile);
-      }
+      const payload = {
+        establishmentId,
+        title: selectedSong.title,
+        artist: selectedSong.artist || "",
+        youtubeId: selectedSong.youtubeId || null,
+        filePath: selectedSong.filePath || null,
+        durationSec: selectedSong.duration || 0,
+        message: message.trim() || null,
+        selfieUrl: selfiePreview || null
+      };
 
       const res = await fetch(`${API_URL}/request`, {
         method: "POST",
-        body: formData,
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify(payload)
       });
 
       const data = await res.json();
