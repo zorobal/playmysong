@@ -169,7 +169,7 @@ export default function ClientPage() {
         selfieUrl: selfiePreview || null
       };
 
-      const res = await fetch(`${API_URL}/request`, {
+      const res = await fetch(`${API_URL}/requests`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json"

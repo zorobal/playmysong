@@ -95,7 +95,7 @@ export default function ClientRequest() {
     formData.append("consent", "true");
 
     try {
-      const res = await fetch(`${API_URL}/request`, {
+      const res = await fetch(`${API_URL}/requests`, {
         method: "POST",
         body: formData
       });
