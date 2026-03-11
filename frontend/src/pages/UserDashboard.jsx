@@ -55,24 +55,29 @@ function UserDashboard() {
       const token = localStorage.getItem("token");
       const headers = { Authorization: `Bearer ${token}` };
 
-      const userRes = await fetch(`${API_URL}/admins/me`, { headers });
+      const userRes = await fetch(`${API_URL}/users/me`, { headers });
       const userData = await userRes.json();
       console.log("User data:", userData);
+      
+      if (userData.error) {
+        console.error("Error loading user:", userData.error);
+        setLoading(false);
+        return;
+      }
+      
       setUser(userData);
-      setEstablishment(userData?.establishment || userData);
+      setEstablishment(userData?.establishment);
 
-      const playlistsRes = await fetch(`${API_URL}/playlists`, { headers });
-      const playlistsData = await playlistsRes.json();
-      console.log("Playlists:", playlistsData);
-      setPlaylists(Array.isArray(playlistsData) ? playlistsData : []);
+      if (userData?.establishmentId) {
+        const playlistsRes = await fetch(`${API_URL}/playlists?establishmentId=${userData.establishmentId}`, { headers });
+        const playlistsData = await playlistsRes.json();
+        console.log("Playlists:", playlistsData);
+        setPlaylists(Array.isArray(playlistsData) ? playlistsData : []);
 
-      const requestsRes = await fetch(`${API_URL}/request/pending`, { headers });
-      const requestsData = await requestsRes.json();
-      setPendingRequests(Array.isArray(requestsData) ? requestsData : []);
-
-      const statsRes = await fetch(`${API_URL}/request/stats`, { headers });
-      const statsData = await statsRes.json();
-      setStats(statsData);
+        const requestsRes = await fetch(`${API_URL}/requests?establishmentId=${userData.establishmentId}`, { headers });
+        const requestsData = await requestsRes.json();
+        setPendingRequests(Array.isArray(requestsData) ? requestsData : []);
+      }
     } catch (err) {
       console.error("Erreur:", err);
     } finally {
@@ -82,6 +87,10 @@ function UserDashboard() {
 
   async function createPlaylist(name) {
     try {
+      if (!establishment?.id) {
+        alert("Erreur: Pas d'établissement associé");
+        return;
+      }
       const token = localStorage.getItem("token");
       const res = await fetch(`${API_URL}/playlists`, {
         method: "POST",
@@ -89,10 +98,17 @@ function UserDashboard() {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`
         },
-        body: JSON.stringify({ name })
+        body: JSON.stringify({ 
+          name, 
+          establishmentId: establishment.id,
+          createdBy: user?.id
+        })
       });
       if (res.ok) {
         loadData();
+      } else {
+        const err = await res.json();
+        alert("Erreur: " + (err.error || "Inconnu"));
       }
     } catch (err) {
       alert("Erreur lors de la création");
