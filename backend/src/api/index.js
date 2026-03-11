@@ -21,6 +21,29 @@ app.get('/api', (req, res) => {
   res.json({ status: 'ok', message: 'Backend is alive' });
 });
 
+app.get('/api/youtube/search', async (req, res) => {
+  try {
+    const { q } = req.query;
+    if (!q) {
+      return res.json({ items: [] });
+    }
+    const YOUTUBE_API_KEY = process.env.YOUTUBE_API_KEY;
+    if (!YOUTUBE_API_KEY) {
+      return res.json({ 
+        items: [],
+        message: "Recherche YouTube non configurée. Ajoutez des chansons depuis les playlists locales."
+      });
+    }
+    const response = await fetch(
+      `https://www.googleapis.com/youtube/v3/search?part=snippet&q=${encodeURIComponent(q)}&type=video&maxResults=10&key=${YOUTUBE_API_KEY}`
+    );
+    const data = await response.json();
+    res.json(data);
+  } catch (error) {
+    res.status(500).json({ error: error.message, items: [] });
+  }
+});
+
 app.get('/api/health', async (req, res) => {
   try {
     await prisma.$queryRaw`SELECT 1`;
