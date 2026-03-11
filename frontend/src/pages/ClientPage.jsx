@@ -72,7 +72,7 @@ export default function ClientPage() {
 
   const fetchEstablishment = async () => {
     try {
-      const res = await fetch(`${API_URL}/establishments/public/${establishmentId}`);
+      const res = await fetch(`${API_URL}/establishments/${establishmentId}`);
       const data = await res.json();
       setEstablishmentName(data.name || "Établissement");
       setEstablishmentType(data.type || "");

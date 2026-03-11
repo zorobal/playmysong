@@ -30,7 +30,7 @@ export default function ClientRequest() {
 
   async function loadEstablishment() {
     try {
-      const res = await fetch(`${API_URL}/establishments/public/${establishmentId}`);
+      const res = await fetch(`${API_URL}/establishments/${establishmentId}`);
       if (res.ok) {
         const data = await res.json();
         setEstablishment(data);

@@ -161,26 +161,46 @@
 
   <script>
     const API_URL = 'https://playmysong-mu.vercel.app/api';
+    const FALLBACK_API = 'https://playmysong-mu.vercel.app/api';
     
     // Get establishment ID from URL or use default
     const urlParams = new URLSearchParams(window.location.search);
     const establishmentId = urlParams.get('establishmentId') || 'cmmke5nms0001ik0424nh0517';
 
+    let apiBase = API_URL;
+
     async function loadData() {
       try {
+        console.log('Loading data from:', apiBase);
+        
+        // Test API connection first
+        const testRes = await fetch(`${apiBase}`);
+        if (!testRes.ok) throw new Error(`API not reachable: ${testRes.status}`);
+        const testData = await testRes.json();
+        console.log('API test:', testData);
+
         // Load establishment info
-        const estRes = await fetch(`${API_URL}/establishments/public/${establishmentId}`);
+        const estRes = await fetch(`${apiBase}/establishments/${establishmentId}`);
+        if (!estRes.ok) {
+          const estText = await estRes.text();
+          throw new Error(`Establishment API error: ${estRes.status} - ${estText.substring(0,100)}`);
+        }
         const establishment = await estRes.json();
         document.getElementById('establishmentName').textContent = establishment.name || 'Établissement';
 
         // Load validated requests (queue)
-        const queueRes = await fetch(`${API_URL}/requests?establishmentId=${establishmentId}&status=VALIDATED`);
+        const queueRes = await fetch(`${apiBase}/requests?establishmentId=${establishmentId}&status=VALIDATED`);
+        if (!queueRes.ok) {
+          const queueText = await queueRes.text();
+          throw new Error(`Queue API error: ${queueRes.status} - ${queueText.substring(0,100)}`);
+        }
         const queue = await queueRes.json();
+        console.log('Queue:', queue);
 
         renderContent(establishment, queue);
       } catch (error) {
         console.error('Error:', error);
-        document.getElementById('content').innerHTML = `<div class="error">Erreur: ${error.message}</div>`;
+        document.getElementById('content').innerHTML = `<div class="error">Erreur de connexion:<br><br>${error.message}<br><br>URL: ${apiBase}</div>`;
       }
     }
 
