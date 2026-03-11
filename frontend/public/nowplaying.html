@@ -196,18 +196,23 @@
               <div class="youtube-container" id="youtubeContainer">
                 <div id="youtubePlayer"></div>
               </div>
-            ` : nowPlaying.filePath ? `
+            ` : nowPlaying.filePath && nowPlaying.filePath.includes('http') ? `
               <audio id="audioPlayer" class="audio-player" controls autoplay>
                 <source src="${escapeHtml(nowPlaying.filePath)}" type="audio/mpeg">
                 Votre navigateur ne supporte pas la lecture audio
               </audio>
             ` : `
-              <p style="margin-top:15px;opacity:0.7;">🎵 Source: Playlist locale</p>
+              <div style="margin-top:20px;padding:20px;background:rgba(255,255,255,0.1);border-radius:15px;">
+                <p style="margin-bottom:10px;">🎵 ${escapeHtml(nowPlaying.title)}</p>
+                <p style="font-size:0.9rem;opacity:0.7;">Fichier local: ${escapeHtml(nowPlaying.filePath || 'Non défini')}</p>
+                <p style="font-size:0.8rem;opacity:0.5;margin-top:10px;">Pour jouer cette chanson, utilisez un fichier avec URL complète ou YouTube</p>
+              </div>
             `}
           </div>
           
           <div class="controls">
             <button class="btn-skip" onclick="skipSong()">⏭️ Suivant</button>
+            <button class="btn-skip" style="background:#e94560;color:white;" onclick="playTestYouTube()">▶️ Tester YouTube</button>
           </div>
         `;
       } else {
@@ -279,6 +284,15 @@
       // When video ends, go to next song
       if (event.data === YT.PlayerState.ENDED) {
         skipSong();
+      }
+    }
+
+    function playTestYouTube() {
+      // Test with a sample YouTube video
+      const testVideoId = 'dQw4w9WgXcQ'; // Never Gonna Give You Up
+      initYouTubePlayer(testVideoId);
+      if (player && player.playVideo) {
+        player.playVideo();
       }
     }
 
