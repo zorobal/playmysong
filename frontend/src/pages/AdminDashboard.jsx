@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { io } from "socket.io-client";
 import API_URL from "../config";
@@ -165,7 +165,33 @@ function AdminDashboard() {
     setNowPlaying(song);
   }
 
+  const [showUploadModal, setShowUploadModal] = useState(false);
+  const [uploadData, setUploadData] = useState({ title: '', artist: '', filePath: '', youtubeId: '' });
+  const [currentPlaylistId, setCurrentPlaylistId] = useState(null);
+  const fileInputRef = useRef(null);
+
   async function handleFileSelect(playlistId) {
+    setCurrentPlaylistId(playlistId);
+    setUploadData({ title: '', artist: '', filePath: '', youtubeId: '' });
+    setShowUploadModal(true);
+  }
+
+  function handleFileChange(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+    
+    const fileName = file.name;
+    const lastDot = fileName.lastIndexOf('.');
+    const title = lastDot > 0 ? fileName.substring(0, lastDot) : fileName;
+    
+    setUploadData(prev => ({
+      ...prev,
+      title: title,
+      filePath: file.name
+    }));
+  }
+
+  async function submitUpload() {
     const token = localStorage.getItem("token");
     if (!token) {
       alert("Session expirée. Veuillez vous reconnecter.");
@@ -173,24 +199,23 @@ function AdminDashboard() {
       return;
     }
     
-    const title = prompt("Titre de la chanson:");
-    if (!title) return;
-    
-    const artist = prompt("Artiste (optionnel):") || null;
-    const youtubeId = prompt("ID YouTube (optionnel, ex: dQw4w9WgXcQ):") || null;
-    const filePath = prompt("Chemin du fichier local (optionnel):") || null;
-    
+    if (!uploadData.title) {
+      alert("Le titre est requis");
+      return;
+    }
+
     try {
-      const res = await fetch(`${API_URL}/playlists/${playlistId}/upload`, {
+      const res = await fetch(`${API_URL}/playlists/${currentPlaylistId}/upload`, {
         method: "POST",
         headers: { 
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`
         },
-        body: JSON.stringify({ title, artist, youtubeId, filePath })
+        body: JSON.stringify(uploadData)
       });
       
       if (res.ok) {
+        setShowUploadModal(false);
         loadInitialData();
       } else {
         const err = await res.json();
@@ -211,6 +236,69 @@ function AdminDashboard() {
 
   return (
     <div className="admin-dashboard">
+      {showUploadModal && (
+        <div className="modal-overlay" onClick={() => setShowUploadModal(false)}>
+          <div className="modal-content" onClick={e => e.stopPropagation()}>
+            <h2>Ajouter une chanson</h2>
+            
+            <div className="form-group">
+              <label>Fichier audio</label>
+              <input 
+                type="file" 
+                accept="audio/*"
+                onChange={handleFileChange}
+                ref={fileInputRef}
+              />
+            </div>
+            
+            <div className="form-group">
+              <label>Titre *</label>
+              <input 
+                type="text" 
+                value={uploadData.title}
+                onChange={e => setUploadData({...uploadData, title: e.target.value})}
+                placeholder="Titre de la chanson"
+              />
+            </div>
+            
+            <div className="form-group">
+              <label>Artiste</label>
+              <input 
+                type="text" 
+                value={uploadData.artist}
+                onChange={e => setUploadData({...uploadData, artist: e.target.value})}
+                placeholder="Nom de l'artiste"
+              />
+            </div>
+            
+            <div className="form-group">
+              <label>Chemin du fichier</label>
+              <input 
+                type="text" 
+                value={uploadData.filePath}
+                onChange={e => setUploadData({...uploadData, filePath: e.target.value})}
+                placeholder="C:\Musique\chanson.mp3"
+              />
+            </div>
+            
+            <div className="form-group">
+              <label>ID YouTube (optionnel)</label>
+              <input 
+                type="text" 
+                value={uploadData.youtubeId}
+                onChange={e => setUploadData({...uploadData, youtubeId: e.target.value})}
+                placeholder="dQw4w9WgXcQ"
+              />
+            </div>
+            
+            <div className="modal-buttons">
+              <button className="btn-cancel" onClick={() => setShowUploadModal(false)}>Annuler</button>
+              <button className="btn-submit" onClick={submitUpload}>Ajouter</button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <header className="dashboard-header">
         <div className="header-left">
           <h1>PlayMySong Admin</h1>
@@ -708,6 +796,68 @@ function AdminDashboard() {
           height: 100vh;
           font-size: 1.2rem;
           color: #666;
+        }
+        .modal-overlay {
+          position: fixed;
+          top: 0;
+          left: 0;
+          right: 0;
+          bottom: 0;
+          background: rgba(0,0,0,0.5);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          z-index: 1000;
+        }
+        .modal-content {
+          background: white;
+          padding: 24px;
+          border-radius: 12px;
+          width: 90%;
+          max-width: 400px;
+          box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+        }
+        .modal-content h2 {
+          margin: 0 0 20px;
+          color: #333;
+        }
+        .form-group {
+          margin-bottom: 16px;
+        }
+        .form-group label {
+          display: block;
+          margin-bottom: 6px;
+          color: #555;
+          font-weight: 500;
+        }
+        .form-group input {
+          width: 100%;
+          padding: 10px;
+          border: 1px solid #ddd;
+          border-radius: 6px;
+          font-size: 14px;
+        }
+        .modal-buttons {
+          display: flex;
+          gap: 12px;
+          margin-top: 20px;
+        }
+        .btn-cancel {
+          flex: 1;
+          padding: 10px;
+          background: #f0f0f0;
+          border: none;
+          border-radius: 6px;
+          cursor: pointer;
+        }
+        .btn-submit {
+          flex: 1;
+          padding: 10px;
+          background: #667eea;
+          color: white;
+          border: none;
+          border-radius: 6px;
+          cursor: pointer;
         }
       `}</style>
     </div>

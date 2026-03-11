@@ -35,6 +35,19 @@ export default function ClientPage() {
       return;
     }
 
+    const existingRequest = localStorage.getItem(`pms_request_${establishmentId}`);
+    if (existingRequest) {
+      try {
+        const reqData = JSON.parse(existingRequest);
+        setSuccess(true);
+        setEstablishmentName(reqData.establishmentName || "Établissement");
+        setEstablishmentType(reqData.establishmentType || "");
+        return;
+      } catch (e) {
+        localStorage.removeItem(`pms_request_${establishmentId}`);
+      }
+    }
+
     fetchEstablishment();
 
     socketRef.current = io(SOCKET_URL, {
@@ -190,6 +203,18 @@ export default function ClientPage() {
         });
       }
 
+      localStorage.setItem(`pms_request_${establishmentId}`, JSON.stringify({
+        title: selectedSong.title,
+        artist: selectedSong.artist,
+        youtubeId: selectedSong.youtubeId,
+        filePath: selectedSong.filePath,
+        message: message.trim(),
+        selfiePreview: selfiePreview,
+        establishmentName: establishmentName,
+        establishmentType: establishmentType,
+        timestamp: Date.now()
+      }));
+
       setSuccess(true);
     } catch (err) {
       console.error("Erreur soumission:", err);
@@ -212,6 +237,12 @@ export default function ClientPage() {
   };
 
   if (success) {
+    const savedRequest = (() => {
+      try {
+        return JSON.parse(localStorage.getItem(`pms_request_${establishmentId}`));
+      } catch { return null; }
+    })();
+
     return (
       <div className="min-h-screen bg-slate-900 flex flex-col items-center justify-center p-6 overflow-hidden relative">
         <div className="absolute inset-0 overflow-hidden">
@@ -236,6 +267,23 @@ export default function ClientPage() {
               Votre demande sera bientôt validée par l'établissement.
             </p>
           </div>
+
+          {savedRequest && (
+            <div className="bg-slate-800/80 rounded-2xl p-5 mb-6 border border-slate-700 text-left">
+              <h3 className="text-white font-semibold mb-3">Votre demande:</h3>
+              <div className="space-y-2">
+                <p className="text-white"><span className="text-slate-400">Chanson:</span> {savedRequest.title}</p>
+                {savedRequest.artist && <p className="text-white"><span className="text-slate-400">Artiste:</span> {savedRequest.artist}</p>}
+                {savedRequest.message && <p className="text-white"><span className="text-slate-400">Message:</span> {savedRequest.message}</p>}
+                {savedRequest.selfiePreview && (
+                  <div className="mt-3">
+                    <p className="text-slate-400 mb-2">Votre selfie:</p>
+                    <img src={savedRequest.selfiePreview} alt="Votre selfie" className="w-24 h-24 object-cover rounded-lg mx-auto" />
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
 
           <div className="bg-gradient-to-r from-amber-500/20 to-orange-500/20 rounded-2xl p-5 mb-8 border border-amber-500/30">
             <div className="flex items-center justify-center gap-2 mb-2">
