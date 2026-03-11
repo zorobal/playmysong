@@ -126,10 +126,17 @@ export default function ClientPage() {
   const handleSelfieChange = (e) => {
     const file = e.target.files[0];
     if (file) {
-      setSelfieFile(file);
+      if (file.size > 5 * 1024 * 1024) {
+        setError("Photo trop volumineuse (max 5MB)");
+        return;
+      }
       const reader = new FileReader();
       reader.onloadend = () => {
         setSelfiePreview(reader.result);
+        setError("");
+      };
+      reader.onerror = () => {
+        setError("Erreur lors du chargement de la photo");
       };
       reader.readAsDataURL(file);
     }
@@ -296,16 +303,32 @@ export default function ClientPage() {
             </div>
           )}
 
-          <div style={{
-            background: 'rgba(251,191,36,0.2)',
-            border: '1px solid rgba(251,191,36,0.3)',
-            borderRadius: '12px',
-            padding: '16px'
-          }}>
-            <p style={{color:'#fbbf24',fontSize:'14px',fontWeight:'500'}}>
-              Pour une nouvelle demande, scannez à nouveau le QR code
-            </p>
-          </div>
+          <button
+            onClick={() => {
+              localStorage.removeItem(`pms_request_${establishmentId}`);
+              setSuccess(false);
+              setSelectedSong(null);
+              setShowForm(false);
+              setMessage("");
+              setSelfieFile(null);
+              setSelfiePreview(null);
+              setError("");
+            }}
+            style={{
+              width: '100%',
+              padding: '14px',
+              borderRadius: '12px',
+              border: 'none',
+              background: 'linear-gradient(135deg, #7c3aed, #db2777)',
+              color: 'white',
+              fontSize: '15px',
+              fontWeight: '600',
+              cursor: 'pointer',
+              marginTop: '16px'
+            }}
+          >
+            ➕ Nouvelle demande
+          </button>
 
           <p style={{color:'#64748b',fontSize:'12px',marginTop:'24px'}}>{establishmentName}</p>
         </div>
@@ -637,7 +660,6 @@ export default function ClientPage() {
                 ref={fileInputRef}
                 type="file"
                 accept="image/*"
-                capture="user"
                 onChange={handleSelfieChange}
                 style={{display:'none'}}
                 id="selfie-input"

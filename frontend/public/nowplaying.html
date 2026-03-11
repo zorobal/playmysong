@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PlayMySong - Maintenant</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+      min-height: 100vh;
+      color: white;
+    }
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+    .header {
+      text-align: center;
+      padding: 30px;
+      background: rgba(255,255,255,0.05);
+      border-radius: 20px;
+      margin-bottom: 30px;
+    }
+    .header h1 {
+      font-size: 2.5rem;
+      background: linear-gradient(135deg, #e94560, #0f3460);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin-bottom: 10px;
+    }
+    .establishment-name {
+      font-size: 1.5rem;
+      color: #e94560;
+    }
+    .now-playing {
+      background: linear-gradient(135deg, #e94560 0%, #533483 100%);
+      border-radius: 30px;
+      padding: 40px;
+      text-align: center;
+      margin-bottom: 30px;
+      box-shadow: 0 20px 60px rgba(233,69,96,0.4);
+    }
+    .now-playing h2 {
+      font-size: 1rem;
+      text-transform: uppercase;
+      letter-spacing: 3px;
+      opacity: 0.8;
+      margin-bottom: 20px;
+    }
+    .song-title {
+      font-size: 3rem;
+      font-weight: bold;
+      margin-bottom: 10px;
+      text-shadow: 0 2px 10px rgba(0,0,0,0.3);
+    }
+    .artist {
+      font-size: 1.5rem;
+      opacity: 0.9;
+      margin-bottom: 20px;
+    }
+    .message-box {
+      background: rgba(255,255,255,0.2);
+      border-radius: 15px;
+      padding: 20px;
+      margin-top: 20px;
+      font-style: italic;
+      font-size: 1.2rem;
+    }
+    .selfie-display {
+      width: 150px;
+      height: 150px;
+      border-radius: 50%;
+      margin: 20px auto;
+      overflow: hidden;
+      border: 4px solid white;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+    }
+    .selfie-display img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+    .queue {
+      background: rgba(255,255,255,0.05);
+      border-radius: 20px;
+      padding: 30px;
+    }
+    .queue h3 {
+      font-size: 1.5rem;
+      margin-bottom: 20px;
+      color: #e94560;
+    }
+    .queue-item {
+      display: flex;
+      align-items: center;
+      gap: 15px;
+      padding: 15px;
+      background: rgba(255,255,255,0.05);
+      border-radius: 15px;
+      margin-bottom: 10px;
+    }
+    .queue-number {
+      font-size: 1.5rem;
+      font-weight: bold;
+      color: #e94560;
+      min-width: 40px;
+    }
+    .queue-info {
+      flex: 1;
+    }
+    .queue-title {
+      font-size: 1.2rem;
+      font-weight: 600;
+    }
+    .queue-artist {
+      font-size: 0.9rem;
+      opacity: 0.7;
+    }
+    .queue-message {
+      font-size: 0.9rem;
+      font-style: italic;
+      color: #fbbf24;
+    }
+    .loading {
+      text-align: center;
+      padding: 50px;
+      font-size: 1.5rem;
+      opacity: 0.7;
+    }
+    .error {
+      text-align: center;
+      padding: 50px;
+      color: #e94560;
+    }
+    .empty-queue {
+      text-align: center;
+      padding: 30px;
+      opacity: 0.6;
+      font-size: 1.2rem;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>🎵 PlayMySong</h1>
+      <div class="establishment-name" id="establishmentName">Chargement...</div>
+    </div>
+
+    <div id="content">
+      <div class="loading">Chargement...</div>
+    </div>
+  </div>
+
+  <script>
+    const API_URL = 'https://playmysong-mu.vercel.app/api';
+    
+    // Get establishment ID from URL or use default
+    const urlParams = new URLSearchParams(window.location.search);
+    const establishmentId = urlParams.get('establishmentId') || 'cmmke5nms0001ik0424nh0517';
+
+    async function loadData() {
+      try {
+        // Load establishment info
+        const estRes = await fetch(`${API_URL}/establishments/public/${establishmentId}`);
+        const establishment = await estRes.json();
+        document.getElementById('establishmentName').textContent = establishment.name || 'Établissement';
+
+        // Load validated requests (queue)
+        const queueRes = await fetch(`${API_URL}/requests?establishmentId=${establishmentId}&status=VALIDATED`);
+        const queue = await queueRes.json();
+
+        renderContent(establishment, queue);
+      } catch (error) {
+        console.error('Error:', error);
+        document.getElementById('content').innerHTML = `<div class="error">Erreur: ${error.message}</div>`;
+      }
+    }
+
+    function renderContent(establishment, queue) {
+      const nowPlaying = queue.find(r => r.status === 'PLAYING') || queue[0];
+      const waitingQueue = queue.filter(r => r.id !== nowPlaying?.id);
+
+      let html = '';
+
+      if (nowPlaying) {
+        html += `
+          <div class="now-playing">
+            <h2>🎶 En cours de lecture</h2>
+            <div class="song-title">${escapeHtml(nowPlaying.title)}</div>
+            <div class="artist">${escapeHtml(nowPlaying.artist || 'Artiste inconnu')}</div>
+            ${nowPlaying.message ? `<div class="message-box">"${escapeHtml(nowPlaying.message)}"</div>` : ''}
+            ${nowPlaying.selfieUrl ? `
+              <div class="selfie-display">
+                <img src="${nowPlaying.selfieUrl}" alt="Selfie" onerror="this.style.display='none'">
+              </div>
+            ` : ''}
+          </div>
+        `;
+      } else {
+        html += `
+          <div class="now-playing">
+            <h2>🎵 En attente de demandes</h2>
+            <div class="song-title" style="font-size: 2rem;">Scannez le QR Code pour demander une chanson!</div>
+          </div>
+        `;
+      }
+
+      html += '<div class="queue"><h3>📋 File d\'attente</h3>';
+
+      if (waitingQueue.length === 0) {
+        html += '<div class="empty-queue">Aucune autre chanson dans la file d\'attente</div>';
+      } else {
+        waitingQueue.forEach((item, index) => {
+          html += `
+            <div class="queue-item">
+              <div class="queue-number">${index + 1}</div>
+              <div class="queue-info">
+                <div class="queue-title">${escapeHtml(item.title)}</div>
+                <div class="queue-artist">${escapeHtml(item.artist || 'Artiste inconnu')}</div>
+                ${item.message ? `<div class="queue-message">💬 ${escapeHtml(item.message)}</div>` : ''}
+              </div>
+            </div>
+          `;
+        });
+      }
+
+      html += '</div>';
+      document.getElementById('content').innerHTML = html;
+    }
+
+    function escapeHtml(text) {
+      if (!text) return '';
+      const div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML;
+    }
+
+    // Auto-refresh every 10 seconds
+    loadData();
+    setInterval(loadData, 10000);
+  </script>
+</body>
+</html>
