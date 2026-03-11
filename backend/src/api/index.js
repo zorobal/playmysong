@@ -215,6 +215,11 @@ app.get('/api/users', async (req, res) => {
 app.post('/api/users', async (req, res) => {
   try {
     const { email, password, name, role, establishmentId } = req.body;
+    
+    if (!establishmentId) {
+      return res.status(400).json({ error: "establishmentId est requis" });
+    }
+    
     const hashedPassword = await bcrypt.hash(password, 12);
     const user = await prisma.user.create({
       data: {
