@@ -345,6 +345,22 @@ app.get('/api/playlists', async (req, res) => {
   }
 });
 
+app.get('/api/playlists/public', async (req, res) => {
+  try {
+    const { establishmentId } = req.query;
+    if (!establishmentId) {
+      return res.status(400).json({ error: "establishmentId requis" });
+    }
+    const playlists = await prisma.playlist.findMany({
+      where: { establishmentId },
+      include: { songs: true }
+    });
+    res.json(playlists);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 app.post('/api/playlists', async (req, res) => {
   try {
     const { name, establishmentId, createdBy } = req.body;
