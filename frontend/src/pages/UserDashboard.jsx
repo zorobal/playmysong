@@ -202,40 +202,33 @@ function UserDashboard() {
       return;
     }
     
-    // Create a hidden file input
-    const input = document.createElement('input');
-    input.type = 'file';
-    input.accept = 'audio/*,.mp3,.flac,.wav,.ogg,.m4a,.aac';
+    const title = prompt("Titre de la chanson:");
+    if (!title) return;
     
-    input.onchange = async (e) => {
-      const file = e.target.files[0];
-      if (!file) return;
+    const artist = prompt("Artiste (optionnel):") || null;
+    const youtubeId = prompt("ID YouTube (optionnel, ex: dQw4w9WgXcQ):") || null;
+    const filePath = prompt("Chemin du fichier local (optionnel):") || null;
+    
+    try {
+      const res = await fetch(`${API_URL}/playlists/${playlistId}/upload`, {
+        method: "POST",
+        headers: { 
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify({ title, artist, youtubeId, filePath })
+      });
       
-      const formData = new FormData();
-      formData.append('audio', file);
-      
-      try {
-        const res = await fetch(`${API_URL}/playlists/${playlistId}/upload`, {
-          method: "POST",
-          headers: { 
-            Authorization: `Bearer ${token}`
-          },
-          body: formData
-        });
-        
-        if (res.ok) {
-          loadData();
-          setSelectedPlaylist(null);
-        } else {
-          const err = await res.json();
-          alert(err.error || "Erreur lors de l'upload du fichier");
-        }
-      } catch (err) {
-        alert("Erreur lors de l'upload du fichier");
+      if (res.ok) {
+        loadData();
+        setSelectedPlaylist(null);
+      } else {
+        const err = await res.json();
+        alert(err.error || "Erreur lors de l'ajout");
       }
-    };
-    
-    input.click();
+    } catch (err) {
+      alert("Erreur lors de l'ajout");
+    }
   }
 
   function logout() {
@@ -355,7 +348,7 @@ function UserDashboard() {
                         artistInput.value = '';
                       }
                     }}>+ Ajouter chanson</button>
-                    <button onClick={() => handleFileSelect(playlist.id)} title="Ajouter un fichier local">
+                    <button onClick={() => handleFileSelect(playlist.id)} title="Ajouter une chanson">➕</button>
                       📁 Parcourir
                     </button>
                   </div>

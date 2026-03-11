@@ -435,6 +435,29 @@ app.delete('/api/playlists/:playlistId/musics/:id', async (req, res) => {
   }
 });
 
+app.post('/api/playlists/:id/upload', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { title, artist, filePath, duration, youtubeId } = req.body;
+    
+    const song = await prisma.song.create({
+      data: {
+        title: title || 'Sans titre',
+        artist: artist || null,
+        youtubeId: youtubeId || null,
+        filePath: filePath || null,
+        duration: duration ? parseInt(duration) : 0,
+        playlistId: id
+      }
+    });
+
+    res.json(song);
+  } catch (error) {
+    console.error('Upload error:', error);
+    res.status(500).json({ error: "Erreur lors de l'ajout: " + error.message });
+  }
+});
+
 // Requests
 app.get('/api/requests', async (req, res) => {
   try {
