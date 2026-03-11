@@ -221,6 +221,12 @@ app.post('/api/users', async (req, res) => {
   try {
     const { email, password, name, role, establishmentId } = req.body;
     
+    // Check if email already exists
+    const existingUser = await prisma.user.findUnique({ where: { email } });
+    if (existingUser) {
+      return res.status(400).json({ error: "Cet email existe déjà" });
+    }
+    
     // SUPER_ADMIN doesn't need establishment
     if (role !== 'SUPER_ADMIN' && !establishmentId) {
       return res.status(400).json({ error: "establishmentId est requis" });
