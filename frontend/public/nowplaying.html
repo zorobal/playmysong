@@ -5,146 +5,130 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>PlayMySong - Maintenant</title>
   <style>
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
     body {
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
       background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
       min-height: 100vh;
       color: white;
     }
-    .container {
-      max-width: 1200px;
-      margin: 0 auto;
-      padding: 20px;
-    }
+    .container { max-width: 1400px; margin: 0 auto; padding: 20px; }
     .header {
       text-align: center;
-      padding: 30px;
+      padding: 20px;
       background: rgba(255,255,255,0.05);
       border-radius: 20px;
-      margin-bottom: 30px;
+      margin-bottom: 20px;
     }
-    .header h1 {
-      font-size: 2.5rem;
-      background: linear-gradient(135deg, #e94560, #0f3460);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      margin-bottom: 10px;
-    }
-    .establishment-name {
-      font-size: 1.5rem;
-      color: #e94560;
-    }
+    .header h1 { font-size: 2rem; margin-bottom: 5px; }
+    .establishment-name { font-size: 1.3rem; color: #e94560; }
+    
+    .main-content { display: flex; gap: 20px; flex-wrap: wrap; }
+    
     .now-playing {
+      flex: 1;
+      min-width: 400px;
       background: linear-gradient(135deg, #e94560 0%, #533483 100%);
-      border-radius: 30px;
-      padding: 40px;
+      border-radius: 25px;
+      padding: 30px;
       text-align: center;
-      margin-bottom: 30px;
       box-shadow: 0 20px 60px rgba(233,69,96,0.4);
     }
     .now-playing h2 {
-      font-size: 1rem;
+      font-size: 0.9rem;
       text-transform: uppercase;
       letter-spacing: 3px;
-      opacity: 0.8;
-      margin-bottom: 20px;
-    }
-    .song-title {
-      font-size: 3rem;
-      font-weight: bold;
-      margin-bottom: 10px;
-      text-shadow: 0 2px 10px rgba(0,0,0,0.3);
-    }
-    .artist {
-      font-size: 1.5rem;
       opacity: 0.9;
       margin-bottom: 20px;
     }
+    .song-title { font-size: 2.5rem; font-weight: bold; margin-bottom: 10px; }
+    .artist { font-size: 1.3rem; opacity: 0.9; margin-bottom: 15px; }
     .message-box {
       background: rgba(255,255,255,0.2);
       border-radius: 15px;
-      padding: 20px;
-      margin-top: 20px;
+      padding: 15px;
+      margin-top: 15px;
       font-style: italic;
-      font-size: 1.2rem;
+      font-size: 1.1rem;
     }
     .selfie-display {
-      width: 150px;
-      height: 150px;
+      width: 120px;
+      height: 120px;
       border-radius: 50%;
-      margin: 20px auto;
+      margin: 15px auto;
       overflow: hidden;
       border: 4px solid white;
-      box-shadow: 0 10px 30px rgba(0,0,0,0.3);
     }
-    .selfie-display img {
+    .selfie-display img { width: 100%; height: 100%; object-fit: cover; }
+    
+    .player-container { margin-top: 20px; }
+    .youtube-container {
+      position: relative;
+      padding-bottom: 56.25%;
+      height: 0;
+      overflow: hidden;
+      border-radius: 15px;
+      margin-top: 15px;
+    }
+    .youtube-container iframe {
+      position: absolute;
+      top: 0;
+      left: 0;
       width: 100%;
       height: 100%;
-      object-fit: cover;
     }
+    .audio-player {
+      width: 100%;
+      margin-top: 15px;
+      border-radius: 10px;
+    }
+    
     .queue {
+      flex: 0.8;
+      min-width: 300px;
       background: rgba(255,255,255,0.05);
       border-radius: 20px;
-      padding: 30px;
+      padding: 20px;
+      max-height: 70vh;
+      overflow-y: auto;
     }
-    .queue h3 {
-      font-size: 1.5rem;
-      margin-bottom: 20px;
-      color: #e94560;
-    }
+    .queue h3 { font-size: 1.3rem; margin-bottom: 15px; color: #e94560; }
     .queue-item {
       display: flex;
       align-items: center;
-      gap: 15px;
-      padding: 15px;
+      gap: 12px;
+      padding: 12px;
       background: rgba(255,255,255,0.05);
-      border-radius: 15px;
-      margin-bottom: 10px;
+      border-radius: 12px;
+      margin-bottom: 8px;
     }
     .queue-number {
-      font-size: 1.5rem;
+      font-size: 1.2rem;
       font-weight: bold;
       color: #e94560;
-      min-width: 40px;
+      min-width: 30px;
     }
-    .queue-info {
-      flex: 1;
+    .queue-info { flex: 1; }
+    .queue-title { font-size: 1rem; font-weight: 600; }
+    .queue-artist { font-size: 0.8rem; opacity: 0.7; }
+    .queue-message { font-size: 0.85rem; font-style: italic; color: #fbbf24; }
+    
+    .controls { display: flex; gap: 10px; justify-content: center; margin-top: 15px; }
+    .controls button {
+      padding: 10px 20px;
+      border-radius: 25px;
+      border: none;
+      font-size: 1rem;
+      cursor: pointer;
+      transition: transform 0.2s;
     }
-    .queue-title {
-      font-size: 1.2rem;
-      font-weight: 600;
-    }
-    .queue-artist {
-      font-size: 0.9rem;
-      opacity: 0.7;
-    }
-    .queue-message {
-      font-size: 0.9rem;
-      font-style: italic;
-      color: #fbbf24;
-    }
-    .loading {
-      text-align: center;
-      padding: 50px;
-      font-size: 1.5rem;
-      opacity: 0.7;
-    }
-    .error {
-      text-align: center;
-      padding: 50px;
-      color: #e94560;
-    }
-    .empty-queue {
-      text-align: center;
-      padding: 30px;
-      opacity: 0.6;
-      font-size: 1.2rem;
-    }
+    .controls button:hover { transform: scale(1.05); }
+    .btn-skip { background: #fbbf24; color: #1a1a2e; }
+    .btn-remove { background: #ef4444; color: white; }
+    
+    .loading { text-align: center; padding: 50px; font-size: 1.5rem; opacity: 0.7; }
+    .error { text-align: center; padding: 50px; color: #e94560; }
+    .empty-queue { text-align: center; padding: 20px; opacity: 0.6; }
   </style>
 </head>
 <body>
@@ -159,84 +143,90 @@
     </div>
   </div>
 
+  <script src="https://www.youtube.com/iframe_api"></script>
   <script>
     const API_URL = 'https://playmysong-mu.vercel.app/api';
-    const FALLBACK_API = 'https://playmysong-mu.vercel.app/api';
-    
-    // Get establishment ID from URL or use default
     const urlParams = new URLSearchParams(window.location.search);
     const establishmentId = urlParams.get('establishmentId') || 'cmmke5nms0001ik0424nh0517';
 
-    let apiBase = API_URL;
+    let queue = [];
+    let currentIndex = 0;
+    let player = null;
+    let audioPlayer = null;
+
+    function onYouTubeIframeAPIReady() {
+      console.log('YouTube API ready');
+    }
 
     async function loadData() {
       try {
-        console.log('Loading data from:', apiBase);
-        
-        // Test API connection first
-        const testRes = await fetch(`${apiBase}`);
-        if (!testRes.ok) throw new Error(`API not reachable: ${testRes.status}`);
-        const testData = await testRes.json();
-        console.log('API test:', testData);
-
-        // Load establishment info
-        const estRes = await fetch(`${apiBase}/establishments/${establishmentId}`);
-        if (!estRes.ok) {
-          const estText = await estRes.text();
-          throw new Error(`Establishment API error: ${estRes.status} - ${estText.substring(0,100)}`);
-        }
+        const estRes = await fetch(`${API_URL}/establishments/${establishmentId}`);
         const establishment = await estRes.json();
         document.getElementById('establishmentName').textContent = establishment.name || 'Établissement';
 
-        // Load validated requests (queue)
-        const queueRes = await fetch(`${apiBase}/requests?establishmentId=${establishmentId}&status=VALIDATED`);
-        if (!queueRes.ok) {
-          const queueText = await queueRes.text();
-          throw new Error(`Queue API error: ${queueRes.status} - ${queueText.substring(0,100)}`);
-        }
-        const queue = await queueRes.json();
-        console.log('Queue:', queue);
+        const queueRes = await fetch(`${API_URL}/requests?establishmentId=${establishmentId}&status=VALIDATED`);
+        queue = await queueRes.json();
+        console.log('Queue loaded:', queue);
 
-        renderContent(establishment, queue);
+        renderContent(establishment);
+        
+        // Auto-play first song if queue changed
+        if (queue.length > 0 && currentIndex < queue.length) {
+          playSong(queue[currentIndex]);
+        }
       } catch (error) {
         console.error('Error:', error);
-        document.getElementById('content').innerHTML = `<div class="error">Erreur de connexion:<br><br>${error.message}<br><br>URL: ${apiBase}</div>`;
+        document.getElementById('content').innerHTML = `<div class="error">Erreur: ${error.message}</div>`;
       }
     }
 
-    function renderContent(establishment, queue) {
-      const nowPlaying = queue.find(r => r.status === 'PLAYING') || queue[0];
-      const waitingQueue = queue.filter(r => r.id !== nowPlaying?.id);
+    function renderContent(establishment) {
+      const nowPlaying = queue[currentIndex];
+      const waitingQueue = queue.slice(currentIndex + 1);
 
-      let html = '';
-
+      let html = '<div class="main-content">';
+      
+      // Now Playing Section
+      html += '<div class="now-playing">';
       if (nowPlaying) {
         html += `
-          <div class="now-playing">
-            <h2>🎶 En cours de lecture</h2>
-            <div class="song-title">${escapeHtml(nowPlaying.title)}</div>
-            <div class="artist">${escapeHtml(nowPlaying.artist || 'Artiste inconnu')}</div>
-            ${nowPlaying.message ? `<div class="message-box">"${escapeHtml(nowPlaying.message)}"</div>` : ''}
-            ${nowPlaying.selfieUrl ? `
-              <div class="selfie-display">
-                <img src="${nowPlaying.selfieUrl}" alt="Selfie" onerror="this.style.display='none'">
+          <h2>🎶 En cours de lecture</h2>
+          <div class="song-title">${escapeHtml(nowPlaying.title)}</div>
+          <div class="artist">${escapeHtml(nowPlaying.artist || 'Artiste inconnu')}</div>
+          ${nowPlaying.message ? `<div class="message-box">"${escapeHtml(nowPlaying.message)}"</div>` : ''}
+          ${nowPlaying.selfieUrl ? `<div class="selfie-display"><img src="${nowPlaying.selfieUrl}" alt="Selfie" onerror="this.style.display='none'"></div>` : ''}
+          
+          <div class="player-container">
+            ${nowPlaying.youtubeId ? `
+              <div class="youtube-container" id="youtubeContainer">
+                <div id="youtubePlayer"></div>
               </div>
-            ` : ''}
+            ` : nowPlaying.filePath ? `
+              <audio id="audioPlayer" class="audio-player" controls autoplay>
+                <source src="${escapeHtml(nowPlaying.filePath)}" type="audio/mpeg">
+                Votre navigateur ne supporte pas la lecture audio
+              </audio>
+            ` : `
+              <p style="margin-top:15px;opacity:0.7;">🎵 Source: Playlist locale</p>
+            `}
+          </div>
+          
+          <div class="controls">
+            <button class="btn-skip" onclick="skipSong()">⏭️ Suivant</button>
           </div>
         `;
       } else {
         html += `
-          <div class="now-playing">
-            <h2>🎵 En attente de demandes</h2>
-            <div class="song-title" style="font-size: 2rem;">Scannez le QR Code pour demander une chanson!</div>
-          </div>
+          <h2>🎵 En attente de demandes</h2>
+          <div class="song-title" style="font-size: 1.8rem;">Scannez le QR Code!</div>
         `;
       }
+      html += '</div>';
 
+      // Queue Section
       html += '<div class="queue"><h3>📋 File d\'attente</h3>';
-
       if (waitingQueue.length === 0) {
-        html += '<div class="empty-queue">Aucune autre chanson dans la file d\'attente</div>';
+        html += '<div class="empty-queue">Aucune autre chanson</div>';
       } else {
         waitingQueue.forEach((item, index) => {
           html += `
@@ -251,9 +241,57 @@
           `;
         });
       }
+      html += '</div></div>';
 
-      html += '</div>';
       document.getElementById('content').innerHTML = html;
+
+      // Initialize player after DOM is ready
+      setTimeout(() => {
+        if (nowPlaying?.youtubeId) {
+          initYouTubePlayer(nowPlaying.youtubeId);
+        }
+        if (nowPlaying?.filePath) {
+          const audio = document.getElementById('audioPlayer');
+          if (audio) {
+            audio.play().catch(e => console.log('Auto-play blocked:', e));
+          }
+        }
+      }, 100);
+    }
+
+    function initYouTubePlayer(videoId) {
+      if (player) {
+        player.loadVideoById(videoId);
+      } else {
+        player = new YT.Player('youtubePlayer', {
+          height: '100%',
+          width: '100%',
+          videoId: videoId,
+          playerVars: {
+            autoplay: 1,
+            controls: 1,
+            modestbranding: 1,
+            rel: 0
+          },
+          events: {
+            onStateChange: onPlayerStateChange
+          }
+        });
+      }
+    }
+
+    function onPlayerStateChange(event) {
+      // When video ends, go to next song
+      if (event.data === YT.PlayerState.ENDED) {
+        skipSong();
+      }
+    }
+
+    function skipSong() {
+      if (currentIndex < queue.length - 1) {
+        currentIndex++;
+        loadData();
+      }
     }
 
     function escapeHtml(text) {
@@ -263,8 +301,10 @@
       return div.innerHTML;
     }
 
-    // Auto-refresh every 10 seconds
+    // Load on page load
     loadData();
+    
+    // Auto-refresh every 10 seconds
     setInterval(loadData, 10000);
   </script>
 </body>
