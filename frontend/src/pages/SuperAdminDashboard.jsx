@@ -8,6 +8,8 @@ function SuperAdminDashboard() {
   const [selectedEstablishment, setSelectedEstablishment] = useState(null);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showAdminModal, setShowAdminModal] = useState(false);
+  const [showQRModal, setShowQRModal] = useState(false);
+  const [qrCodeData, setQrCodeData] = useState(null);
   const [loading, setLoading] = useState(true);
   
   const [newEstablishment, setNewEstablishment] = useState({
@@ -92,6 +94,19 @@ function SuperAdminDashboard() {
       loadData();
     } catch (err) {
       alert("Erreur lors de la suppression");
+    }
+  }
+
+  async function showQRCode(establishmentId) {
+    try {
+      const est = establishments.find(e => e.id === establishmentId);
+      setSelectedEstablishment(est);
+      const res = await fetch(`${API_URL}/establishments/${establishmentId}/qrcode`);
+      const data = await res.json();
+      setQrCodeData(data);
+      setShowQRModal(true);
+    } catch (err) {
+      alert("Erreur lors de la génération du QR Code");
     }
   }
 
@@ -195,6 +210,9 @@ function SuperAdminDashboard() {
                   <div className="card-actions">
                     <button onClick={() => setSelectedEstablishment(est)}>
                       Voir détails
+                    </button>
+                    <button onClick={() => showQRCode(est.id)}>
+                      📱 QR Code
                     </button>
                     <button className="btn-danger" onClick={() => deleteEstablishment(est.id)}>
                       Supprimer
@@ -371,7 +389,30 @@ function SuperAdminDashboard() {
               <p><strong>URL Client:</strong> {API_URL}/?establishmentId={selectedEstablishment.id}</p>
             </div>
             <div className="modal-actions">
+              <button onClick={() => showQRCode(selectedEstablishment.id)}>📱 Voir QR Code</button>
               <button onClick={() => setSelectedEstablishment(null)}>Fermer</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showQRModal && qrCodeData && (
+        <div className="modal-overlay" onClick={() => setShowQRModal(false)}>
+          <div className="modal" onClick={e => e.stopPropagation()}>
+            <h3>QR Code - {selectedEstablishment?.name}</h3>
+            <div className="qr-code-container">
+              <img src={qrCodeData.qrCode} alt="QR Code" />
+            </div>
+            <p className="qr-url">{qrCodeData.url}</p>
+            <p className="qr-instruction">Imprimez ce QR Code et placez-le dans votre établissement</p>
+            <div className="modal-actions">
+              <button onClick={() => {
+                const link = document.createElement('a');
+                link.download = `qrcode-${selectedEstablishment?.name}.png`;
+                link.href = qrCodeData.qrCode;
+                link.click();
+              }}>Télécharger PNG</button>
+              <button onClick={() => setShowQRModal(false)}>Fermer</button>
             </div>
           </div>
         </div>
@@ -581,6 +622,31 @@ function SuperAdminDashboard() {
           height: 100vh;
           font-size: 1.2rem;
           color: #666;
+        }
+        .qr-code-container {
+          text-align: center;
+          padding: 20px;
+          background: white;
+          border-radius: 12px;
+          margin: 20px 0;
+        }
+        .qr-code-container img {
+          max-width: 100%;
+          height: auto;
+        }
+        .qr-url {
+          word-break: break-all;
+          font-size: 0.85rem;
+          color: #666;
+          background: #f5f5f5;
+          padding: 10px;
+          border-radius: 6px;
+          margin-bottom: 10px;
+        }
+        .qr-instruction {
+          font-size: 0.9rem;
+          color: #888;
+          margin-bottom: 15px;
         }
       `}</style>
     </div>

@@ -4,6 +4,7 @@ const cookieParser = require('cookie-parser');
 const { PrismaClient } = require('@prisma/client');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
+const QRCode = require('qrcode');
 
 const app = express();
 const prisma = new PrismaClient();
@@ -146,6 +147,27 @@ app.get('/api/establishments', async (req, res) => {
       }
     });
     res.json(establishments);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.get('/api/establishments/:id/qrcode', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const frontendUrl = process.env.FRONTEND_URL || 'https://playmysong-998d4.web.app';
+    const url = `${frontendUrl}/client?establishmentId=${id}`;
+    
+    const qrCodeDataURL = await QRCode.toDataURL(url, {
+      width: 400,
+      margin: 2,
+      color: {
+        dark: '#000000',
+        light: '#ffffff'
+      }
+    });
+    
+    res.json({ qrCode: qrCodeDataURL, url });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
