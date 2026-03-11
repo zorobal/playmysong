@@ -169,11 +169,6 @@
         console.log('Queue loaded:', queue);
 
         renderContent(establishment);
-        
-        // Auto-play first song if queue changed
-        if (queue.length > 0 && currentIndex < queue.length) {
-          playSong(queue[currentIndex]);
-        }
       } catch (error) {
         console.error('Error:', error);
         document.getElementById('content').innerHTML = `<div class="error">Erreur: ${error.message}</div>`;
