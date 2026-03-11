@@ -88,19 +88,19 @@ function AdminDashboard() {
 
       setAdmin(adminData);
 
-      const usersRes = await fetch(`${API_URL}/users`, { headers });
-      const usersData = await usersRes.json();
-      setUsers(Array.isArray(usersData) ? usersData : []);
-
-      const playlistsRes = await fetch(`${API_URL}/playlists`, { headers });
-      const playlistsData = await playlistsRes.json();
-      setPlaylists(Array.isArray(playlistsData) ? playlistsData : []);
-
-      const requestsRes = await fetch(`${API_URL}/request/pending`, { headers });
-      const requestsData = await requestsRes.json();
-      setPendingRequests(Array.isArray(requestsData) ? requestsData : []);
-
       if (adminData.establishmentId) {
+        const usersRes = await fetch(`${API_URL}/users?establishmentId=${adminData.establishmentId}`, { headers });
+        const usersData = await usersRes.json();
+        setUsers(Array.isArray(usersData) ? usersData : []);
+
+        const playlistsRes = await fetch(`${API_URL}/playlists?establishmentId=${adminData.establishmentId}`, { headers });
+        const playlistsData = await playlistsRes.json();
+        setPlaylists(Array.isArray(playlistsData) ? playlistsData : []);
+
+        const requestsRes = await fetch(`${API_URL}/request/pending?establishmentId=${adminData.establishmentId}`, { headers });
+        const requestsData = await requestsRes.json();
+        setPendingRequests(Array.isArray(requestsData) ? requestsData : []);
+
         const playlistRes = await fetch(`${API_URL}/request/playlist/current?establishmentId=${adminData.establishmentId}`);
         const playlistData = await playlistRes.json();
         setNowPlaying(playlistData.nowPlaying);
@@ -414,13 +414,19 @@ function AdminDashboard() {
               <input placeholder="Téléphone" value={newUser.phoneNumber} onChange={e => setNewUser({ ...newUser, phoneNumber: e.target.value })} />
               <button onClick={async () => {
                 const token = localStorage.getItem("token");
+                const userData = {
+                  ...newUser,
+                  role: "USER",
+                  establishmentId: establishmentId,
+                  createdBy: adminData.id
+                };
                 const res = await fetch(`${API_URL}/users`, {
                   method: "POST",
                   headers: { 
                     Authorization: `Bearer ${token}`,
                     "Content-Type": "application/json"
                   },
-                  body: JSON.stringify(newUser)
+                  body: JSON.stringify(userData)
                 });
                 const data = await res.json();
                 console.log("Create user response:", data);

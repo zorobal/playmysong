@@ -205,7 +205,12 @@ app.post('/api/establishments/:id/admins', async (req, res) => {
 // Users
 app.get('/api/users', async (req, res) => {
   try {
-    const users = await prisma.user.findMany();
+    const { establishmentId, createdBy } = req.query;
+    const where = {};
+    if (establishmentId) where.establishmentId = establishmentId;
+    if (createdBy) where.createdBy = createdBy;
+    
+    const users = await prisma.user.findMany({ where });
     res.json(users);
   } catch (error) {
     res.status(500).json({ error: error.message });
