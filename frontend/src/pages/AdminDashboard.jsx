@@ -2,6 +2,7 @@ import React, { useEffect, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { io } from "socket.io-client";
 import API_URL from "../config";
+import { uploadMusicFile } from "../firebase";
 
 function AdminDashboard() {
   const [admin, setAdmin] = useState(null);
@@ -187,8 +188,28 @@ function AdminDashboard() {
     setUploadData(prev => ({
       ...prev,
       title: title,
-      filePath: file.name
+      file: file,
+      filePath: 'uploading...'
     }));
+
+    const establishmentId = admin?.establishmentId;
+    if (establishmentId) {
+      uploadMusicFile(file, establishmentId)
+        .then(downloadURL => {
+          setUploadData(prev => ({
+            ...prev,
+            filePath: downloadURL
+          }));
+        })
+        .catch(err => {
+          console.error('Upload error:', err);
+          alert('Erreur lors de l\'upload: ' + err.message);
+          setUploadData(prev => ({
+            ...prev,
+            filePath: ''
+          }));
+        });
+    }
   }
 
   async function submitUpload() {
@@ -272,13 +293,16 @@ function AdminDashboard() {
             </div>
             
             <div className="form-group">
-              <label>Chemin du fichier</label>
+              <label>Fichier audio (optionnel - sera stocké sur le cloud)</label>
               <input 
-                type="text" 
-                value={uploadData.filePath}
-                onChange={e => setUploadData({...uploadData, filePath: e.target.value})}
-                placeholder="C:\Musique\chanson.mp3"
+                type="file" 
+                accept="audio/*"
+                onChange={handleFileChange}
+                ref={fileInputRef}
               />
+              {uploadData.filePath && uploadData.filePath.startsWith('http') && (
+                <p style={{fontSize:'12px',color:'green',marginTop:'5px'}}>✓ Fichier uploadé</p>
+              )}
             </div>
             
             <div className="form-group">
