@@ -324,17 +324,34 @@ function AdminDashboard() {
                   navigate("/login");
                   return;
                 }
+                if (!establishmentId || establishmentId === 'null' || establishmentId === 'undefined') {
+                  alert("Erreur: Votre compte n'est pas lié à un établissement. Veuillez contacter l'administrateur.");
+                  console.log("Admin data:", admin);
+                  return;
+                }
+                const playlistData = {
+                  name: newPlaylist.name,
+                  establishmentId: establishmentId,
+                  createdBy: admin?.id
+                };
+                console.log("Creating playlist:", playlistData);
                 const res = await fetch(`${API_URL}/playlists`, {
                   method: "POST",
                   headers: { 
                     Authorization: `Bearer ${token}`,
                     "Content-Type": "application/json"
                   },
-                  body: JSON.stringify(newPlaylist)
+                  body: JSON.stringify(playlistData)
                 });
+                console.log("Playlist response:", res.status);
                 if (res.ok) {
                   setNewPlaylist({ name: "" });
-                  loadInitialData();
+                  // Refresh playlists
+                  const playlistsRes = await fetch(`${API_URL}/playlists?establishmentId=${establishmentId}`, { 
+                    headers: { Authorization: `Bearer ${token}` } 
+                  });
+                  const playlistsData = await playlistsRes.json();
+                  setPlaylists(Array.isArray(playlistsData) ? playlistsData : []);
                 } else {
                   const err = await res.json();
                   alert("Erreur: " + (err.error || "Inconnu"));
@@ -413,12 +430,16 @@ function AdminDashboard() {
               <input placeholder="Mot de passe" type="password" value={newUser.password} onChange={e => setNewUser({ ...newUser, password: e.target.value })} />
               <input placeholder="Téléphone" value={newUser.phoneNumber} onChange={e => setNewUser({ ...newUser, phoneNumber: e.target.value })} />
               <button onClick={async () => {
+                if (!establishmentId) {
+                  alert("Erreur: Pas d'établissement associé");
+                  return;
+                }
                 const token = localStorage.getItem("token");
                 const userData = {
                   ...newUser,
                   role: "USER",
                   establishmentId: establishmentId,
-                  createdBy: adminData.id
+                  createdBy: admin?.id
                 };
                 const res = await fetch(`${API_URL}/users`, {
                   method: "POST",
@@ -432,7 +453,12 @@ function AdminDashboard() {
                 console.log("Create user response:", data);
                 if (res.ok) {
                   setNewUser({ name: "", email: "", password: "", phoneNumber: "" });
-                  loadInitialData();
+                  // Refresh users list
+                  const usersRes = await fetch(`${API_URL}/users?establishmentId=${establishmentId}`, { 
+                    headers: { Authorization: `Bearer ${token}` } 
+                  });
+                  const usersData = await usersRes.json();
+                  setUsers(Array.isArray(usersData) ? usersData : []);
                 } else {
                   alert("Erreur: " + (data.error || "Inconnu"));
                 }

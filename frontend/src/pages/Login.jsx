@@ -40,8 +40,9 @@ function Login() {
       });
       const data = await res.json();
 
-      if (data.accessToken) {
-        localStorage.setItem("token", data.accessToken);
+      if (data.token || data.accessToken) {
+        const token = data.token || data.accessToken;
+        localStorage.setItem("token", token);
         localStorage.setItem("user", JSON.stringify(data.user));
 
         if (data.user.role === "SUPER_ADMIN") {
@@ -56,7 +57,7 @@ function Login() {
           navigate("/");
         }
       } else {
-        setError("Email ou mot de passe incorrect");
+        setError(data.error || "Email ou mot de passe incorrect");
       }
     } catch (err) {
       setError("Erreur de connexion");
