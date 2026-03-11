@@ -178,7 +178,7 @@ export default function ClientPage() {
       });
 
       const data = await res.json();
-      
+
       if (!res.ok) {
         console.error("Server error response:", data);
         throw new Error(data.error || "Erreur lors de l'envoi de la demande");
@@ -235,303 +235,267 @@ export default function ClientPage() {
     })();
 
     return (
-      <div className="min-h-screen bg-slate-900 flex flex-col items-center justify-center p-6 overflow-hidden relative">
-        <div className="absolute inset-0 overflow-hidden">
-          <div className="absolute top-1/4 left-1/4 w-64 h-64 bg-pink-500/20 rounded-full blur-3xl animate-pulse"></div>
-          <div className="absolute bottom-1/4 right-1/4 w-64 h-64 bg-purple-500/20 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1s' }}></div>
-        </div>
-        
-        <div className="relative z-10 text-center max-w-md w-full">
-          <p className="text-xs font-bold tracking-wider text-pink-400 mb-2">PlayMySong</p>
-          <div className="mb-8">
-            <div className="w-28 h-28 mx-auto mb-6 rounded-full bg-gradient-to-br from-green-400 to-emerald-500 flex items-center justify-center shadow-2xl shadow-green-500/30 animate-bounce">
-              <svg className="w-14 h-14 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
-              </svg>
-            </div>
-            
-            <h1 className="text-4xl font-bold mb-3 bg-gradient-to-r from-pink-400 to-purple-400 bg-clip-text text-transparent">
-              Demande Envoyée!
-            </h1>
-            
-            <p className="text-slate-300 text-lg mb-6">
-              Votre demande sera bientôt validée par l'établissement.
-            </p>
+      <div style={{
+        minHeight: '100vh',
+        background: 'linear-gradient(135deg, #1e1b4b 0%, #312e81 50%, #4c1d95 100%)',
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: '24px',
+        fontFamily: 'system-ui, -apple-system, sans-serif'
+      }}>
+        <div style={{
+          background: 'rgba(255,255,255,0.1)',
+          backdropFilter: 'blur(20px)',
+          borderRadius: '24px',
+          padding: '32px',
+          maxWidth: '400px',
+          width: '100%',
+          textAlign: 'center',
+          border: '1px solid rgba(255,255,255,0.2)'
+        }}>
+          <div style={{
+            width: '80px',
+            height: '80px',
+            borderRadius: '50%',
+            background: 'linear-gradient(135deg, #10b981, #34d399)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            margin: '0 auto 20px',
+            boxShadow: '0 10px 40px rgba(16,185,129,0.4)'
+          }}>
+            <svg style={{width:'40px',height:'40px',color:'white'}} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+            </svg>
           </div>
+          
+          <h1 style={{fontSize:'28px',fontWeight:'bold',color:'white',marginBottom:'8px'}}>
+            Demande Envoyée!
+          </h1>
+          <p style={{color:'#cbd5e1',marginBottom:'24px'}}>
+            Votre demande sera bientôt validée.
+          </p>
 
           {savedRequest && (
-            <div className="bg-slate-800/80 rounded-2xl p-5 mb-6 border border-slate-700 text-left">
-              <h3 className="text-white font-semibold mb-3">Votre demande:</h3>
-              <div className="space-y-2">
-                <p className="text-white"><span className="text-slate-400">Chanson:</span> {savedRequest.title}</p>
-                {savedRequest.artist && <p className="text-white"><span className="text-slate-400">Artiste:</span> {savedRequest.artist}</p>}
-                {savedRequest.message && <p className="text-white"><span className="text-slate-400">Message:</span> {savedRequest.message}</p>}
-                {savedRequest.selfiePreview && (
-                  <div className="mt-3">
-                    <p className="text-slate-400 mb-2">Votre selfie:</p>
-                    <img src={savedRequest.selfiePreview} alt="Votre selfie" className="w-24 h-24 object-cover rounded-lg mx-auto" />
-                  </div>
-                )}
-              </div>
+            <div style={{
+              background: 'rgba(0,0,0,0.3)',
+              borderRadius: '16px',
+              padding: '20px',
+              textAlign: 'left',
+              marginBottom: '24px'
+            }}>
+              <h3 style={{color:'#fbbf24',fontSize:'14px',fontWeight:'600',marginBottom:'12px'}}>Votre demande:</h3>
+              <p style={{color:'white',marginBottom:'4px'}}><strong>{savedRequest.title}</strong></p>
+              {savedRequest.artist && <p style={{color:'#94a3b8',fontSize:'14px',marginBottom:'8px'}}>{savedRequest.artist}</p>}
+              {savedRequest.message && <p style={{color:'#e2e8f0',fontSize:'14px',fontStyle:'italic',marginBottom:'8px'}}>"{savedRequest.message}"</p>}
+              {savedRequest.selfiePreview && (
+                <img src={savedRequest.selfiePreview} alt="Votre selfie" style={{width:'80px',height:'80px',objectFit:'cover',borderRadius:'12px',marginTop:'12px'}} />
+              )}
             </div>
           )}
 
-          <div className="bg-gradient-to-r from-amber-500/20 to-orange-500/20 rounded-2xl p-5 mb-8 border border-amber-500/30">
-            <div className="flex items-center justify-center gap-2 mb-2">
-              <svg className="w-5 h-5 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z" />
-              </svg>
-              <p className="text-amber-400 font-semibold">Pour une nouvelle demande, scannez à nouveau le QR code</p>
-            </div>
+          <div style={{
+            background: 'rgba(251,191,36,0.2)',
+            border: '1px solid rgba(251,191,36,0.3)',
+            borderRadius: '12px',
+            padding: '16px'
+          }}>
+            <p style={{color:'#fbbf24',fontSize:'14px',fontWeight:'500'}}>
+              Pour une nouvelle demande, scannez à nouveau le QR code
+            </p>
           </div>
-        </div>
 
-        <div className="mt-10 text-slate-600 text-sm text-center relative z-10">
-          <p className="font-medium">{establishmentName}</p>
-          {establishmentType && <p className="text-xs mt-1">{establishmentType}</p>}
+          <p style={{color:'#64748b',fontSize:'12px',marginTop:'24px'}}>{establishmentName}</p>
         </div>
-
-        <style>{`
-          @keyframes gradient {
-            0% { background-position: 0% 50%; }
-            50% { background-position: 100% 50%; }
-            100% { background-position: 0% 50%; }
-          }
-          .animate-gradient {
-            animation: gradient 3s ease infinite;
-          }
-        `}</style>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-slate-900 text-white pb-28 md:pb-8">
-      <style>{`
-        @keyframes slideUp {
-          from { opacity: 0; transform: translateY(20px); }
-          to { opacity: 1; transform: translateY(0); }
-        }
-        @keyframes fadeIn {
-          from { opacity: 0; }
-          to { opacity: 1; }
-        }
-        @keyframes gradient {
-          0% { background-position: 0% 50%; }
-          50% { background-position: 100% 50%; }
-          100% { background-position: 0% 50%; }
-        }
-        .animate-slide-up { animation: slideUp 0.4s ease-out forwards; }
-        .animate-fade-in { animation: fadeIn 0.3s ease-out forwards; }
-        .animate-gradient {
-          animation: gradient 3s ease infinite;
-          background-size: 200% 200%;
-        }
-      `}</style>
-      <div className="md:max-w-2xl md:mx-auto md:py-4">
-
-      {/* Hero Header */}
-      <div className="relative overflow-hidden bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
-        <div className="absolute inset-0 overflow-hidden">
-          <div className="absolute -top-20 -right-20 w-40 h-40 bg-pink-500/30 rounded-full blur-3xl"></div>
-          <div className="absolute -bottom-10 -left-10 w-32 h-32 bg-purple-500/30 rounded-full blur-3xl"></div>
-        </div>
-        
-        <div className="relative px-4 py-3 md:py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex-1">
-              <p className="text-xs text-pink-400 font-bold tracking-wider">PlayMySong</p>
-              <div className="flex items-center gap-2 mb-1">
-                <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
-                <span className="text-xs text-slate-400">Connecté</span>
-              </div>
-              <h1 className="text-lg font-bold bg-gradient-to-r from-white to-slate-300 bg-clip-text text-transparent">
-                {establishmentName}
-              </h1>
-            </div>
-            
-            <div className="w-10 h-10 bg-gradient-to-br from-pink-500 to-purple-600 rounded-xl flex items-center justify-center">
-              <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3" />
-              </svg>
-            </div>
+    <div style={{
+      minHeight: '100vh',
+      background: '#0f172a',
+      color: 'white',
+      fontFamily: 'system-ui, -apple-system, sans-serif'
+    }}>
+      {/* Header */}
+      <div style={{
+        background: 'linear-gradient(135deg, #7c3aed, #db2777)',
+        padding: '16px 20px',
+        position: 'sticky',
+        top: 0,
+        zIndex: 100
+      }}>
+        <div style={{display:'flex',alignItems:'center',justifyContent:'space-between'}}>
+          <div>
+            <h1 style={{fontSize:'18px',fontWeight:'bold'}}>🎵 {establishmentName}</h1>
+            {establishmentType && <p style={{fontSize:'12px',opacity:0.9}}>{establishmentType}</p>}
           </div>
-
-          <p className="text-slate-400 text-xs mt-2">
-            Choisissez une chanson et partagez-la avec tous!
-          </p>
         </div>
       </div>
 
-      {/* Error Banner */}
-      {error && (
-        <div className="mx-4 mt-4 p-4 bg-red-500/20 border border-red-500/30 rounded-xl text-red-300 text-sm flex items-center justify-between animate-slide-up">
-          <span>{error}</span>
-          <button onClick={() => setError("")} className="ml-2 p-1 hover:bg-red-500/30 rounded">
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-            </svg>
-          </button>
+      {/* Tabs */}
+      <div style={{display:'flex',padding:'12px 16px',gap:'8px'}}>
+        <button
+          onClick={() => {setActiveTab("playlist"); setSelectedSong(null); setShowForm(false);}}
+          style={{
+            flex: 1,
+            padding: '12px',
+            borderRadius: '12px',
+            border: 'none',
+            fontSize: '14px',
+            fontWeight: '600',
+            cursor: 'pointer',
+            background: activeTab === "playlist" ? 'linear-gradient(135deg, #7c3aed, #db2777)' : '#1e293b',
+            color: activeTab === "playlist" ? 'white' : '#94a3b8'
+          }}
+        >
+          📋 Playlist
+        </button>
+        <button
+          onClick={() => {setActiveTab("youtube"); setSelectedSong(null); setShowForm(false);}}
+          style={{
+            flex: 1,
+            padding: '12px',
+            borderRadius: '12px',
+            border: 'none',
+            fontSize: '14px',
+            fontWeight: '600',
+            cursor: 'pointer',
+            background: activeTab === "youtube" ? 'linear-gradient(135deg, #7c3aed, #db2777)' : '#1e293b',
+            color: activeTab === "youtube" ? 'white' : '#94a3b8'
+          }}
+        >
+          ▶️ YouTube
+        </button>
+      </div>
+
+      {/* Playlist Tabs */}
+      {activeTab === "playlist" && playlists.length > 1 && (
+        <div style={{display:'flex',gap:'8px',padding:'0 16px 12px',overflowX:'auto'}}>
+          {playlists.map((pl) => (
+            <button
+              key={pl.id}
+              onClick={() => selectPlaylist(pl)}
+              style={{
+                flexShrink: 0,
+                padding: '8px 16px',
+                borderRadius: '20px',
+                border: 'none',
+                fontSize: '13px',
+                fontWeight: '500',
+                cursor: 'pointer',
+                background: selectedPlaylist?.id === pl.id ? '#db2777' : '#334155',
+                color: 'white'
+              }}
+            >
+              {pl.name}
+            </button>
+          ))}
         </div>
       )}
 
-      {/* Beautiful Tabs */}
-      <div className="px-4 mt-4">
-        <div className="flex bg-slate-800/80 rounded-2xl p-1 backdrop-blur-sm">
-          <button
-            onClick={() => setActiveTab("playlist")}
-            className={`flex-1 py-2 px-3 rounded-lg font-medium text-xs transition-all duration-300 flex items-center justify-center gap-1.5 ${
-              activeTab === "playlist" 
-                ? "bg-gradient-to-r from-pink-500 to-purple-600 text-white shadow-lg shadow-pink-500/25" 
-                : "text-slate-400 hover:text-white hover:bg-slate-700/50"
-            }`}
-          >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3" />
-            </svg>
-            Playlist
-          </button>
-          <button
-            onClick={() => setActiveTab("youtube")}
-            className={`flex-1 py-2 px-3 rounded-lg font-medium text-xs transition-all duration-300 flex items-center justify-center gap-1.5 ${
-              activeTab === "youtube" 
-                ? "bg-gradient-to-r from-pink-500 to-purple-600 text-white shadow-lg shadow-pink-500/25" 
-                : "text-slate-400 hover:text-white hover:bg-slate-700/50"
-            }`}
-          >
-            <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/>
-            </svg>
-            YouTube
-          </button>
-        </div>
-      </div>
-
-      {/* Content Area */}
-      <div className="p-4">
+      {/* Content */}
+      <div style={{padding: '16px', paddingBottom: showForm ? '400px' : '80px'}}>
         {activeTab === "playlist" && (
-          <>
-            {/* Playlist Pills */}
-            {playlists.length > 1 && (
-              <div className="flex gap-2 overflow-x-auto pb-4 scrollbar-hide -mx-1 px-1">
-                {playlists.map((playlist, index) => (
-                  <button
-                    key={playlist.id}
-                    onClick={() => selectPlaylist(playlist)}
-                    className={`flex-shrink-0 px-5 py-2.5 rounded-full text-sm font-medium transition-all duration-300 ${
-                      selectedPlaylist?.id === playlist.id
-                        ? "bg-gradient-to-r from-pink-500 to-purple-600 text-white shadow-lg shadow-pink-500/25"
-                        : "bg-slate-800 text-slate-400 hover:bg-slate-700 hover:text-white"
-                    }`}
-                  >
-                    {playlist.name}
-                  </button>
-                ))}
+          <div style={{display:'flex',flexDirection:'column',gap:'8px'}}>
+            {playlistSongs.length === 0 ? (
+              <div style={{textAlign:'center',padding:'40px 20px',color:'#64748b'}}>
+                <p>Aucune chanson dans cette playlist</p>
               </div>
-            )}
-
-            {/* Songs Grid */}
-            <div className="space-y-3">
-              {playlistSongs.length === 0 ? (
-                <div className="text-center py-12">
-                  <div className="w-20 h-20 mx-auto mb-4 bg-slate-800 rounded-full flex items-center justify-center">
-                    <svg className="w-10 h-10 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3" />
+            ) : (
+              playlistSongs.map((song) => (
+                <button
+                  key={song.id}
+                  onClick={() => {setSelectedSong(song); setShowForm(true);}}
+                  style={{
+                    display:'flex',
+                    alignItems:'center',
+                    gap:'12px',
+                    padding: '12px',
+                    borderRadius: '12px',
+                    border: selectedSong?.id === song.id && showForm ? '2px solid #db2777' : 'none',
+                    width: '100%',
+                    textAlign: 'left',
+                    cursor: 'pointer',
+                    background: selectedSong?.id === song.id && showForm ? 'rgba(219,39,119,0.2)' : '#1e293b'
+                  }}
+                >
+                  <div style={{
+                    width: '48px',
+                    height: '48px',
+                    borderRadius: '8px',
+                    background: '#475569',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    flexShrink: 0
+                  }}>
+                    <svg style={{width:'24px',height:'24px',color:'#94a3b8'}} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3" />
                     </svg>
                   </div>
-                  <p className="text-slate-500">Aucune chanson dans cette playlist</p>
-                  <p className="text-slate-600 text-sm mt-1">Essayez l'onglet YouTube</p>
-                </div>
-              ) : (
-                playlistSongs.map((song, index) => (
-                  <button
-                    key={song.id}
-                    onClick={() => {
-                      setSelectedSong(song);
-                      setShowForm(true);
-                    }}
-                    className={`w-full p-4 rounded-2xl flex items-center gap-4 transition-all duration-300 animate-slide-up ${
-                      selectedSong?.id === song.id && showForm
-                        ? "bg-gradient-to-r from-pink-500/20 to-purple-600/20 border-2 border-pink-500 shadow-lg shadow-pink-500/10"
-                        : "bg-slate-800/60 hover:bg-slate-800 border border-slate-700/50 hover:border-slate-600"
-                    }`}
-                    style={{ animationDelay: `${index * 50}ms` }}
-                  >
-                    <div className="w-14 h-14 bg-gradient-to-br from-slate-700 to-slate-600 rounded-xl flex items-center justify-center flex-shrink-0 overflow-hidden">
-                      {song.thumbnail ? (
-                        <img src={song.thumbnail} alt="" className="w-full h-full object-cover" />
-                      ) : (
-                        <svg className="w-6 h-6 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3" />
-                        </svg>
-                      )}
-                    </div>
-                    <div className="flex-1 text-left min-w-0">
-                      <p className="font-semibold truncate text-white">{song.title || "Sans titre"}</p>
-                      <p className="text-sm text-slate-400 truncate">{song.artist || "Artiste inconnu"}</p>
-                    </div>
-                    <div className={`w-10 h-10 rounded-full flex items-center justify-center transition-all ${
-                      selectedSong?.id === song.id && showForm
-                        ? "bg-pink-500 text-white"
-                        : "bg-slate-700 text-slate-500 group-hover:bg-pink-500/20"
-                    }`}>
-                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                      </svg>
-                    </div>
-                  </button>
-                ))
-              )}
-            </div>
-          </>
+                  <div style={{flex:1,minWidth:0}}>
+                    <p style={{color:'white',fontSize:'14px',fontWeight:'500',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>
+                      {song.title}
+                    </p>
+                    <p style={{color:'#94a3b8',fontSize:'12px',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>
+                      {song.artist || 'Artiste inconnu'}
+                    </p>
+                  </div>
+                </button>
+              ))
+            )}
+          </div>
         )}
 
         {activeTab === "youtube" && (
           <>
-            {/* Search Form */}
-            <form onSubmit={searchYoutube} className="mb-5">
-              <div className="relative">
+            <form onSubmit={searchYoutube} style={{marginBottom:'16px'}}>
+              <div style={{position:'relative'}}>
                 <input
                   type="text"
                   value={youtubeSearch}
                   onChange={(e) => setYoutubeSearch(e.target.value)}
-                  placeholder="Rechercher une chanson..."
-                  className="w-full p-4 pr-14 bg-slate-800 rounded-2xl text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-pink-500 focus:bg-slate-750 border border-slate-700/50 transition-all"
+                  placeholder="Rechercher sur YouTube..."
+                  style={{
+                    width: '100%',
+                    padding: '14px 50px 14px 16px',
+                    borderRadius: '12px',
+                    border: '1px solid #334155',
+                    background: '#1e293b',
+                    color: 'white',
+                    fontSize: '14px',
+                    outline: 'none'
+                  }}
                 />
                 <button
                   type="submit"
                   disabled={loading || !youtubeSearch.trim()}
-                  className="absolute right-2 top-1/2 -translate-y-1/2 p-3 bg-gradient-to-r from-pink-500 to-purple-600 rounded-xl font-medium hover:from-pink-600 hover:to-purple-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                  style={{
+                    position: 'absolute',
+                    right: '8px',
+                    top: '50%',
+                    transform: 'translateY(-50%)',
+                    padding: '8px 16px',
+                    borderRadius: '8px',
+                    border: 'none',
+                    background: loading ? '#475569' : 'linear-gradient(135deg, #7c3aed, #db2777)',
+                    color: 'white',
+                    fontSize: '14px',
+                    fontWeight: '500',
+                    cursor: loading ? 'not-allowed' : 'pointer'
+                  }}
                 >
-                  {loading ? (
-                    <svg className="w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                    </svg>
-                  ) : (
-                    <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                    </svg>
-                  )}
+                  {loading ? '...' : '🔍'}
                 </button>
               </div>
             </form>
 
-            {/* YouTube Results */}
-            <div className="space-y-3">
-              {youtubeResults.length === 0 && !loading && (
-                <div className="text-center py-12">
-                  <div className="w-20 h-20 mx-auto mb-4 bg-red-500/10 rounded-full flex items-center justify-center">
-                    <svg className="w-10 h-10 text-red-400" viewBox="0 0 24 24" fill="currentColor">
-                      <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/>
-                    </svg>
-                  </div>
-                  <p className="text-slate-500">Recherchez une chanson sur YouTube</p>
-                  <p className="text-slate-600 text-sm mt-1">Tapez le titre ou l'artiste</p>
-                </div>
-              )}
-              {youtubeResults.map((video, index) => (
+            <div style={{display:'flex',flexDirection:'column',gap:'8px'}}>
+              {youtubeResults.map((video) => (
                 <button
                   key={video.id.videoId}
                   onClick={() => {
@@ -543,30 +507,40 @@ export default function ClientPage() {
                     });
                     setShowForm(true);
                   }}
-                  className={`w-full p-3 rounded-2xl flex items-center gap-3 transition-all duration-300 animate-slide-up ${
-                    selectedSong?.youtubeId === video.id.videoId && showForm
-                      ? "bg-gradient-to-r from-pink-500/20 to-purple-600/20 border-2 border-pink-500"
-                      : "bg-slate-800/60 hover:bg-slate-800 border border-slate-700/50"
-                  }`}
-                  style={{ animationDelay: `${index * 30}ms` }}
+                  style={{
+                    display:'flex',
+                    alignItems:'center',
+                    gap:'12px',
+                    padding: '10px',
+                    borderRadius: '12px',
+                    border: selectedSong?.youtubeId === video.id.videoId && showForm ? '2px solid #db2777' : 'none',
+                    width: '100%',
+                    textAlign: 'left',
+                    cursor: 'pointer',
+                    background: selectedSong?.youtubeId === video.id.videoId && showForm ? 'rgba(219,39,119,0.2)' : '#1e293b'
+                  }}
                 >
-                  <div className="relative w-24 h-16 rounded-xl overflow-hidden flex-shrink-0">
+                  <div style={{
+                    position: 'relative',
+                    width: '80px',
+                    height: '50px',
+                    borderRadius: '8px',
+                    overflow: 'hidden',
+                    flexShrink: 0
+                  }}>
                     <img
                       src={video.snippet.thumbnails?.medium?.url || ""}
-                      alt={video.snippet.title}
-                      className="w-full h-full object-cover"
+                      alt=""
+                      style={{width:'100%',height:'100%',objectFit:'cover'}}
                     />
-                    <div className="absolute inset-0 bg-black/20 flex items-center justify-center">
-                      <div className="w-8 h-8 bg-white/90 rounded-full flex items-center justify-center">
-                        <svg className="w-4 h-4 text-slate-900 ml-0.5" fill="currentColor" viewBox="0 0 24 24">
-                          <path d="M8 5v14l11-7z"/>
-                        </svg>
-                      </div>
-                    </div>
                   </div>
-                  <div className="flex-1 text-left min-w-0">
-                    <p className="font-medium text-sm truncate text-white">{video.snippet.title}</p>
-                    <p className="text-xs text-slate-400 truncate mt-1">{video.snippet.channelTitle}</p>
+                  <div style={{flex:1,minWidth:0}}>
+                    <p style={{color:'white',fontSize:'13px',fontWeight:'500',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>
+                      {video.snippet.title}
+                    </p>
+                    <p style={{color:'#94a3b8',fontSize:'11px',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>
+                      {video.snippet.channelTitle}
+                    </p>
                   </div>
                 </button>
               ))}
@@ -575,195 +549,221 @@ export default function ClientPage() {
         )}
       </div>
 
-      {/* Bottom Elements */}
-      <>
-        {/* Bottom Floating Card */}
-        {selectedSong && showForm && (
-          <div className="fixed bottom-0 left-0 right-0 bg-gradient-to-t from-slate-900 via-slate-800 to-slate-700 rounded-t-3xl shadow-2xl border-t border-slate-600/50 z-[9999] max-h-[85vh] overflow-y-auto backdrop-blur-sm">
-            {/* Handle Bar */}
-            <div className="w-12 h-1.5 bg-slate-500 rounded-full mx-auto mt-3 mb-4"></div>
+      {/* Bottom Form Modal */}
+      {showForm && selectedSong && (
+        <div style={{
+          position: 'fixed',
+          bottom: 0,
+          left: 0,
+          right: 0,
+          background: '#1e293b',
+          borderTopLeftRadius: '24px',
+          borderTopRightRadius: '24px',
+          boxShadow: '0 -10px 40px rgba(0,0,0,0.5)',
+          zIndex: 1000,
+          maxHeight: '90vh',
+          overflow: 'auto'
+        }}>
+          <div style={{padding:'20px'}}>
+            {/* Handle */}
+            <div style={{width:'40px',height:'4px',background:'#475569',borderRadius:'2px',margin:'0 auto 16px'}}></div>
             
             {/* Header */}
-            <div className="px-6 pb-4 border-b border-slate-600/30">
-              <h3 className="text-lg font-bold text-white text-center">Demander cette chanson</h3>
-            </div>
-            
-            {/* Selected Song Info */}
-            <div className="px-6 py-4 bg-slate-800/50">
-              <div className="flex items-center gap-4 mb-4">
-                <div className="w-16 h-16 bg-gradient-to-br from-pink-500/30 to-purple-600/30 rounded-xl flex items-center justify-center flex-shrink-0 overflow-hidden shadow-lg">
-                  {selectedSong.thumbnail ? (
-                    <img src={selectedSong.thumbnail} alt="" className="w-full h-full object-cover" />
-                  ) : (
-                    <svg className="w-8 h-8 text-pink-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3" />
-                    </svg>
-                  )}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="font-bold text-white text-lg truncate">{selectedSong.title}</p>
-                  <p className="text-slate-300 truncate">{selectedSong.artist || "Artiste inconnu"}</p>
-                </div>
-                <button
-                  onClick={() => {
-                    setSelectedSong(null);
-                    setShowForm(false);
-                  }}
-                  className="w-10 h-10 bg-slate-700 rounded-full flex items-center justify-center hover:bg-slate-600 transition-colors"
-                >
-                  <svg className="w-5 h-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                  </svg>
-                </button>
-              </div>
+            <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:'16px'}}>
+              <h3 style={{fontSize:'18px',fontWeight:'bold',color:'white'}}>Votre demande</h3>
+              <button
+                onClick={() => {setSelectedSong(null); setShowForm(false);}}
+                style={{
+                  width:'32px',
+                  height:'32px',
+                  borderRadius:'50%',
+                  border:'none',
+                  background:'#334155',
+                  cursor:'pointer',
+                  display:'flex',
+                  alignItems:'center',
+                  justifyContent:'center'
+                }}
+              >
+                <svg style={{width:'16px',height:'16px',color:'#94a3b8'}} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
             </div>
 
-            {/* Form */}
-            <div className="px-6 py-6 space-y-5">
-              {/* Message Input */}
-              <div>
-                <label className="block text-sm font-medium text-slate-300 mb-2">
-                  Message personnalisé (optionnel)
-                </label>
-                <div className="relative">
-                  <svg className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
-                  </svg>
-                  <input
-                    type="text"
-                    value={message}
-                    onChange={(e) => setMessage(e.target.value)}
-                    placeholder="Joyeux anniversaire, dédicace spéciale..."
-                    maxLength={100}
-                    className="w-full p-4 pl-12 bg-slate-700/70 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-pink-500 border border-slate-600/50 transition-all"
-                  />
-                  <span className="absolute right-4 top-1/2 -translate-y-1/2 text-xs text-slate-500">{message.length}/100</span>
-                </div>
+            {/* Song Info */}
+            <div style={{display:'flex',alignItems:'center',gap:'12px',padding:'12px',background:'#0f172a',borderRadius:'12px',marginBottom:'16px'}}>
+              <div style={{width:'48px',height:'48px',borderRadius:'8px',background:'#7c3aed',display:'flex',alignItems:'center',justifyContent:'center'}}>
+                <svg style={{width:'24px',height:'24px',color:'white'}} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3" />
+                </svg>
               </div>
-
-              {/* Selfie Upload */}
-              <div>
-                <label className="block text-sm font-medium text-slate-300 mb-2">
-                  Photo souvenir (optionnel)
-                </label>
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept="image/*"
-                  capture="user"
-                  onChange={handleSelfieChange}
-                  className="hidden"
-                  id="selfie-input"
-                />
-                
-                {!selfiePreview ? (
-                  <label
-                    htmlFor="selfie-input"
-                    className="block w-full py-4 bg-slate-700/70 rounded-xl text-center text-slate-300 hover:bg-slate-700 cursor-pointer flex items-center justify-center gap-3 transition-all border border-slate-600/50 border-dashed hover:border-pink-500/50"
-                  >
-                    <svg className="w-6 h-6 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
-                    </svg>
-                    <span>Ajouter une photo</span>
-                  </label>
-                ) : (
-                  <div className="relative">
-                    <img
-                      src={selfiePreview}
-                      alt="Selfie preview"
-                      className="w-32 h-32 object-cover rounded-xl mx-auto shadow-lg"
-                    />
-                    <button
-                      onClick={removeSelfie}
-                      className="absolute -top-2 -right-2 w-8 h-8 bg-red-500 rounded-full flex items-center justify-center shadow-lg hover:bg-red-600 transition-colors"
-                    >
-                      <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                      </svg>
-                    </button>
-                  </div>
-                )}
+              <div style={{flex:1}}>
+                <p style={{color:'white',fontWeight:'600',fontSize:'14px'}}>{selectedSong.title}</p>
+                <p style={{color:'#94a3b8',fontSize:'12px'}}>{selectedSong.artist || 'Artiste inconnu'}</p>
               </div>
+            </div>
 
-              {/* Consent */}
-              <label className="flex items-start gap-3 p-4 bg-slate-700/50 rounded-xl cursor-pointer">
-                <input 
-                  type="checkbox" 
-                  checked={consent}
-                  onChange={(e) => setConsent(e.target.checked)}
-                  className="w-5 h-5 mt-0.5 rounded bg-slate-700 border-slate-600 text-pink-500 focus:ring-pink-500 focus:ring-offset-0" 
-                />
-                <span className="text-sm text-slate-300">
-                  J'accepte que ma photo soit affichée sur l'écran de l'établissement pour partager ce moment spécial
-                </span>
+            {/* Message Input */}
+            <div style={{marginBottom:'16px'}}>
+              <label style={{display:'block',color:'#94a3b8',fontSize:'13px',marginBottom:'8px'}}>
+                Message (optionnel)
               </label>
+              <input
+                type="text"
+                value={message}
+                onChange={(e) => setMessage(e.target.value)}
+                placeholder="Joyeux anniversaire, dédicace..."
+                maxLength={100}
+                style={{
+                  width: '100%',
+                  padding: '12px',
+                  borderRadius: '10px',
+                  border: '1px solid #334155',
+                  background: '#0f172a',
+                  color: 'white',
+                  fontSize: '14px',
+                  outline: 'none'
+                }}
+              />
+            </div>
 
-              {/* Error Message */}
-              {error && (
-                <div className="p-4 bg-red-500/20 border border-red-500/30 rounded-xl text-red-300 text-sm">
-                  {error}
+            {/* Selfie */}
+            <div style={{marginBottom:'16px'}}>
+              <label style={{display:'block',color:'#94a3b8',fontSize:'13px',marginBottom:'8px'}}>
+                Photo (optionnel)
+              </label>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                capture="user"
+                onChange={handleSelfieChange}
+                style={{display:'none'}}
+                id="selfie-input"
+              />
+              
+              {!selfiePreview ? (
+                <label
+                  htmlFor="selfie-input"
+                  style={{
+                    display: 'block',
+                    padding: '20px',
+                    borderRadius: '10px',
+                    border: '2px dashed #334155',
+                    textAlign: 'center',
+                    cursor: 'pointer',
+                    color: '#94a3b8',
+                    fontSize: '14px'
+                  }}
+                >
+                  📷 Ajouter une photo
+                </label>
+              ) : (
+                <div style={{position:'relative',display:'inline-block'}}>
+                  <img src={selfiePreview} alt="Preview" style={{width:'80px',height:'80px',objectFit:'cover',borderRadius:'10px'}} />
+                  <button
+                    onClick={removeSelfie}
+                    style={{
+                      position: 'absolute',
+                      top: '-8px',
+                      right: '-8px',
+                      width:'24px',
+                      height:'24px',
+                      borderRadius:'50%',
+                      border:'none',
+                      background:'#ef4444',
+                      cursor:'pointer',
+                      display:'flex',
+                      alignItems:'center',
+                      justifyContent:'center'
+                    }}
+                  >
+                    <svg style={{width:'12px',height:'12px',color:'white'}} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
                 </div>
               )}
+            </div>
 
-              {/* Action Buttons */}
-              <div className="flex gap-3 pt-2">
-                <button
-                  onClick={() => {
-                    setSelectedSong(null);
-                    setShowForm(false);
-                    setError("");
-                  }}
-                  className="flex-1 py-3 px-6 bg-slate-700 hover:bg-slate-600 rounded-xl font-medium text-slate-300 transition-colors"
-                >
-                  Annuler
-                </button>
-                <button
-                  onClick={submitRequest}
-                  disabled={loading || !consent}
-                  className="flex-1 py-3 px-6 bg-gradient-to-r from-pink-500 via-purple-500 to-pink-500 bg-size-200 animate-gradient rounded-xl font-semibold text-white hover:shadow-lg hover:shadow-pink-500/25 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  {loading ? (
-                    <span className="flex items-center justify-center gap-2">
-                      <svg className="w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24">
-                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                      </svg>
-                      Envoi...
-                    </span>
-                  ) : (
-                    <span className="flex items-center justify-center gap-2">
-                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
-                      </svg>
-                      Envoyer la demande
-                    </span>
-                  )}
-                </button>
+            {/* Consent */}
+            <label style={{display:'flex',alignItems:'flex-start',gap:'10px',marginBottom:'20px',cursor:'pointer'}}>
+              <input 
+                type="checkbox" 
+                checked={consent}
+                onChange={(e) => setConsent(e.target.checked)}
+                style={{marginTop:'3px'}}
+              />
+              <span style={{color:'#94a3b8',fontSize:'12px'}}>
+                J'accepte que ma photo soit affichée sur l'écran
+              </span>
+            </label>
+
+            {/* Error */}
+            {error && (
+              <div style={{padding:'12px',background:'rgba(239,68,68,0.2)',borderRadius:'10px',color:'#fca5a5',fontSize:'13px',marginBottom:'16px'}}>
+                {error}
               </div>
+            )}
+
+            {/* Buttons */}
+            <div style={{display:'flex',gap:'12px'}}>
+              <button
+                onClick={() => {setSelectedSong(null); setShowForm(false); setError("");}}
+                style={{
+                  flex: 1,
+                  padding: '14px',
+                  borderRadius: '12px',
+                  border: 'none',
+                  background: '#334155',
+                  color: '#cbd5e1',
+                  fontSize: '14px',
+                  fontWeight: '600',
+                  cursor: 'pointer'
+                }}
+              >
+                Annuler
+              </button>
+              <button
+                onClick={submitRequest}
+                disabled={loading || !consent}
+                style={{
+                  flex: 1,
+                  padding: '14px',
+                  borderRadius: '12px',
+                  border: 'none',
+                  background: loading || !consent ? '#475569' : 'linear-gradient(135deg, #7c3aed, #db2777)',
+                  color: 'white',
+                  fontSize: '14px',
+                  fontWeight: '600',
+                  cursor: loading || !consent ? 'not-allowed' : 'pointer'
+                }}
+              >
+                {loading ? 'Envoi...' : '✅ Envoyer'}
+              </button>
             </div>
           </div>
-        )}
-
-        {/* Bottom Tip */}
-        {!showForm && (
-          <div className="fixed bottom-0 left-0 right-0 bg-slate-800/90 backdrop-blur-sm py-3 px-4 text-center border-t border-slate-600/30">
-            <p className="text-sm text-slate-400">
-              Scannez le QR Code pour demander une chanson 🎵
-            </p>
-          </div>
-        )}
-      </>
+        </div>
+      )}
 
       {/* Bottom Tip */}
       {!showForm && (
-        <div className="fixed bottom-0 left-0 right-0 bg-slate-800/90 backdrop-blur-sm py-2 px-4 text-center">
-          <p className="text-xs text-slate-500">
+        <div style={{
+          position: 'fixed',
+          bottom: 0,
+          left: 0,
+          right: 0,
+          background: '#1e293b',
+          padding: '12px',
+          textAlign: 'center',
+          borderTop: '1px solid #334155'
+        }}>
+          <p style={{color:'#64748b',fontSize:'12px'}}>
             Scannez le QR Code pour demander une chanson
           </p>
         </div>
       )}
-      </div>
     </div>
   );
 }
