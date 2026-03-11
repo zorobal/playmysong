@@ -262,6 +262,20 @@ app.delete('/api/admins/:id', async (req, res) => {
   }
 });
 
+app.post('/api/users/reset-password', async (req, res) => {
+  try {
+    const { email, newPassword } = req.body;
+    const hashedPassword = await bcrypt.hash(newPassword, 12);
+    const user = await prisma.user.update({
+      where: { email },
+      data: { password: hashedPassword }
+    });
+    res.json({ message: "Mot de passe mis à jour", email: user.email });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 // Playlists
 app.get('/api/playlists', async (req, res) => {
   try {
