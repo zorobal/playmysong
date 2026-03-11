@@ -404,8 +404,6 @@ function AdminDashboard() {
                       loadInitialData();
                     }}>+</button>
                     <button onClick={() => handleFileSelect(pl.id)} title="Ajouter une chanson">➕</button>
-                      📁 Parcourir
-                    </button>
                   </div>
                 </div>
               ))}

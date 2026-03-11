@@ -349,8 +349,6 @@ function UserDashboard() {
                       }
                     }}>+ Ajouter chanson</button>
                     <button onClick={() => handleFileSelect(playlist.id)} title="Ajouter une chanson">➕</button>
-                      📁 Parcourir
-                    </button>
                   </div>
                 </div>
               ))}
