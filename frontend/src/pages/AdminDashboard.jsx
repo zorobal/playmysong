@@ -2,6 +2,7 @@ import React, { useEffect, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { io } from "socket.io-client";
 import API_URL from "../config";
+import { uploadMusicBase64 } from "../cloudinary";
 
 function AdminDashboard() {
   const [admin, setAdmin] = useState(null);
@@ -184,11 +185,36 @@ function AdminDashboard() {
     const lastDot = fileName.lastIndexOf('.');
     const title = lastDot > 0 ? fileName.substring(0, lastDot) : fileName;
     
+    if (file.size > 10 * 1024 * 1024) {
+      alert('Fichier trop volumineux (max 10MB)');
+      return;
+    }
+
     setUploadData(prev => ({
       ...prev,
       title: title,
-      filePath: file.name
+      filePath: '⏳ Upload Cloudinary...'
     }));
+
+    const reader = new FileReader();
+    reader.onload = async function(event) {
+      try {
+        const base64 = event.target.result;
+        const establishmentId = admin?.establishmentId;
+        
+        const url = await uploadMusicBase64(base64, file.name, establishmentId);
+        
+        setUploadData(prev => ({
+          ...prev,
+          filePath: url
+        }));
+      } catch (err) {
+        console.error('Upload error:', err);
+        alert('Erreur upload Cloudinary: ' + err.message);
+        setUploadData(prev => ({ ...prev, filePath: '' }));
+      }
+    };
+    reader.readAsDataURL(file);
   }
 
   async function submitUpload() {
