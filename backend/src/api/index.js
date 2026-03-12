@@ -44,11 +44,6 @@ app.get('/api/youtube/search', async (req, res) => {
   }
 });
 
-app.get('/api/youtube/search', async (req, res) => {
-    res.status(500).json({ error: error.message, items: [] });
-  }
-});
-
 app.get('/api/health', async (req, res) => {
   try {
     await prisma.$queryRaw`SELECT 1`;
