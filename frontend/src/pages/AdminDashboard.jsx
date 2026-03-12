@@ -2,7 +2,6 @@ import React, { useEffect, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { io } from "socket.io-client";
 import API_URL from "../config";
-import { uploadMusicFile } from "../firebase";
 
 function AdminDashboard() {
   const [admin, setAdmin] = useState(null);
@@ -188,28 +187,8 @@ function AdminDashboard() {
     setUploadData(prev => ({
       ...prev,
       title: title,
-      file: file,
-      filePath: 'uploading...'
+      filePath: file.name
     }));
-
-    const establishmentId = admin?.establishmentId;
-    if (establishmentId) {
-      uploadMusicFile(file, establishmentId)
-        .then(downloadURL => {
-          setUploadData(prev => ({
-            ...prev,
-            filePath: downloadURL
-          }));
-        })
-        .catch(err => {
-          console.error('Upload error:', err);
-          alert('Erreur lors de l\'upload: ' + err.message);
-          setUploadData(prev => ({
-            ...prev,
-            filePath: ''
-          }));
-        });
-    }
   }
 
   async function submitUpload() {
@@ -225,6 +204,19 @@ function AdminDashboard() {
       return;
     }
 
+    let youtubeId = uploadData.youtubeId || '';
+    if (youtubeId.includes('youtube.com') || youtubeId.includes('youtu.be')) {
+      const match = youtubeId.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([^&\s]+)/);
+      if (match) youtubeId = match[1];
+    }
+
+    const payload = {
+      title: uploadData.title,
+      artist: uploadData.artist || null,
+      youtubeId: youtubeId || null,
+      filePath: uploadData.filePath || null
+    };
+    
     try {
       const res = await fetch(`${API_URL}/playlists/${currentPlaylistId}/upload`, {
         method: "POST",
@@ -232,7 +224,7 @@ function AdminDashboard() {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`
         },
-        body: JSON.stringify(uploadData)
+        body: JSON.stringify(payload)
       });
       
       if (res.ok) {
