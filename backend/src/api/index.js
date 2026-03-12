@@ -5,17 +5,26 @@ const { PrismaClient } = require('@prisma/client');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const QRCode = require('qrcode');
+const path = require('path');
+const fs = require('fs');
 
 const app = express();
 const prisma = new PrismaClient();
 const JWT_SECRET = process.env.JWT_SECRET || 'default-secret-key';
 
+const UPLOAD_DIR = path.join(process.cwd(), 'public', 'uploads');
+if (!fs.existsSync(UPLOAD_DIR)) {
+  fs.mkdirSync(UPLOAD_DIR, { recursive: true });
+}
+
 app.use(cors({
   origin: '*',
   credentials: true
 }));
-app.use(express.json());
+app.use(express.json({ limit: '50mb' }));
+app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 app.use(cookieParser());
+app.use('/uploads', express.static(UPLOAD_DIR));
 
 app.get('/api', (req, res) => {
   res.json({ status: 'ok', message: 'Backend is alive' });
@@ -38,6 +47,38 @@ app.get('/api/youtube/search', async (req, res) => {
       `https://www.googleapis.com/youtube/v3/search?part=snippet&q=${encodeURIComponent(q)}&type=video&maxResults=10&key=${YOUTUBE_API_KEY}`
     );
     const data = await response.json();
+    res.json(data);
+  } catch (error) {
+    res.status(500).json({ error: error.message, items: [] });
+  }
+});
+
+app.post('/api/upload/audio', async (req, res) => {
+  try {
+    const { audioData, fileName, establishmentId } = req.body;
+    
+    if (!audioData || !fileName) {
+      return res.status(400).json({ error: "Données audio manquantes" });
+    }
+
+    const base64Data = audioData.replace(/^data:audio\/\w+;base64,/,);
+    const buffer = Buffer.from(base64Data, 'base64');
+    
+    if (buffer.length > 10 * 1024 * 1024) {
+      return res.status(400).json({ error: "Fichier trop volumineux (max 10MB)" });
+    }
+
+    const safeName = `${Date.now()}-${establishmentId || 'global'}-${fileName.replace(/[^a-zA-Z0-9.-]/g, '_')}`;
+    const filePath = path.join(UPLOAD_DIR, safeName);
+    
+    fs.writeFileSync(filePath, buffer);
+    
+    const downloadUrl = `/uploads/${safeName}`;
+    res.json({ url: downloadUrl, fileName: safeName });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
     res.json(data);
   } catch (error) {
     res.status(500).json({ error: error.message, items: [] });
