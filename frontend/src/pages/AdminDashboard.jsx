@@ -2,7 +2,6 @@ import React, { useEffect, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { io } from "socket.io-client";
 import API_URL from "../config";
-import { uploadMusicBase64 } from "../cloudinary";
 
 function AdminDashboard() {
   const [admin, setAdmin] = useState(null);
@@ -167,102 +166,11 @@ function AdminDashboard() {
   }
 
   const [showUploadModal, setShowUploadModal] = useState(false);
-  const [uploadData, setUploadData] = useState({ title: '', artist: '', filePath: '', youtubeId: '' });
   const [currentPlaylistId, setCurrentPlaylistId] = useState(null);
-  const fileInputRef = useRef(null);
 
   async function handleFileSelect(playlistId) {
     setCurrentPlaylistId(playlistId);
-    setUploadData({ title: '', artist: '', filePath: '', youtubeId: '' });
     setShowUploadModal(true);
-  }
-
-  function handleFileChange(e) {
-    const file = e.target.files[0];
-    if (!file) return;
-    
-    const fileName = file.name;
-    const lastDot = fileName.lastIndexOf('.');
-    const title = lastDot > 0 ? fileName.substring(0, lastDot) : fileName;
-    
-    if (file.size > 10 * 1024 * 1024) {
-      alert('Fichier trop volumineux (max 10MB)');
-      return;
-    }
-
-    setUploadData(prev => ({
-      ...prev,
-      title: title,
-      filePath: '⏳ Upload Cloudinary...'
-    }));
-
-    const reader = new FileReader();
-    reader.onload = async function(event) {
-      try {
-        const base64 = event.target.result;
-        const establishmentId = admin?.establishmentId;
-        
-        const url = await uploadMusicBase64(base64, file.name, establishmentId);
-        
-        setUploadData(prev => ({
-          ...prev,
-          filePath: url
-        }));
-      } catch (err) {
-        console.error('Upload error:', err);
-        alert('Erreur upload Cloudinary: ' + err.message);
-        setUploadData(prev => ({ ...prev, filePath: '' }));
-      }
-    };
-    reader.readAsDataURL(file);
-  }
-
-  async function submitUpload() {
-    const token = localStorage.getItem("token");
-    if (!token) {
-      alert("Session expirée. Veuillez vous reconnecter.");
-      navigate("/login");
-      return;
-    }
-    
-    if (!uploadData.title) {
-      alert("Le titre est requis");
-      return;
-    }
-
-    let youtubeId = uploadData.youtubeId || '';
-    if (youtubeId.includes('youtube.com') || youtubeId.includes('youtu.be')) {
-      const match = youtubeId.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([^&\s]+)/);
-      if (match) youtubeId = match[1];
-    }
-
-    const payload = {
-      title: uploadData.title,
-      artist: uploadData.artist || null,
-      youtubeId: youtubeId || null,
-      filePath: uploadData.filePath || null
-    };
-    
-    try {
-      const res = await fetch(`${API_URL}/playlists/${currentPlaylistId}/upload`, {
-        method: "POST",
-        headers: { 
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`
-        },
-        body: JSON.stringify(payload)
-      });
-      
-      if (res.ok) {
-        setShowUploadModal(false);
-        loadInitialData();
-      } else {
-        const err = await res.json();
-        alert(err.error || "Erreur lors de l'ajout");
-      }
-    } catch (err) {
-      alert("Erreur lors de l'ajout");
-    }
   }
 
   function logout() {
@@ -276,69 +184,14 @@ function AdminDashboard() {
   return (
     <div className="admin-dashboard">
       {showUploadModal && (
-        <div className="modal-overlay" onClick={() => setShowUploadModal(false)}>
-          <div className="modal-content" onClick={e => e.stopPropagation()}>
-            <h2>Ajouter une chanson</h2>
-            
-            <div className="form-group">
-              <label>Fichier audio</label>
-              <input 
-                type="file" 
-                accept="audio/*"
-                onChange={handleFileChange}
-                ref={fileInputRef}
-              />
-            </div>
-            
-            <div className="form-group">
-              <label>Titre *</label>
-              <input 
-                type="text" 
-                value={uploadData.title}
-                onChange={e => setUploadData({...uploadData, title: e.target.value})}
-                placeholder="Titre de la chanson"
-              />
-            </div>
-            
-            <div className="form-group">
-              <label>Artiste</label>
-              <input 
-                type="text" 
-                value={uploadData.artist}
-                onChange={e => setUploadData({...uploadData, artist: e.target.value})}
-                placeholder="Nom de l'artiste"
-              />
-            </div>
-            
-            <div className="form-group">
-              <label>Fichier audio (optionnel - sera stocké sur le cloud)</label>
-              <input 
-                type="file" 
-                accept="audio/*"
-                onChange={handleFileChange}
-                ref={fileInputRef}
-              />
-              {uploadData.filePath && uploadData.filePath.startsWith('http') && (
-                <p style={{fontSize:'12px',color:'green',marginTop:'5px'}}>✓ Fichier uploadé</p>
-              )}
-            </div>
-            
-            <div className="form-group">
-              <label>ID YouTube (optionnel)</label>
-              <input 
-                type="text" 
-                value={uploadData.youtubeId}
-                onChange={e => setUploadData({...uploadData, youtubeId: e.target.value})}
-                placeholder="dQw4w9WgXcQ"
-              />
-            </div>
-            
-            <div className="modal-buttons">
-              <button className="btn-cancel" onClick={() => setShowUploadModal(false)}>Annuler</button>
-              <button className="btn-submit" onClick={submitUpload}>Ajouter</button>
-            </div>
-          </div>
-        </div>
+        <YouTubeUploadModal
+          playlistId={currentPlaylistId}
+          onClose={() => setShowUploadModal(false)}
+          onUpload={() => {
+            setShowUploadModal(false);
+            loadInitialData();
+          }}
+        />
       )}
 
       <header className="dashboard-header">
@@ -902,6 +755,196 @@ function AdminDashboard() {
           cursor: pointer;
         }
       `}</style>
+    </div>
+  );
+}
+
+function YouTubeUploadModal({ playlistId, onClose, onUpload }) {
+  const [search, setSearch] = useState("");
+  const [results, setResults] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [adding, setAdding] = useState(null);
+  const token = localStorage.getItem("token");
+
+  const searchYouTube = async (e) => {
+    e.preventDefault();
+    if (!search.trim()) return;
+    
+    setLoading(true);
+    try {
+      const res = await fetch(`${API_URL}/youtube/search?q=${encodeURIComponent(search)}`);
+      const data = await res.json();
+      setResults(data.items || []);
+    } catch (err) {
+      console.error("Search error:", err);
+    }
+    setLoading(false);
+  };
+
+  const addToPlaylist = async (video) => {
+    setAdding(video.id.videoId);
+    try {
+      const res = await fetch(`${API_URL}/playlists/${playlistId}/upload`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          title: video.snippet.title,
+          artist: video.snippet.channelTitle,
+          youtubeId: video.id.videoId,
+          filePath: null
+        })
+      });
+      
+      if (res.ok) {
+        onUpload();
+      } else {
+        alert("Erreur lors de l'ajout");
+      }
+    } catch (err) {
+      alert("Erreur lors de l'ajout");
+    }
+    setAdding(null);
+  };
+
+  return (
+    <div className="modal-overlay" onClick={onClose}>
+      <div className="modal-content youtube-modal" onClick={e => e.stopPropagation()}>
+        <h2>🎵 Rechercher sur YouTube</h2>
+        
+        <form onSubmit={searchYouTube} className="search-form">
+          <input
+            type="text"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Rechercher une chanson..."
+            autoFocus
+          />
+          <button type="submit" disabled={loading}>
+            {loading ? '...' : '🔍'}
+          </button>
+        </form>
+
+        <div className="results-list">
+          {results.map((video) => (
+            <button
+              key={video.id.videoId}
+              className="result-item"
+              onClick={() => addToPlaylist(video)}
+              disabled={adding === video.id.videoId}
+            >
+              <img 
+                src={video.snippet.thumbnails?.medium?.url} 
+                alt={video.snippet.title}
+              />
+              <div className="result-info">
+                <p className="result-title">{video.snippet.title}</p>
+                <p className="result-channel">{video.snippet.channelTitle}</p>
+              </div>
+              <span className="add-btn">
+                {adding === video.id.videoId ? '⏳' : '➕'}
+              </span>
+            </button>
+          ))}
+          
+          {results.length === 0 && !loading && search && (
+            <p className="no-results">Aucun résultat</p>
+          )}
+        </div>
+
+        <button className="btn-close" onClick={onClose}>Fermer</button>
+
+        <style>{`
+          .youtube-modal {
+            max-width: 500px;
+            max-height: 80vh;
+            display: flex;
+            flex-direction: column;
+          }
+          .search-form {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+          }
+          .search-form input {
+            flex: 1;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 14px;
+          }
+          .search-form button {
+            padding: 12px 16px;
+            background: #ff0000;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+          }
+          .results-list {
+            flex: 1;
+            overflow-y: auto;
+            max-height: 400px;
+          }
+          .result-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 10px;
+            background: #f9f9f9;
+            border: none;
+            border-radius: 8px;
+            margin-bottom: 8px;
+            cursor: pointer;
+            text-align: left;
+            width: 100%;
+          }
+          .result-item:hover {
+            background: #f0f0f0;
+          }
+          .result-item img {
+            width: 80px;
+            height: 50px;
+            object-fit: cover;
+            border-radius: 4px;
+          }
+          .result-info {
+            flex: 1;
+            min-width: 0;
+          }
+          .result-title {
+            font-size: 13px;
+            font-weight: 500;
+            color: #333;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+          }
+          .result-channel {
+            font-size: 11px;
+            color: #666;
+          }
+          .add-btn {
+            font-size: 18px;
+          }
+          .no-results {
+            text-align: center;
+            color: #999;
+            padding: 20px;
+          }
+          .btn-close {
+            margin-top: 15px;
+            width: 100%;
+            padding: 12px;
+            background: #eee;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+          }
+        `}</style>
+      </div>
     </div>
   );
 }

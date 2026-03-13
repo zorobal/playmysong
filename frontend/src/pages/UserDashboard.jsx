@@ -14,6 +14,11 @@ function UserDashboard() {
   const [activeTab, setActiveTab] = useState("playlists");
   const [showRejectModal, setShowRejectModal] = useState(null);
   const [rejectReason, setRejectReason] = useState("");
+  const [ytSearch, setYtSearch] = useState("");
+  const [ytResults, setYtResults] = useState([]);
+  const [ytLoading, setYtLoading] = useState(false);
+  const [ytAdding, setYtAdding] = useState(false);
+  const [ytPlaylistId, setYtPlaylistId] = useState(null);
   const navigate = useNavigate();
   
   const accessToken = localStorage.getItem("token");
@@ -195,40 +200,59 @@ function UserDashboard() {
   }
 
   async function handleFileSelect(playlistId) {
+    setYtPlaylistId(playlistId);
+    setYtSearch("");
+    setYtResults([]);
+  }
+
+  async function searchYouTube(e) {
+    e.preventDefault();
+    if (!ytSearch.trim()) return;
+    
+    setYtLoading(true);
+    try {
+      const res = await fetch(`${API_URL}/youtube/search?q=${encodeURIComponent(ytSearch)}`);
+      const data = await res.json();
+      setYtResults(data.items || []);
+    } catch (err) {
+      console.error("Search error:", err);
+    }
+    setYtLoading(false);
+  }
+
+  async function addYouTubeSong(video) {
     const token = localStorage.getItem("token");
     if (!token) {
-      alert("Session expirée. Veuillez vous reconnecter.");
-      navigate("/login");
+      alert("Session expirée");
       return;
     }
     
-    const title = prompt("Titre de la chanson:");
-    if (!title) return;
-    
-    const artist = prompt("Artiste (optionnel):") || null;
-    const youtubeId = prompt("ID YouTube (optionnel, ex: dQw4w9WgXcQ):") || null;
-    const filePath = prompt("Chemin du fichier local (optionnel):") || null;
-    
+    setYtAdding(true);
     try {
-      const res = await fetch(`${API_URL}/playlists/${playlistId}/upload`, {
+      const res = await fetch(`${API_URL}/playlists/${ytPlaylistId}/upload`, {
         method: "POST",
         headers: { 
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`
         },
-        body: JSON.stringify({ title, artist, youtubeId, filePath })
+        body: JSON.stringify({
+          title: video.snippet.title,
+          artist: video.snippet.channelTitle,
+          youtubeId: video.id.videoId,
+          filePath: null
+        })
       });
       
       if (res.ok) {
+        setYtPlaylistId(null);
         loadData();
-        setSelectedPlaylist(null);
       } else {
-        const err = await res.json();
-        alert(err.error || "Erreur lors de l'ajout");
+        alert("Erreur lors de l'ajout");
       }
     } catch (err) {
       alert("Erreur lors de l'ajout");
     }
+    setYtAdding(false);
   }
 
   function logout() {
@@ -241,6 +265,38 @@ function UserDashboard() {
 
   return (
     <div className="user-dashboard">
+      {ytPlaylistId && (
+        <div className="yt-modal-overlay" onClick={() => setYtPlaylistId(null)}>
+          <div className="yt-modal" onClick={e => e.stopPropagation()}>
+            <h3>🎵 Rechercher sur YouTube</h3>
+            <form onSubmit={searchYouTube} className="yt-search-form">
+              <input
+                type="text"
+                value={ytSearch}
+                onChange={(e) => setYtSearch(e.target.value)}
+                placeholder="Titre de la chanson..."
+                autoFocus
+              />
+              <button type="submit" disabled={ytLoading}>{ytLoading ? '...' : '🔍'}</button>
+            </form>
+            <div className="yt-results">
+              {ytResults.map((video) => (
+                <button key={video.id.videoId} className="yt-result-item" onClick={() => addYouTubeSong(video)} disabled={ytAdding}>
+                  <img src={video.snippet.thumbnails?.medium?.url} alt="" />
+                  <div className="yt-result-info">
+                    <p className="yt-result-title">{video.snippet.title}</p>
+                    <p className="yt-result-channel">{video.snippet.channelTitle}</p>
+                  </div>
+                  <span>{ytAdding ? '⏳' : '➕'}</span>
+                </button>
+              ))}
+              {ytResults.length === 0 && !ytLoading && ytSearch && <p className="yt-no-results">Aucun résultat</p>}
+            </div>
+            <button className="yt-close-btn" onClick={() => setYtPlaylistId(null)}>Fermer</button>
+          </div>
+        </div>
+      )}
+
       <header className="dashboard-header">
         <div className="header-left">
           <h1>🎵 PlayMySong</h1>
@@ -771,6 +827,101 @@ function UserDashboard() {
         .modal-actions button:first-child {
           background: #e0e0e0;
           color: #333;
+        }
+        
+        .yt-modal-overlay {
+          position: fixed;
+          top: 0;
+          left: 0;
+          right: 0;
+          bottom: 0;
+          background: rgba(0,0,0,0.5);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          z-index: 1000;
+        }
+        .yt-modal {
+          background: white;
+          padding: 20px;
+          border-radius: 12px;
+          width: 90%;
+          max-width: 450px;
+          max-height: 80vh;
+          display: flex;
+          flex-direction: column;
+        }
+        .yt-modal h3 {
+          margin: 0 0 15px;
+          text-align: center;
+        }
+        .yt-search-form {
+          display: flex;
+          gap: 8px;
+          margin-bottom: 12px;
+        }
+        .yt-search-form input {
+          flex: 1;
+          padding: 10px;
+          border: 1px solid #ddd;
+          border-radius: 6px;
+        }
+        .yt-search-form button {
+          padding: 10px 14px;
+          background: #ff0000;
+          color: white;
+          border: none;
+          border-radius: 6px;
+          cursor: pointer;
+        }
+        .yt-results {
+          flex: 1;
+          overflow-y: auto;
+          max-height: 350px;
+        }
+        .yt-result-item {
+          display: flex;
+          align-items: center;
+          gap: 10px;
+          padding: 8px;
+          background: #f9f9f9;
+          border: none;
+          border-radius: 6px;
+          margin-bottom: 6px;
+          cursor: pointer;
+          width: 100%;
+          text-align: left;
+        }
+        .yt-result-item:hover { background: #f0f0f0; }
+        .yt-result-item img {
+          width: 70px;
+          height: 45px;
+          object-fit: cover;
+          border-radius: 4px;
+        }
+        .yt-result-info { flex: 1; min-width: 0; }
+        .yt-result-title {
+          font-size: 12px;
+          font-weight: 500;
+          color: #333;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          white-space: nowrap;
+        }
+        .yt-result-channel { font-size: 10px; color: #666; }
+        .yt-no-results {
+          text-align: center;
+          color: #999;
+          padding: 15px;
+        }
+        .yt-close-btn {
+          margin-top: 12px;
+          width: 100%;
+          padding: 10px;
+          background: #eee;
+          border: none;
+          border-radius: 6px;
+          cursor: pointer;
         }
       `}</style>
     </div>
