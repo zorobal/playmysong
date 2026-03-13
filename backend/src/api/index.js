@@ -705,7 +705,7 @@ app.get('/api/request/playlist/current', async (req, res) => {
   try {
     const { establishmentId } = req.query;
     if (!establishmentId) {
-      return res.json({ nowPlaying: null, queue: [] });
+      return res.json({ nowPlaying: null, queue: [], establishmentPlaylist: [] });
     }
     
     const nowPlaying = await prisma.songRequest.findFirst({
@@ -724,7 +724,45 @@ app.get('/api/request/playlist/current', async (req, res) => {
       orderBy: { createdAt: 'asc' }
     });
     
-    res.json({ nowPlaying, queue });
+    // Get establishment playlist (first playlist)
+    const playlists = await prisma.playlist.findMany({
+      where: { establishmentId },
+      include: { songs: true },
+      orderBy: { createdAt: 'asc' },
+      take: 1
+    });
+    
+    const establishmentPlaylist = playlists.length > 0 ? playlists[0].songs : [];
+    
+    res.json({ nowPlaying, queue, establishmentPlaylist });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.get('/api/request/playlist/establishment/next', async (req, res) => {
+  try {
+    const { establishmentId, currentIndex } = req.query;
+    if (!establishmentId) {
+      return res.json({ song: null, nextIndex: 0 });
+    }
+    
+    const playlists = await prisma.playlist.findMany({
+      where: { establishmentId },
+      include: { songs: true },
+      orderBy: { createdAt: 'asc' },
+      take: 1
+    });
+    
+    if (playlists.length === 0 || playlists[0].songs.length === 0) {
+      return res.json({ song: null, nextIndex: 0 });
+    }
+    
+    const songs = playlists[0].songs;
+    const nextIndex = currentIndex ? (parseInt(currentIndex) + 1) % songs.length : 0;
+    const nextSong = songs[nextIndex];
+    
+    res.json({ song: nextSong, nextIndex });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
