@@ -10,7 +10,7 @@ if (!fs.existsSync(QR_CODE_DIR)) {
 
 export async function generateQRCode(establishmentId, establishmentName) {
   const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
-  const url = `${frontendUrl}/client?establishmentId=${establishmentId}`;
+  const url = `${frontendUrl}/r/${establishmentId}`;
   
   const fileName = `qr_${establishmentId}_${Date.now()}.png`;
   const filePath = path.join(QR_CODE_DIR, fileName);
@@ -29,7 +29,7 @@ export async function generateQRCode(establishmentId, establishmentName) {
 
 export async function generateQRCodeDataURL(establishmentId) {
   const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
-  const url = `${frontendUrl}/client?establishmentId=${establishmentId}`;
+  const url = `${frontendUrl}/r/${establishmentId}`;
   
   return await QRCode.toDataURL(url, {
     width: 400,

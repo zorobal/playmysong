@@ -10,6 +10,7 @@ import ClientRequest from "./pages/ClientRequest.jsx";
 import ScanLanding from "./pages/ScanLanding.jsx";
 import Search from "./pages/Search.jsx";
 import PlaylistView from "./pages/PlaylistView.jsx";
+import RedirectPage from "./pages/RedirectPage.jsx";
 
 function App() {
   return (
@@ -20,6 +21,7 @@ function App() {
         <Route path="/login" element={<Login />} />
         
         {/* Client PWA Routes - accessible aux clients qui scannent le QR */}
+        <Route path="/r/:id" element={<RedirectPage />} />
         <Route path="/client" element={<ClientPage />} />
         <Route path="/clienthome" element={<ClientHome />} />
         <Route path="/scan" element={<ScanLanding />} />
