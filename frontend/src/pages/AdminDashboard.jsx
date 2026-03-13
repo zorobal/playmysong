@@ -65,6 +65,10 @@ function AdminDashboard() {
       setNowPlaying(song);
     });
 
+    socket.on("request_completed", ({ requestId }) => {
+      setValidatedRequests(prev => prev.filter(r => r.id !== requestId));
+    });
+
     socket.on("playlist_updated", () => {
       loadPlaylist();
     });
@@ -794,6 +798,7 @@ function YouTubeUploadModal({ playlistId, onClose, onUpload }) {
           title: video.snippet.title,
           artist: video.snippet.channelTitle,
           youtubeId: video.id.videoId,
+          thumbnail: video.snippet.thumbnails?.medium?.url || video.snippet.thumbnails?.default?.url,
           filePath: null
         })
       });

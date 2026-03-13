@@ -9,6 +9,7 @@ function UserDashboard() {
   const [playlists, setPlaylists] = useState([]);
   const [selectedPlaylist, setSelectedPlaylist] = useState(null);
   const [pendingRequests, setPendingRequests] = useState([]);
+  const [validatedRequests, setValidatedRequests] = useState([]);
   const [stats, setStats] = useState({ total: 0, pending: 0, validated: 0, rejected: 0 });
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("playlists");
@@ -43,12 +44,19 @@ function UserDashboard() {
       socket.emit("join_establishment", establishment.id);
     });
 
-    socket.on("request_validated", ({ requestId }) => {
+    socket.on("request_validated", ({ request, requestId }) => {
       setPendingRequests(prev => prev.filter(r => r.id !== requestId));
+      if (request) {
+        setValidatedRequests(prev => [...prev, request]);
+      }
     });
 
     socket.on("request_rejected", ({ requestId }) => {
       setPendingRequests(prev => prev.filter(r => r.id !== requestId));
+    });
+    
+    socket.on("request_completed", ({ requestId }) => {
+      setValidatedRequests(prev => prev.filter(r => r.id !== requestId));
     });
 
     return () => socket.disconnect();
@@ -79,9 +87,13 @@ function UserDashboard() {
         console.log("Playlists:", playlistsData);
         setPlaylists(Array.isArray(playlistsData) ? playlistsData : []);
 
-        const requestsRes = await fetch(`${API_URL}/requests?establishmentId=${userData.establishmentId}`, { headers });
-        const requestsData = await requestsRes.json();
-        setPendingRequests(Array.isArray(requestsData) ? requestsData : []);
+        const pendingRes = await fetch(`${API_URL}/requests?establishmentId=${userData.establishmentId}&status=PENDING`, { headers });
+        const pendingData = await pendingRes.json();
+        setPendingRequests(Array.isArray(pendingData) ? pendingData : []);
+
+        const validatedRes = await fetch(`${API_URL}/requests?establishmentId=${userData.establishmentId}&status=VALIDATED`, { headers });
+        const validatedData = await validatedRes.json();
+        setValidatedRequests(Array.isArray(validatedData) ? validatedData : []);
       }
     } catch (err) {
       console.error("Erreur:", err);
@@ -506,11 +518,11 @@ function UserDashboard() {
         {activeTab === "queue" && (
           <div className="queue-panel">
             <h2>File d'attente des demandes</h2>
-            {pendingRequests.length === 0 ? (
+            {validatedRequests.length === 0 ? (
               <p className="empty-message">Aucune demande en attente</p>
             ) : (
               <div className="requests-list">
-                {pendingRequests.map((req, index) => (
+                {validatedRequests.map((req, index) => (
                   <div key={req.id} className="request-card">
                     <div className="request-position">#{index + 1}</div>
                     <div className="request-info">

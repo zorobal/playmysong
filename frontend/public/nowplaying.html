@@ -167,9 +167,11 @@
     const establishmentId = urlParams.get('establishmentId') || 'cmmke5nms0001ik0424nh0517';
 
     let queue = [];
-    let currentIndex = 0;
+    let currentSongId = null;
     let player = null;
     let audioPlayer = null;
+    let currentNowPlaying = null;
+    let currentQueue = [];
 
     function onYouTubeIframeAPIReady() {
       console.log('YouTube API ready');
@@ -181,20 +183,44 @@
         const establishment = await estRes.json();
         document.getElementById('establishmentName').textContent = establishment.name || 'Établissement';
 
-        const queueRes = await fetch(`${API_URL}/requests?establishmentId=${establishmentId}&status=VALIDATED`);
-        queue = await queueRes.json();
-        console.log('Queue loaded:', queue);
+        // Use the proper endpoint for current playlist
+        const playlistRes = await fetch(`${API_URL}/request/playlist/current?establishmentId=${establishmentId}`);
+        const playlistData = await playlistRes.json();
+        
+        // If there's a nowPlaying, use it; otherwise use first validated as now playing
+        let nowPlaying = playlistData.nowPlaying;
+        let queue = playlistData.queue || [];
+        
+        // If no nowPlaying but queue has items, start playing the first one
+        if (!nowPlaying && queue.length > 0) {
+          nowPlaying = queue[0];
+          queue = queue.slice(1);
+          // Mark as playing
+          try {
+            await fetch(`${API_URL}/request/${nowPlaying.id}/play`, { method: 'POST' });
+          } catch (e) {
+            console.log('Could not mark as playing:', e);
+          }
+        }
 
-        renderContent(establishment);
+        // Store globally
+        currentNowPlaying = nowPlaying;
+        currentQueue = queue;
+
+        console.log('NowPlaying:', nowPlaying);
+        console.log('Queue:', queue);
+
+        renderContent(establishment, nowPlaying, queue);
       } catch (error) {
         console.error('Error:', error);
         document.getElementById('content').innerHTML = `<div class="error">Erreur: ${error.message}</div>`;
       }
     }
 
-    function renderContent(establishment) {
-      const nowPlaying = queue[currentIndex];
-      const waitingQueue = queue.slice(currentIndex + 1);
+    function renderContent(establishment, nowPlayingParam, queueParam) {
+      const nowPlaying = nowPlayingParam;
+      const waitingQueue = queueParam || [];
+      currentSongId = nowPlaying?.id;
 
       let html = '<div class="main-content">';
       
@@ -317,19 +343,17 @@
 
     async function skipSong() {
       // Mark current song as completed before skipping
-      if (queue[currentIndex]) {
+      if (currentNowPlaying) {
         try {
-          await fetch(`${API_URL}/request/${queue[currentIndex].id}/complete`, {
+          await fetch(`${API_URL}/request/${currentNowPlaying.id}/complete`, {
             method: 'POST'
           });
         } catch (e) {
           console.log('Could not mark as completed:', e);
         }
       }
-      if (currentIndex < queue.length - 1) {
-        currentIndex++;
-        loadData();
-      }
+      // Reload to get next song
+      loadData();
     }
 
     function escapeHtml(text) {

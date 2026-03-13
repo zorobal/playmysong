@@ -603,6 +603,15 @@ app.post('/api/request/:id/validate', async (req, res) => {
       where: { id },
       data: { status: 'VALIDATED' }
     });
+    
+    // Emit socket event
+    if (global.io) {
+      global.io.to(request.establishmentId).emit('request_validated', { 
+        requestId: id,
+        request 
+      });
+    }
+    
     res.json(request);
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -620,6 +629,15 @@ app.post('/api/request/:id/reject', async (req, res) => {
         rejectionReason: reason
       }
     });
+    
+    // Emit socket event
+    if (global.io) {
+      global.io.to(request.establishmentId).emit('request_rejected', { 
+        requestId: id,
+        request 
+      });
+    }
+    
     res.json(request);
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -633,7 +651,51 @@ app.post('/api/request/:id/complete', async (req, res) => {
       where: { id },
       data: { status: 'COMPLETED' }
     });
+    
+    // Emit socket event
+    if (global.io) {
+      global.io.to(request.establishmentId).emit('request_completed', { 
+        requestId: id,
+        request 
+      });
+    }
+    
     res.json(request);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.post('/api/request/:id/play', async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    // First, set all PLAYING songs to COMPLETED
+    const request = await prisma.songRequest.findUnique({ where: { id } });
+    if (request) {
+      await prisma.songRequest.updateMany({
+        where: { 
+          establishmentId: request.establishmentId,
+          status: 'PLAYING'
+        },
+        data: { status: 'COMPLETED' }
+      });
+    }
+    
+    // Now mark this one as PLAYING
+    const updated = await prisma.songRequest.update({
+      where: { id },
+      data: { status: 'PLAYING' }
+    });
+    
+    // Emit socket event
+    if (global.io) {
+      global.io.to(request.establishmentId).emit('now_playing_updated', { 
+        request: updated
+      });
+    }
+    
+    res.json(updated);
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
