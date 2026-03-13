@@ -72,6 +72,7 @@ model Song {
   artist     String?
   filePath   String?
   youtubeId  String?
+  thumbnail  String?
   duration   Int      @default(0)
   createdAt  DateTime @default(now())
 }
@@ -83,6 +84,7 @@ model SongRequest {
   youtubeId         String?
   title             String
   artist            String?
+  thumbnail         String?
   durationSec       Int           @default(0)
   message           String?
   selfieUrl         String?

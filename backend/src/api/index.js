@@ -499,7 +499,7 @@ app.delete('/api/playlists/:playlistId/musics/:id', async (req, res) => {
 app.post('/api/playlists/:id/upload', async (req, res) => {
   try {
     const { id } = req.params;
-    const { title, artist, filePath, duration, youtubeId } = req.body;
+    const { title, artist, filePath, duration, youtubeId, thumbnail } = req.body;
     
     const song = await prisma.song.create({
       data: {
@@ -508,6 +508,7 @@ app.post('/api/playlists/:id/upload', async (req, res) => {
         youtubeId: youtubeId || null,
         filePath: filePath || null,
         duration: duration ? parseInt(duration) : 0,
+        thumbnail: thumbnail || null,
         playlistId: id
       }
     });
@@ -555,16 +556,18 @@ app.get('/api/request/pending', async (req, res) => {
 
 app.post('/api/requests', async (req, res) => {
   try {
-    const { establishmentId, youtubeId, title, artist, message, selfieUrl, filePath, createdByUserId } = req.body;
+    const { establishmentId, youtubeId, title, artist, thumbnail, message, selfieUrl, filePath, createdByUserId, durationSec } = req.body;
     const request = await prisma.songRequest.create({
       data: {
         establishmentId,
         youtubeId,
         title,
         artist,
+        thumbnail,
         message,
         selfieUrl,
         filePath,
+        durationSec: durationSec || 0,
         createdByUserId,
         status: 'PENDING'
       }
@@ -616,6 +619,19 @@ app.post('/api/request/:id/reject', async (req, res) => {
         status: 'REJECTED',
         rejectionReason: reason
       }
+    });
+    res.json(request);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.post('/api/request/:id/complete', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const request = await prisma.songRequest.update({
+      where: { id },
+      data: { status: 'COMPLETED' }
     });
     res.json(request);
   } catch (error) {

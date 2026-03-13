@@ -41,6 +41,15 @@
       opacity: 0.9;
       margin-bottom: 20px;
     }
+    .song-thumbnail {
+      width: 200px;
+      height: 200px;
+      border-radius: 15px;
+      margin: 0 auto 15px;
+      overflow: hidden;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.4);
+    }
+    .song-thumbnail img { width: 100%; height: 100%; object-fit: cover; }
     .song-title { font-size: 2.5rem; font-weight: bold; margin-bottom: 10px; }
     .artist { font-size: 1.3rem; opacity: 0.9; margin-bottom: 15px; }
     .message-box {
@@ -102,6 +111,14 @@
       border-radius: 12px;
       margin-bottom: 8px;
     }
+    .queue-thumb {
+      width: 50px;
+      height: 50px;
+      border-radius: 8px;
+      overflow: hidden;
+      flex-shrink: 0;
+    }
+    .queue-thumb img { width: 100%; height: 100%; object-fit: cover; }
     .queue-number {
       font-size: 1.2rem;
       font-weight: bold;
@@ -186,6 +203,7 @@
       if (nowPlaying) {
         html += `
           <h2>🎶 En cours de lecture</h2>
+          ${nowPlaying.thumbnail ? `<div class="song-thumbnail"><img src="${escapeHtml(nowPlaying.thumbnail)}" alt="Thumbnail" onerror="this.parentElement.style.display='none'"></div>` : ''}
           <div class="song-title">${escapeHtml(nowPlaying.title)}</div>
           <div class="artist">${escapeHtml(nowPlaying.artist || 'Artiste inconnu')}</div>
           ${nowPlaying.message ? `<div class="message-box">"${escapeHtml(nowPlaying.message)}"</div>` : ''}
@@ -232,6 +250,7 @@
           html += `
             <div class="queue-item">
               <div class="queue-number">${index + 1}</div>
+              ${item.thumbnail ? `<div class="queue-thumb"><img src="${escapeHtml(item.thumbnail)}" alt="" onerror="this.parentElement.style.display='none'"></div>` : ''}
               <div class="queue-info">
                 <div class="queue-title">${escapeHtml(item.title)}</div>
                 <div class="queue-artist">${escapeHtml(item.artist || 'Artiste inconnu')}</div>
@@ -296,7 +315,17 @@
       }
     }
 
-    function skipSong() {
+    async function skipSong() {
+      // Mark current song as completed before skipping
+      if (queue[currentIndex]) {
+        try {
+          await fetch(`${API_URL}/request/${queue[currentIndex].id}/complete`, {
+            method: 'POST'
+          });
+        } catch (e) {
+          console.log('Could not mark as completed:', e);
+        }
+      }
       if (currentIndex < queue.length - 1) {
         currentIndex++;
         loadData();
