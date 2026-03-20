@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "dev": "vite",
-    "build": "vite build",
+    "build": "vite build && node -e \"const fs=require('fs');const p=fs.readdirSync('public/pwa');p.forEach(f=>{if(f!=='index.html')fs.copyFileSync('public/pwa/'+f,'dist/pwa/'+f)});if(!fs.existsSync('dist/pwa'))fs.mkdirSync('dist/pwa');p.forEach(f=>{fs.copyFileSync('public/pwa/'+f,'dist/pwa/'+f)});\"",
     "preview": "vite preview"
   },
   "keywords": [],
@@ -13,6 +13,7 @@
   "license": "ISC",
   "type": "module",
   "dependencies": {
+    "cloudinary": "^2.9.0",
     "react": "^19.2.4",
     "react-dom": "^19.2.4",
     "react-router-dom": "^7.13.0",

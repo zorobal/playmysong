@@ -1,0 +1,809 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="theme-color" content="#e94560">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="PlayMySong">
+  <meta name="description" content="Demandez vos chansons préférées">
+  
+  <title>PlayMySong</title>
+  
+  <link rel="manifest" href="/pwa/manifest.json">
+  <link rel="apple-touch-icon" href="/pwa/icon-192.png">
+  
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: linear-gradient(135deg, #1e1b4b 0%, #312e81 50%, #4c1d95 100%);
+      min-height: 100vh;
+      color: white;
+      overflow-x: hidden;
+    }
+    
+    .install-banner {
+      background: linear-gradient(135deg, #10b981, #059669);
+      padding: 15px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+    
+    .install-banner.hidden {
+      display: none;
+    }
+    
+    .install-banner-text {
+      font-size: 14px;
+      font-weight: 500;
+    }
+    
+    .install-btn {
+      background: white;
+      color: #10b981;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 20px;
+      font-weight: bold;
+      cursor: pointer;
+      font-size: 14px;
+    }
+    
+    .close-btn {
+      background: transparent;
+      border: none;
+      color: white;
+      font-size: 20px;
+      cursor: pointer;
+      padding: 5px 10px;
+    }
+    
+    .container {
+      padding: 20px;
+      max-width: 500px;
+      margin: 0 auto;
+    }
+    
+    .header {
+      text-align: center;
+      margin-bottom: 30px;
+    }
+    
+    .logo {
+      font-size: 4rem;
+      margin-bottom: 10px;
+    }
+    
+    .establishment-name {
+      font-size: 1.5rem;
+      color: #e94560;
+      font-weight: bold;
+      margin-bottom: 5px;
+    }
+    
+    .establishment-type {
+      color: #cbd5e1;
+      font-size: 0.9rem;
+    }
+    
+    .tab-container {
+      display: flex;
+      background: rgba(255,255,255,0.1);
+      border-radius: 12px;
+      padding: 5px;
+      margin-bottom: 20px;
+    }
+    
+    .tab {
+      flex: 1;
+      padding: 12px;
+      text-align: center;
+      border: none;
+      background: transparent;
+      color: #94a3b8;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      border-radius: 8px;
+      transition: all 0.3s;
+    }
+    
+    .tab.active {
+      background: #e94560;
+      color: white;
+    }
+    
+    .content {
+      display: none;
+    }
+    
+    .content.active {
+      display: block;
+    }
+    
+    .playlist-card {
+      background: rgba(255,255,255,0.1);
+      border-radius: 12px;
+      padding: 15px;
+      margin-bottom: 15px;
+    }
+    
+    .playlist-name {
+      font-weight: bold;
+      margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    
+    .song-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px;
+      background: rgba(0,0,0,0.2);
+      border-radius: 10px;
+      margin-bottom: 8px;
+      cursor: pointer;
+      transition: transform 0.2s;
+    }
+    
+    .song-item:active {
+      transform: scale(0.98);
+    }
+    
+    .song-thumb {
+      width: 50px;
+      height: 50px;
+      border-radius: 8px;
+      object-fit: cover;
+    }
+    
+    .song-info {
+      flex: 1;
+    }
+    
+    .song-title {
+      font-weight: 600;
+      font-size: 14px;
+      margin-bottom: 2px;
+    }
+    
+    .song-artist {
+      font-size: 12px;
+      color: #94a3b8;
+    }
+    
+    .search-container {
+      margin-bottom: 20px;
+    }
+    
+    .search-input {
+      width: 100%;
+      padding: 15px;
+      border: none;
+      border-radius: 12px;
+      background: rgba(255,255,255,0.1);
+      color: white;
+      font-size: 16px;
+    }
+    
+    .search-input::placeholder {
+      color: #64748b;
+    }
+    
+    .search-results {
+      margin-top: 15px;
+    }
+    
+    .loading {
+      text-align: center;
+      padding: 20px;
+      color: #94a3b8;
+    }
+    
+    .empty-state {
+      text-align: center;
+      padding: 40px 20px;
+      color: #94a3b8;
+    }
+    
+    /* Modal */
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0,0,0,0.8);
+      z-index: 1000;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    
+    .modal.active {
+      display: flex;
+    }
+    
+    .modal-content {
+      background: #1e1b4b;
+      border-radius: 20px;
+      padding: 25px;
+      width: 100%;
+      max-width: 400px;
+      max-height: 80vh;
+      overflow-y: auto;
+    }
+    
+    .modal-header {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+    
+    .modal-thumb {
+      width: 120px;
+      height: 120px;
+      border-radius: 15px;
+      margin: 0 auto 15px;
+      object-fit: cover;
+    }
+    
+    .modal-title {
+      font-size: 1.2rem;
+      font-weight: bold;
+      margin-bottom: 5px;
+    }
+    
+    .modal-artist {
+      color: #94a3b8;
+      font-size: 0.9rem;
+    }
+    
+    .form-group {
+      margin-bottom: 15px;
+    }
+    
+    .form-label {
+      display: block;
+      margin-bottom: 8px;
+      font-size: 14px;
+      color: #cbd5e1;
+    }
+    
+    .form-input {
+      width: 100%;
+      padding: 12px;
+      border: none;
+      border-radius: 10px;
+      background: rgba(255,255,255,0.1);
+      color: white;
+      font-size: 14px;
+    }
+    
+    .form-textarea {
+      width: 100%;
+      padding: 12px;
+      border: none;
+      border-radius: 10px;
+      background: rgba(255,255,255,0.1);
+      color: white;
+      font-size: 14px;
+      resize: none;
+      height: 80px;
+    }
+    
+    .btn {
+      width: 100%;
+      padding: 15px;
+      border: none;
+      border-radius: 12px;
+      font-size: 16px;
+      font-weight: bold;
+      cursor: pointer;
+      margin-bottom: 10px;
+    }
+    
+    .btn-primary {
+      background: linear-gradient(135deg, #e94560, #db2777);
+      color: white;
+    }
+    
+    .btn-secondary {
+      background: rgba(255,255,255,0.1);
+      color: white;
+    }
+    
+    /* Success screen */
+    .success-screen {
+      display: none;
+      text-align: center;
+      padding: 40px 20px;
+    }
+    
+    .success-screen.active {
+      display: block;
+    }
+    
+    .success-icon {
+      width: 80px;
+      height: 80px;
+      background: linear-gradient(135deg, #10b981, #34d399);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 20px;
+      font-size: 40px;
+    }
+    
+    .success-title {
+      font-size: 1.5rem;
+      font-weight: bold;
+      margin-bottom: 10px;
+    }
+    
+    .success-message {
+      color: #94a3b8;
+      margin-bottom: 30px;
+    }
+    
+    /* Camera */
+    .camera-container {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: black;
+      z-index: 2000;
+    }
+    
+    .camera-container.active {
+      display: block;
+    }
+    
+    .camera-video {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+    
+    .camera-close {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      background: rgba(0,0,0,0.5);
+      border: none;
+      color: white;
+      font-size: 30px;
+      width: 50px;
+      height: 50px;
+      border-radius: 50%;
+      cursor: pointer;
+    }
+    
+    .camera-capture {
+      position: absolute;
+      bottom: 40px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 70px;
+      height: 70px;
+      border-radius: 50%;
+      background: white;
+      border: 4px solid #e94560;
+      cursor: pointer;
+    }
+    
+    .selfie-preview {
+      width: 80px;
+      height: 80px;
+      border-radius: 50%;
+      object-fit: cover;
+      margin: 10px auto;
+      display: block;
+    }
+    
+    .remove-selfie {
+      color: #ef4444;
+      font-size: 12px;
+      text-align: center;
+      cursor: pointer;
+      margin-top: 5px;
+    }
+  </style>
+</head>
+<body>
+  <!-- Install Banner -->
+  <div id="installBanner" class="install-banner">
+    <span class="install-banner-text">📱 Installer l'app pour une meilleure expérience</span>
+    <button class="install-btn" onclick="installApp()">Installer</button>
+    <button class="close-btn" onclick="hideInstallBanner()">×</button>
+  </div>
+
+  <!-- Main Container -->
+  <div class="container" id="mainContainer">
+    <div class="header">
+      <div class="logo">🎵</div>
+      <div class="establishment-name" id="establishmentName">Chargement...</div>
+      <div class="establishment-type" id="establishmentType"></div>
+    </div>
+
+    <div class="tab-container">
+      <button class="tab active" onclick="switchTab('playlist')">📋 Playlist</button>
+      <button class="tab" onclick="switchTab('search')">🔍 Rechercher</button>
+    </div>
+
+    <!-- Playlist Tab -->
+    <div id="playlistTab" class="content active">
+      <div id="playlistsContainer">
+        <div class="loading">Chargement des playlists...</div>
+      </div>
+    </div>
+
+    <!-- Search Tab -->
+    <div id="searchTab" class="content">
+      <div class="search-container">
+        <input 
+          type="text" 
+          class="search-input" 
+          id="searchInput" 
+          placeholder="Rechercher une chanson..."
+          onkeyup="handleSearch(event)"
+        >
+        <div id="searchResults" class="search-results"></div>
+      </div>
+    </div>
+
+    <!-- Success Screen -->
+    <div id="successScreen" class="success-screen">
+      <div class="success-icon">✓</div>
+      <h2 class="success-title">Demande envoyée !</h2>
+      <p class="success-message">Votre demande sera bientôt validée.</p>
+      <button class="btn btn-secondary" onclick="resetForNewRequest()">
+        🔄 Nouvelle demande (scanner QR)
+      </button>
+    </div>
+  </div>
+
+  <!-- Request Modal -->
+  <div id="requestModal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <img src="" alt="" class="modal-thumb" id="modalThumb">
+        <h3 class="modal-title" id="modalTitle">Titre</h3>
+        <p class="modal-artist" id="modalArtist">Artiste</p>
+      </div>
+      
+      <div class="form-group">
+        <label class="form-label">💬 Message (optionnel)</label>
+        <textarea class="form-textarea" id="messageInput" placeholder="Un message pour le DJ..."></textarea>
+      </div>
+      
+      <div class="form-group">
+        <label class="form-label">📸 Selfie (optionnel)</label>
+        <div id="selfiePreviewContainer" style="display:none;">
+          <img src="" alt="" class="selfie-preview" id="selfiePreview">
+          <span class="remove-selfie" onclick="removeSelfie()">✕ Supprimer</span>
+        </div>
+        <button class="btn btn-secondary" onclick="openCamera()">📷 Ajouter un selfie</button>
+      </div>
+      
+      <button class="btn btn-primary" onclick="submitRequest()">🎵 Envoyer la demande</button>
+      <button class="btn btn-secondary" onclick="closeModal()">Annuler</button>
+    </div>
+  </div>
+
+  <!-- Camera Container -->
+  <div id="cameraContainer" class="camera-container">
+    <video id="cameraVideo" autoplay playsinline></video>
+    <button class="camera-close" onclick="closeCamera()">×</button>
+    <button class="camera-capture" onclick="capturePhoto()"></button>
+    <canvas id="cameraCanvas" style="display:none;"></canvas>
+  </div>
+
+  <script>
+    // Config
+    const API_URL = 'https://playmysong-mu.vercel.app/api';
+    const SOCKET_URL = 'https://playmysong-mu.vercel.app';
+    
+    // State
+    let establishmentId = null;
+    let establishment = null;
+    let playlists = [];
+    let selectedSong = null;
+    let selfieData = null;
+    let deferredPrompt = null;
+    
+    // Get establishment ID from URL
+    const urlParams = new URLSearchParams(window.location.search);
+    establishmentId = urlParams.get('establishmentId') || urlParams.get('id');
+    
+    // Check if already requested
+    const existingRequest = localStorage.getItem(`pms_request_${establishmentId}`);
+    if (existingRequest) {
+      showSuccessScreen();
+    }
+    
+    // Initialize
+    document.addEventListener('DOMContentLoaded', () => {
+      if (establishmentId) {
+        loadEstablishment();
+        loadPlaylists();
+      } else {
+        document.getElementById('establishmentName').textContent = 'QR Code invalide';
+      }
+      
+      // Register service worker
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('/pwa/sw.js')
+          .then(reg => console.log('SW registered'))
+          .catch(err => console.log('SW registration failed:', err));
+      }
+      
+      // Handle PWA install prompt
+      window.addEventListener('beforeinstallprompt', (e) => {
+        e.preventDefault();
+        deferredPrompt = e;
+        if (!localStorage.getItem('pwa_installed')) {
+          document.getElementById('installBanner').classList.remove('hidden');
+        }
+      });
+    });
+    
+    // Load establishment data
+    async function loadEstablishment() {
+      try {
+        const res = await fetch(`${API_URL}/establishments/${establishmentId}`);
+        establishment = await res.json();
+        document.getElementById('establishmentName').textContent = establishment.name || 'Établissement';
+        document.getElementById('establishmentType').textContent = establishment.type || '';
+      } catch (err) {
+        console.error('Error loading establishment:', err);
+      }
+    }
+    
+    // Load playlists
+    async function loadPlaylists() {
+      try {
+        const res = await fetch(`${API_URL}/playlists/public?establishmentId=${establishmentId}`);
+        playlists = await res.json();
+        
+        const container = document.getElementById('playlistsContainer');
+        if (playlists.length === 0) {
+          container.innerHTML = '<div class="empty-state">Aucune playlist disponible.<br>Utilisez l\'onglet recherche.</div>';
+          return;
+        }
+        
+        let html = '';
+        playlists.forEach(playlist => {
+          html += `
+            <div class="playlist-card">
+              <div class="playlist-name">📋 ${playlist.name}</div>
+              ${(playlist.songs || []).map(song => `
+                <div class="song-item" onclick="selectSong(${JSON.stringify(song).replace(/"/g, '&quot;')})">
+                  ${song.thumbnail ? `<img src="${song.thumbnail}" alt="" class="song-thumb">` : '<div class="song-thumb" style="background:#333;"></div>'}
+                  <div class="song-info">
+                    <div class="song-title">${song.title}</div>
+                    <div class="song-artist">${song.artist || 'Artiste inconnu'}</div>
+                  </div>
+                </div>
+              `).join('')}
+            </div>
+          `;
+        });
+        container.innerHTML = html;
+      } catch (err) {
+        console.error('Error loading playlists:', err);
+      }
+    }
+    
+    // Search YouTube
+    async function handleSearch(event) {
+      if (event.key !== 'Enter') return;
+      
+      const query = event.target.value.trim();
+      if (!query) return;
+      
+      document.getElementById('searchResults').innerHTML = '<div class="loading">Recherche en cours...</div>';
+      
+      try {
+        const res = await fetch(`${API_URL}/youtube/search?q=${encodeURIComponent(query)}`);
+        const data = await res.json();
+        
+        const container = document.getElementById('searchResults');
+        if (!data.items || data.items.length === 0) {
+          container.innerHTML = '<div class="empty-state">Aucun résultat trouvé</div>';
+          return;
+        }
+        
+        let html = '';
+        data.items.forEach(video => {
+          const thumb = video.snippet?.thumbnails?.medium?.url || '';
+          html += `
+            <div class="song-item" onclick="selectSong({
+              youtubeId: '${video.id.videoId}',
+              title: '${video.snippet.title.replace(/'/g, "\\'")}',
+              artist: '${video.snippet.channelTitle.replace(/'/g, "\\'")}',
+              thumbnail: '${thumb}'
+            })">
+              <img src="${thumb}" alt="" class="song-thumb">
+              <div class="song-info">
+                <div class="song-title">${video.snippet.title}</div>
+                <div class="song-artist">${video.snippet.channelTitle}</div>
+              </div>
+            </div>
+          `;
+        });
+        container.innerHTML = html;
+      } catch (err) {
+        console.error('Search error:', err);
+        document.getElementById('searchResults').innerHTML = '<div class="empty-state">Erreur de recherche</div>';
+      }
+    }
+    
+    // Select song
+    function selectSong(song) {
+      selectedSong = song;
+      document.getElementById('modalThumb').src = song.thumbnail || '';
+      document.getElementById('modalTitle').textContent = song.title;
+      document.getElementById('modalArtist').textContent = song.artist || 'Artiste inconnu';
+      document.getElementById('requestModal').classList.add('active');
+    }
+    
+    // Close modal
+    function closeModal() {
+      document.getElementById('requestModal').classList.remove('active');
+      selectedSong = null;
+    }
+    
+    // Camera functions
+    let cameraStream = null;
+    
+    function openCamera() {
+      const container = document.getElementById('cameraContainer');
+      const video = document.getElementById('cameraVideo');
+      
+      navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' } })
+        .then(stream => {
+          cameraStream = stream;
+          video.srcObject = stream;
+          container.classList.add('active');
+        })
+        .catch(err => {
+          alert('Impossible d\'accéder à la caméra');
+          console.error('Camera error:', err);
+        });
+    }
+    
+    function closeCamera() {
+      const container = document.getElementById('cameraContainer');
+      const video = document.getElementById('cameraVideo');
+      
+      if (cameraStream) {
+        cameraStream.getTracks().forEach(track => track.stop());
+        cameraStream = null;
+      }
+      video.srcObject = null;
+      container.classList.remove('active');
+    }
+    
+    function capturePhoto() {
+      const video = document.getElementById('cameraVideo');
+      const canvas = document.getElementById('cameraCanvas');
+      const preview = document.getElementById('selfiePreview');
+      
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+      canvas.getContext('2d').drawImage(video, 0, 0);
+      
+      selfieData = canvas.toDataURL('image/jpeg', 0.8);
+      preview.src = selfieData;
+      document.getElementById('selfiePreviewContainer').style.display = 'block';
+      
+      closeCamera();
+    }
+    
+    function removeSelfie() {
+      selfieData = null;
+      document.getElementById('selfiePreviewContainer').style.display = 'none';
+    }
+    
+    // Submit request
+    async function submitRequest() {
+      if (!selectedSong) return;
+      
+      const message = document.getElementById('messageInput').value.trim();
+      
+      try {
+        const body = {
+          establishmentId,
+          youtubeId: selectedSong.youtubeId,
+          title: selectedSong.title,
+          artist: selectedSong.artist,
+          thumbnail: selectedSong.thumbnail,
+          message,
+          selfieUrl: selfieData
+        };
+        
+        const res = await fetch(`${API_URL}/requests`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(body)
+        });
+        
+        if (!res.ok) throw new Error('Request failed');
+        
+        // Save to localStorage
+        localStorage.setItem(`pms_request_${establishmentId}`, JSON.stringify({
+          ...selectedSong,
+          message,
+          selfiePreview: selfieData,
+          establishmentName: establishment?.name,
+          timestamp: Date.now()
+        }));
+        
+        closeModal();
+        showSuccessScreen();
+        
+      } catch (err) {
+        alert('Erreur lors de l\'envoi');
+        console.error('Submit error:', err);
+      }
+    }
+    
+    // Show success screen
+    function showSuccessScreen() {
+      document.getElementById('mainContainer').style.display = 'none';
+      document.getElementById('successScreen').classList.add('active');
+    }
+    
+    // Reset for new request
+    function resetForNewRequest() {
+      // This will be handled by the QR scan - just redirect
+      window.location.href = '/pwa/';
+    }
+    
+    // Tab switching
+    function switchTab(tab) {
+      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+      document.querySelectorAll('.content').forEach(c => c.classList.remove('active'));
+      
+      event.target.classList.add('active');
+      document.getElementById(tab + 'Tab').classList.add('active');
+    }
+    
+    // PWA Install
+    function installApp() {
+      if (deferredPrompt) {
+        deferredPrompt.prompt();
+        deferredPrompt.userChoice.then((choiceResult) => {
+          if (choiceResult.outcome === 'accepted') {
+            localStorage.setItem('pwa_installed', 'true');
+          }
+          deferredPrompt = null;
+          hideInstallBanner();
+        });
+      }
+    }
+    
+    function hideInstallBanner() {
+      document.getElementById('installBanner').classList.add('hidden');
+    }
+  </script>
+</body>
+</html>

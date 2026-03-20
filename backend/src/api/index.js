@@ -179,7 +179,7 @@ app.get('/api/establishments/:id/qrcode', async (req, res) => {
   try {
     const { id } = req.params;
     const frontendUrl = process.env.FRONTEND_URL || 'https://playmysong-998d4.web.app';
-    const url = `${frontendUrl}/r/${id}`;
+    const url = `${frontendUrl}/pwa/?id=${id}`;
     
     const qrCodeDataURL = await QRCode.toDataURL(url, {
       width: 400,
