@@ -8,7 +8,11 @@
     ],
     "rewrites": [
       {
-        "source": "**/nowplaying.html",
+        "source": "/pwa/**",
+        "destination": "/pwa/index.html"
+      },
+      {
+        "source": "/nowplaying.html",
         "destination": "/nowplaying.html"
       },
       {

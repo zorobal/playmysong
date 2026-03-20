@@ -2,17 +2,15 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8">
-  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
-  <meta http-equiv="Pragma" content="no-cache">
-  <meta http-equiv="Expires" content="0">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <meta name="theme-color" content="#e94560">
+  <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <meta name="apple-mobile-web-app-title" content="PlayMySong Scanner">
-  <meta name="description" content="Scannez le QR Code pour demander vos chansons">
+  <meta name="apple-mobile-web-app-title" content="PlayMySong">
+  <meta name="description" content="Demandez vos chansons préférées">
   
-  <title>PlayMySong Scanner</title>
+  <title>PlayMySong</title>
   
   <link rel="manifest" href="/pwa/manifest.json">
   <link rel="apple-touch-icon" href="/pwa/icon.svg">
@@ -22,192 +20,191 @@
       margin: 0;
       padding: 0;
       box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+    }
+    
+    html, body {
+      height: 100%;
+      overflow: hidden;
     }
     
     body {
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-      background: linear-gradient(135deg, #1e1b4b 0%, #312e81 50%, #4c1d95 100%);
-      min-height: 100vh;
+      background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
       color: white;
       overflow-x: hidden;
     }
     
-    /* Install Banner */
-    .install-banner {
-      background: linear-gradient(135deg, #10b981, #059669);
-      padding: 12px 15px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      position: sticky;
+    /* ========== SCREENS ========== */
+    .screen {
+      display: none;
+      width: 100%;
+      height: 100%;
+      position: fixed;
       top: 0;
-      z-index: 100;
+      left: 0;
     }
     
-    .install-banner.hidden {
-      display: none;
-    }
-    
-    .install-banner-text {
-      font-size: 13px;
-      font-weight: 500;
-    }
-    
-    .install-btn {
-      background: white;
-      color: #10b981;
-      border: none;
-      padding: 6px 12px;
-      border-radius: 15px;
-      font-weight: bold;
-      cursor: pointer;
-      font-size: 12px;
-    }
-    
-    .close-btn {
-      background: transparent;
-      border: none;
-      color: white;
-      font-size: 18px;
-      cursor: pointer;
-      padding: 5px 8px;
-    }
-    
-    /* Container */
-    .container {
-      padding: 20px;
-      max-width: 500px;
-      margin: 0 auto;
-    }
-    
-    /* Home Screen */
-    .home-screen {
-      display: none;
-      text-align: center;
-      padding-top: 60px;
-    }
-    
-    .home-screen.visible {
+    .screen.active {
       display: flex;
       flex-direction: column;
+    }
+    
+    /* ========== HOME SCREEN ========== */
+    #homeScreen {
+      justify-content: center;
       align-items: center;
+      padding: 30px 25px;
+      text-align: center;
+      background: linear-gradient(180deg, #1a1a2e 0%, #16213e 100%);
     }
     
     .home-logo {
-      font-size: 5rem;
+      font-size: 80px;
       margin-bottom: 20px;
+      animation: float 3s ease-in-out infinite;
+    }
+    
+    @keyframes float {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-10px); }
     }
     
     .home-title {
-      font-size: 2rem;
-      font-weight: bold;
+      font-size: 2.2rem;
+      font-weight: 800;
       margin-bottom: 10px;
+      background: linear-gradient(135deg, #fff 0%, #e94560 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
     }
     
     .home-subtitle {
-      color: #cbd5e1;
-      margin-bottom: 40px;
+      color: rgba(255,255,255,0.7);
       font-size: 1rem;
+      margin-bottom: 40px;
+      max-width: 300px;
     }
     
     .scan-btn {
-      background: linear-gradient(135deg, #e94560, #db2777);
+      background: linear-gradient(135deg, #e94560 0%, #ff6b6b 100%);
       color: white;
       border: none;
-      padding: 20px 40px;
+      padding: 18px 50px;
       border-radius: 50px;
-      font-size: 1.2rem;
-      font-weight: bold;
+      font-size: 1.1rem;
+      font-weight: 700;
       cursor: pointer;
-      display: inline-flex;
+      display: flex;
       align-items: center;
-      gap: 10px;
-      box-shadow: 0 10px 30px rgba(233, 69, 96, 0.4);
-      transition: transform 0.2s;
+      gap: 12px;
+      box-shadow: 0 8px 30px rgba(233, 69, 96, 0.5);
+      transition: all 0.3s ease;
+      margin-bottom: 50px;
     }
     
     .scan-btn:active {
       transform: scale(0.95);
+      box-shadow: 0 4px 15px rgba(233, 69, 96, 0.4);
     }
     
-    .home-features {
-      margin-top: 50px;
+    .scan-btn-icon {
+      font-size: 1.4rem;
+    }
+    
+    .features {
       display: flex;
       flex-direction: column;
       gap: 15px;
+      width: 100%;
+      max-width: 320px;
     }
     
-    .feature-item {
-      background: rgba(255,255,255,0.1);
-      padding: 15px 20px;
-      border-radius: 12px;
+    .feature {
       display: flex;
       align-items: center;
       gap: 15px;
+      padding: 15px;
+      background: rgba(255,255,255,0.05);
+      border-radius: 15px;
+      text-align: left;
     }
     
     .feature-icon {
       font-size: 2rem;
+      width: 50px;
+      height: 50px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(233, 69, 96, 0.2);
+      border-radius: 12px;
     }
     
     .feature-text {
-      text-align: left;
+      flex: 1;
     }
     
     .feature-title {
-      font-weight: bold;
-      margin-bottom: 3px;
+      font-weight: 600;
+      font-size: 0.95rem;
+      margin-bottom: 2px;
     }
     
     .feature-desc {
-      font-size: 0.85rem;
-      color: #94a3b8;
+      font-size: 0.8rem;
+      color: rgba(255,255,255,0.5);
     }
     
-    /* Scanner Screen */
-    .scanner-screen {
-      display: none;
-      position: fixed;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      background: black;
-      z-index: 2000;
-    }
-    
-    .scanner-screen.active {
-      display: flex;
-      flex-direction: column;
+    /* ========== SCANNER SCREEN ========== */
+    #scannerScreen {
+      background: #000;
+      z-index: 100;
     }
     
     .scanner-header {
-      padding: 15px;
+      padding: 15px 20px;
       display: flex;
       justify-content: space-between;
       align-items: center;
-      background: rgba(0,0,0,0.5);
+      background: rgba(0,0,0,0.8);
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 10;
     }
     
     .scanner-title {
-      font-size: 1rem;
-      font-weight: bold;
+      font-size: 1.1rem;
+      font-weight: 600;
     }
     
     .scanner-close {
       background: rgba(255,255,255,0.2);
       border: none;
       color: white;
-      font-size: 20px;
-      width: 40px;
-      height: 40px;
+      font-size: 24px;
+      width: 44px;
+      height: 44px;
       border-radius: 50%;
       cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    
+    .scanner-video-container {
+      flex: 1;
+      position: relative;
+      display: flex;
+      flex-direction: column;
     }
     
     .scanner-video {
-      flex: 1;
       width: 100%;
+      height: 100%;
       object-fit: cover;
     }
     
@@ -216,77 +213,98 @@
       top: 50%;
       left: 50%;
       transform: translate(-50%, -50%);
-      width: 250px;
-      height: 250px;
-      border: 3px solid #e94560;
-      border-radius: 20px;
+      width: 260px;
+      height: 260px;
+      border: 4px solid #e94560;
+      border-radius: 25px;
+      box-shadow: 0 0 0 9999px rgba(0,0,0,0.5);
     }
+    
+    .scanner-corner {
+      position: absolute;
+      width: 30px;
+      height: 30px;
+      border-color: #e94560;
+      border-style: solid;
+    }
+    
+    .scanner-corner.tl { top: -2px; left: -2px; border-width: 4px 0 0 4px; border-radius: 8px 0 0 0; }
+    .scanner-corner.tr { top: -2px; right: -2px; border-width: 4px 4px 0 0; border-radius: 0 8px 0 0; }
+    .scanner-corner.bl { bottom: -2px; left: -2px; border-width: 0 0 4px 4px; border-radius: 0 0 0 8px; }
+    .scanner-corner.br { bottom: -2px; right: -2px; border-width: 0 4px 4px 0; border-radius: 0 0 8px 0; }
     
     .scanner-hint {
       position: absolute;
-      bottom: 40px;
+      bottom: 0;
       left: 0;
       right: 0;
+      padding: 25px;
       text-align: center;
-      color: white;
-      font-size: 0.9rem;
-      background: rgba(0,0,0,0.5);
-      padding: 15px;
+      background: linear-gradient(transparent, rgba(0,0,0,0.8));
+      font-size: 1rem;
+      color: rgba(255,255,255,0.8);
     }
     
-    /* Client Screen */
-    .client-screen {
-      display: none;
-    }
-    
-    .client-screen.active {
-      display: block;
+    /* ========== CLIENT SCREEN ========== */
+    #clientScreen {
+      padding: 20px;
+      padding-top: env(safe-area-inset-top, 20px);
+      overflow-y: auto;
     }
     
     .client-header {
-      text-align: center;
-      margin-bottom: 20px;
+      display: flex;
+      align-items: center;
+      gap: 15px;
+      margin-bottom: 25px;
     }
     
     .back-btn {
       background: rgba(255,255,255,0.1);
       border: none;
       color: white;
-      padding: 10px 15px;
-      border-radius: 10px;
-      margin-bottom: 15px;
+      padding: 12px;
+      border-radius: 12px;
       cursor: pointer;
-      display: inline-flex;
-      align-items: center;
-      gap: 5px;
+      font-size: 1.2rem;
+    }
+    
+    .establishment-info {
+      flex: 1;
     }
     
     .establishment-name {
-      font-size: 1.5rem;
-      font-weight: bold;
+      font-size: 1.4rem;
+      font-weight: 700;
       color: #e94560;
-      margin-bottom: 5px;
     }
     
-    .tab-container {
+    .establishment-subtitle {
+      font-size: 0.85rem;
+      color: rgba(255,255,255,0.5);
+    }
+    
+    /* Tabs */
+    .tabs {
       display: flex;
-      background: rgba(255,255,255,0.1);
-      border-radius: 12px;
+      background: rgba(255,255,255,0.05);
+      border-radius: 15px;
       padding: 5px;
-      margin-bottom: 20px;
+      margin-bottom: 25px;
     }
     
     .tab {
       flex: 1;
-      padding: 12px;
+      padding: 14px;
       text-align: center;
       border: none;
       background: transparent;
-      color: #94a3b8;
-      font-size: 14px;
+      color: rgba(255,255,255,0.5);
+      font-size: 1rem;
       font-weight: 600;
       cursor: pointer;
-      border-radius: 8px;
+      border-radius: 12px;
+      transition: all 0.2s;
     }
     
     .tab.active {
@@ -294,147 +312,187 @@
       color: white;
     }
     
+    /* Content */
     .content {
       display: none;
+      flex: 1;
     }
     
     .content.active {
       display: block;
     }
     
+    /* Playlist */
+    .playlist-empty {
+      text-align: center;
+      padding: 40px 20px;
+      color: rgba(255,255,255,0.5);
+    }
+    
+    .playlist-empty-icon {
+      font-size: 4rem;
+      margin-bottom: 15px;
+    }
+    
+    .song-list {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    
     .song-item {
       display: flex;
       align-items: center;
-      gap: 12px;
-      padding: 12px;
-      background: rgba(255,255,255,0.1);
-      border-radius: 10px;
-      margin-bottom: 10px;
+      gap: 15px;
+      padding: 15px;
+      background: rgba(255,255,255,0.05);
+      border-radius: 15px;
       cursor: pointer;
+      transition: all 0.2s;
+    }
+    
+    .song-item:active {
+      background: rgba(255,255,255,0.1);
+      transform: scale(0.98);
     }
     
     .song-thumb {
-      width: 50px;
-      height: 50px;
-      border-radius: 8px;
+      width: 60px;
+      height: 60px;
+      border-radius: 12px;
       object-fit: cover;
+      background: rgba(255,255,255,0.1);
     }
     
     .song-info {
       flex: 1;
+      min-width: 0;
     }
     
     .song-title {
       font-weight: 600;
-      font-size: 14px;
-      margin-bottom: 2px;
+      font-size: 1rem;
+      margin-bottom: 4px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
     
     .song-artist {
-      font-size: 12px;
-      color: #94a3b8;
+      font-size: 0.85rem;
+      color: rgba(255,255,255,0.5);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    
+    .song-add {
+      font-size: 1.5rem;
+      color: #e94560;
+    }
+    
+    /* Search */
+    .search-container {
+      margin-bottom: 20px;
     }
     
     .search-input {
       width: 100%;
-      padding: 15px;
+      padding: 16px 20px;
       border: none;
-      border-radius: 12px;
+      border-radius: 15px;
       background: rgba(255,255,255,0.1);
       color: white;
-      font-size: 16px;
-      margin-bottom: 15px;
+      font-size: 1rem;
     }
     
+    .search-input::placeholder {
+      color: rgba(255,255,255,0.4);
+    }
+    
+    /* Loading */
     .loading {
       text-align: center;
-      padding: 30px;
-      color: #94a3b8;
+      padding: 50px 20px;
+      color: rgba(255,255,255,0.5);
     }
     
-    /* Modal */
-    .modal {
-      display: none;
-      position: fixed;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      background: rgba(0,0,0,0.8);
-      z-index: 3000;
+    .loading-spinner {
+      font-size: 3rem;
+      margin-bottom: 15px;
+      animation: spin 1s linear infinite;
+    }
+    
+    @keyframes spin {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
+    
+    /* ========== SUCCESS SCREEN ========== */
+    #successScreen {
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+      padding: 30px;
+    }
+    
+    .success-icon {
+      width: 100px;
+      height: 100px;
+      background: linear-gradient(135deg, #10b981, #34d399);
+      border-radius: 50%;
+      display: flex;
       align-items: center;
       justify-content: center;
-      padding: 20px;
+      margin: 0 auto 25px;
+      font-size: 50px;
+      animation: success-pop 0.5s ease;
     }
     
-    .modal.active {
-      display: flex;
+    @keyframes success-pop {
+      0% { transform: scale(0); }
+      50% { transform: scale(1.2); }
+      100% { transform: scale(1); }
     }
     
-    .modal-content {
-      background: #1e1b4b;
-      border-radius: 20px;
-      padding: 25px;
-      width: 100%;
-      max-width: 400px;
-    }
-    
-    .modal-thumb {
-      width: 120px;
-      height: 120px;
-      border-radius: 15px;
-      margin: 0 auto 15px;
-      display: block;
-      object-fit: cover;
-    }
-    
-    .modal-title {
-      text-align: center;
-      font-size: 1.2rem;
-      font-weight: bold;
-      margin-bottom: 5px;
-    }
-    
-    .modal-artist {
-      text-align: center;
-      color: #94a3b8;
-      font-size: 0.9rem;
-      margin-bottom: 20px;
-    }
-    
-    .form-label {
-      display: block;
-      margin-bottom: 8px;
-      font-size: 14px;
-      color: #cbd5e1;
-    }
-    
-    .form-textarea {
-      width: 100%;
-      padding: 12px;
-      border: none;
-      border-radius: 10px;
-      background: rgba(255,255,255,0.1);
-      color: white;
-      font-size: 14px;
-      resize: none;
-      height: 80px;
-      margin-bottom: 15px;
-    }
-    
-    .btn {
-      width: 100%;
-      padding: 15px;
-      border: none;
-      border-radius: 12px;
-      font-size: 16px;
-      font-weight: bold;
-      cursor: pointer;
+    .success-title {
+      font-size: 1.8rem;
+      font-weight: 700;
       margin-bottom: 10px;
     }
     
+    .success-message {
+      color: rgba(255,255,255,0.6);
+      margin-bottom: 40px;
+      font-size: 1.1rem;
+    }
+    
+    .success-buttons {
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+      width: 100%;
+      max-width: 300px;
+    }
+    
+    /* ========== BUTTONS ========== */
+    .btn {
+      width: 100%;
+      padding: 18px;
+      border: none;
+      border-radius: 15px;
+      font-size: 1.1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    
+    .btn:active {
+      transform: scale(0.95);
+    }
+    
     .btn-primary {
-      background: linear-gradient(135deg, #e94560, #db2777);
+      background: linear-gradient(135deg, #e94560, #ff6b6b);
       color: white;
     }
     
@@ -443,303 +501,325 @@
       color: white;
     }
     
-    /* Success */
-    .success-screen {
+    /* ========== MODAL ========== */
+    .modal {
       display: none;
-      text-align: center;
-      padding-top: 60px;
-    }
-    
-    .success-screen.active {
-      display: block;
-    }
-    
-    .success-icon {
-      width: 80px;
-      height: 80px;
-      background: linear-gradient(135deg, #10b981, #34d399);
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0,0,0,0.9);
+      z-index: 200;
+      align-items: flex-end;
       justify-content: center;
+    }
+    
+    .modal.active {
+      display: flex;
+    }
+    
+    .modal-content {
+      background: linear-gradient(180deg, #1a1a2e, #16213e);
+      border-radius: 25px 25px 0 0;
+      padding: 30px 25px;
+      padding-bottom: max(25px, env(safe-area-inset-bottom));
+      width: 100%;
+      max-width: 500px;
+      animation: slide-up 0.3s ease;
+    }
+    
+    @keyframes slide-up {
+      from { transform: translateY(100%); }
+      to { transform: translateY(0); }
+    }
+    
+    .modal-handle {
+      width: 40px;
+      height: 4px;
+      background: rgba(255,255,255,0.2);
+      border-radius: 2px;
+      margin: 0 auto 25px;
+    }
+    
+    .modal-thumb {
+      width: 150px;
+      height: 150px;
+      border-radius: 20px;
       margin: 0 auto 20px;
-      font-size: 40px;
+      display: block;
+      object-fit: cover;
     }
     
-    .success-title {
-      font-size: 1.5rem;
-      font-weight: bold;
+    .modal-title {
+      text-align: center;
+      font-size: 1.3rem;
+      font-weight: 700;
+      margin-bottom: 5px;
+    }
+    
+    .modal-artist {
+      text-align: center;
+      color: rgba(255,255,255,0.5);
+      margin-bottom: 25px;
+    }
+    
+    .form-label {
+      display: block;
       margin-bottom: 10px;
+      font-size: 1rem;
+      font-weight: 600;
+      color: rgba(255,255,255,0.8);
     }
     
-    .success-message {
-      color: #94a3b8;
-      margin-bottom: 30px;
+    .form-textarea {
+      width: 100%;
+      padding: 15px;
+      border: none;
+      border-radius: 15px;
+      background: rgba(255,255,255,0.1);
+      color: white;
+      font-size: 1rem;
+      resize: none;
+      height: 100px;
+      margin-bottom: 20px;
+      font-family: inherit;
+    }
+    
+    .form-textarea::placeholder {
+      color: rgba(255,255,255,0.4);
     }
   </style>
 </head>
 <body>
-  <!-- Install Banner -->
-  <div id="installBanner" class="install-banner">
-    <span class="install-banner-text">📱 Installer l'app pour une meilleure expérience</span>
-    <button class="install-btn" onclick="installApp()">Installer</button>
-    <button class="close-btn" onclick="hideInstallBanner()">×</button>
-  </div>
-
   <!-- Home Screen -->
-  <div id="homeScreen" class="container home-screen">
+  <div id="homeScreen" class="screen active">
     <div class="home-logo">🎵</div>
     <h1 class="home-title">PlayMySong</h1>
     <p class="home-subtitle">Demandez vos chansons préférées dans votre établissement</p>
     
     <button class="scan-btn" onclick="startScanner()">
-      📷 Scanner le QR Code
+      <span class="scan-btn-icon">📷</span>
+      Scanner le QR Code
     </button>
     
-    <div class="home-features">
-      <div class="feature-item">
-        <span class="feature-icon">🎤</span>
+    <div class="features">
+      <div class="feature">
+        <div class="feature-icon">🎤</div>
         <div class="feature-text">
           <div class="feature-title">Choisissez vos hits</div>
-          <div class="feature-desc">Recherchez parmi des millions de chansons</div>
+          <div class="feature-desc">Des millions de chansons</div>
         </div>
       </div>
-      <div class="feature-item">
-        <span class="feature-icon">💬</span>
+      <div class="feature">
+        <div class="feature-icon">💬</div>
         <div class="feature-text">
           <div class="feature-title">Ajoutez un message</div>
-          <div class="feature-desc">Personnalisez votre demande</div>
+          <div class="feature-desc">Pour le DJ ou vos amis</div>
         </div>
       </div>
-      <div class="feature-item">
-        <span class="feature-icon">📸</span>
+      <div class="feature">
+        <div class="feature-icon">📸</div>
         <div class="feature-text">
           <div class="feature-title">Envoyez un selfie</div>
-          <div class="feature-desc">Montrez-vous au DJ</div>
+          <div class="feature-desc">Montrez-vous sur scène</div>
         </div>
       </div>
     </div>
   </div>
 
   <!-- Scanner Screen -->
-  <div id="scannerScreen" class="scanner-screen">
+  <div id="scannerScreen" class="screen">
     <div class="scanner-header">
       <span class="scanner-title">Scanner le QR Code</span>
-      <button class="scanner-close" onclick="stopScanner()">×</button>
+      <button class="scanner-close" onclick="stopScanner()">✕</button>
     </div>
-    <video id="scannerVideo" class="scanner-video" autoplay playsinline></video>
-    <div class="scanner-overlay"></div>
-    <div class="scanner-hint">Placez le QR Code dans le cadre</div>
-    <canvas id="scannerCanvas" style="display:none;"></canvas>
+    <div class="scanner-video-container" style="position:relative;">
+      <div id="scannerLoading" style="flex:1;display:flex;align-items:center;justify-content:center;background:#000;position:absolute;top:0;left:0;right:0;bottom:0;z-index:5;">
+        <div style="text-align:center;color:#fff;padding:20px;">
+          <div style="font-size:3rem;margin-bottom:15px;">📷</div>
+          <div>Chargement caméra...</div>
+        </div>
+      </div>
+      <div id="scannerRegion" style="flex:1;display:flex;align-items:center;justify-content:center;background:#000;"></div>
+      <div class="scanner-overlay">
+        <div class="scanner-corner tl"></div>
+        <div class="scanner-corner tr"></div>
+        <div class="scanner-corner bl"></div>
+        <div class="scanner-corner br"></div>
+      </div>
+      <div class="scanner-hint">Placez le QR Code dans le cadre</div>
+    </div>
   </div>
 
   <!-- Client Screen -->
-  <div id="clientScreen" class="container client-screen">
-    <button class="back-btn" onclick="goHome()">← Retour</button>
-    
+  <div id="clientScreen" class="screen">
     <div class="client-header">
-      <div class="establishment-name" id="establishmentName">Chargement...</div>
+      <button class="back-btn" onclick="goHome()">←</button>
+      <div class="establishment-info">
+        <div class="establishment-name" id="establishmentName">Chargement...</div>
+        <div class="establishment-subtitle">Faites votre demande</div>
+      </div>
     </div>
 
-    <div class="tab-container">
+    <div class="tabs">
       <button class="tab active" onclick="switchTab('playlist')">📋 Playlist</button>
       <button class="tab" onclick="switchTab('search')">🔍 Rechercher</button>
     </div>
 
     <div id="playlistTab" class="content active">
       <div id="playlistsContainer">
-        <div class="loading">Chargement...</div>
+        <div class="loading">
+          <div class="loading-spinner">⏳</div>
+          Chargement...
+        </div>
       </div>
     </div>
 
     <div id="searchTab" class="content">
-      <input type="text" class="search-input" id="searchInput" placeholder="Rechercher..." onkeyup="handleSearch(event)">
+      <div class="search-container">
+        <input type="text" class="search-input" id="searchInput" placeholder="Rechercher une chanson..." onkeyup="handleSearch(event)">
+      </div>
       <div id="searchResults"></div>
     </div>
   </div>
 
   <!-- Success Screen -->
-  <div id="successScreen" class="container success-screen">
+  <div id="successScreen" class="screen">
     <div class="success-icon">✓</div>
     <h2 class="success-title">Demande envoyée !</h2>
-    <p class="success-message">Votre demande sera bientôt validée.</p>
-    <button class="btn btn-primary" onclick="scanAnother()">📷 Scanner un autre QR Code</button>
-    <button class="btn btn-secondary" onclick="goHome()">🏠 Accueil</button>
+    <p class="success-message">Votre chanson sera bientôt jouée</p>
+    <div class="success-buttons">
+      <button class="btn btn-primary" onclick="scanAnother()">📷 Scanner un autre QR Code</button>
+      <button class="btn btn-secondary" onclick="goHome()">🏠 Accueil</button>
+    </div>
   </div>
 
   <!-- Request Modal -->
   <div id="requestModal" class="modal">
     <div class="modal-content">
+      <div class="modal-handle"></div>
       <img src="" alt="" class="modal-thumb" id="modalThumb">
       <h3 class="modal-title" id="modalTitle">Titre</h3>
       <p class="modal-artist" id="modalArtist">Artiste</p>
       
-      <label class="form-label">💬 Message (optionnel)</label>
-      <textarea class="form-textarea" id="messageInput" placeholder="Un message pour le DJ..."></textarea>
+      <label class="form-label">💬 Message pour le DJ (optionnel)</label>
+      <textarea class="form-textarea" id="messageInput" placeholder="Ex: Bonne fête Marie ! 🎉"></textarea>
       
-      <button class="btn btn-primary" onclick="submitRequest()">🎵 Envoyer</button>
+      <button class="btn btn-primary" onclick="submitRequest()">🎵 Envoyer la demande</button>
       <button class="btn btn-secondary" onclick="closeModal()">Annuler</button>
     </div>
   </div>
 
-  <!-- QR Code Scanner Library -->
   <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
   
   <script>
-    // Config
     const API_URL = 'https://playmysong-mu.vercel.app/api';
     
-    // State
     let html5QrCode = null;
     let establishmentId = null;
     let selectedSong = null;
-    let deferredPrompt = null;
     
-    // Initialize
-    (function init() {
-      console.log('PWA Init starting...');
-      
-      // UNREGISTER old service workers first
-      if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.getRegistrations().then(registrations => {
-          for (let reg of registrations) {
-            reg.unregister();
-            console.log('Old SW unregistered');
-          }
-        });
-      }
-      
-      // Clear any old data
-      sessionStorage.clear();
-      
-      // Check if opened with QR data (direct link from QR code)
+    window.addEventListener('load', () => {
       const urlParams = new URLSearchParams(window.location.search);
       const id = urlParams.get('id');
       
-      console.log('Init - ID from URL:', id);
-      
-      // Always show home screen first unless we have a valid ID
       if (id && id.length > 5) {
-        // Direct link - open client directly
         establishmentId = id;
         showScreen('client');
         openClient(id);
       } else {
-        // No ID - show home screen
         showScreen('home');
       }
-      
-      // Register service worker
-      if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.register('/pwa/sw.js')
-          .then(reg => console.log('SW registered'))
-          .catch(err => console.log('SW failed:', err));
-      }
-      
-      // Handle PWA install
-      window.addEventListener('beforeinstallprompt', (e) => {
-        e.preventDefault();
-        deferredPrompt = e;
-        if (!localStorage.getItem('pwa_installed')) {
-          document.getElementById('installBanner').classList.remove('hidden');
-        }
-      });
-    })();
+    });
     
-    // Screen management
     function showScreen(screen) {
-      console.log('showScreen called with:', screen);
-      
-      const home = document.getElementById('homeScreen');
-      const client = document.getElementById('clientScreen');
-      const success = document.getElementById('successScreen');
-      const scanner = document.getElementById('scannerScreen');
-      
-      // Hide all first
-      home.style.display = 'none';
-      client.style.display = 'none';
-      client.classList.remove('active');
-      success.style.display = 'none';
-      success.classList.remove('active');
-      scanner.style.display = 'none';
-      scanner.classList.remove('active');
-      
-      // Show requested screen
-      switch(screen) {
-        case 'home':
-          home.style.display = 'flex';
-          console.log('Home screen shown');
-          break;
-        case 'client':
-          client.style.display = 'block';
-          client.classList.add('active');
-          console.log('Client screen shown');
-          break;
-        case 'success':
-          success.style.display = 'block';
-          success.classList.add('active');
-          console.log('Success screen shown');
-          break;
-        case 'scanner':
-          scanner.style.display = 'flex';
-          scanner.classList.add('active');
-          console.log('Scanner screen shown');
-          break;
-      }
+      document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+      document.getElementById(screen + 'Screen').classList.add('active');
     }
     
-    // Scanner Functions
-    function startScanner() {
+    async function startScanner() {
       showScreen('scanner');
       
-      html5QrCode = new Html5Qrcode("scannerVideo");
+      // Small delay to ensure screen is visible
+      await new Promise(r => setTimeout(r, 500));
       
-      html5QrCode.start(
-        { facingMode: "environment" },
-        {
-          fps: 10,
-          qrbox: { width: 250, height: 250 }
-        },
-        onScanSuccess,
-        onScanFailure
-      ).catch(err => {
-        alert('Erreur caméra: ' + err);
+      const config = {
+        fps: 10,
+        qrbox: { width: 220, height: 220 }
+      };
+      
+      try {
+        // First check available cameras
+        const cameras = await Html5Qrcode.getCameras();
+        console.log('Cameras found:', cameras);
+        
+        if (!cameras || cameras.length === 0) {
+          alert('Aucune caméra trouvée');
+          stopScanner();
+          return;
+        }
+        
+        // Find back camera
+        let cameraId = cameras[0].id;
+        const backCam = cameras.find(c => 
+          c.label.toLowerCase().includes('back') || 
+          c.label.toLowerCase().includes('rear') ||
+          c.label.toLowerCase().includes('environment')
+        );
+        if (backCam) cameraId = backCam.id;
+        
+        console.log('Using camera:', cameraId);
+        
+        // Create scanner on the container div
+        html5QrCode = new Html5Qrcode("scannerRegion");
+        
+        await html5QrCode.start(
+          cameraId,
+          config,
+          onScanSuccess,
+          (err) => {} // Silent failure
+        );
+        
+        // Hide loading indicator
+        const loadingEl = document.getElementById('scannerLoading');
+        if (loadingEl) loadingEl.style.display = 'none';
+        
+      } catch (err) {
+        console.error('Scanner error:', err);
+        
+        let errorMsg = 'Erreur caméra';
+        
+        if (err.toString().includes('Permission')) {
+          errorMsg = 'Permission refusée.\n\nAutorisez l\'accès à la caméra dans les paramètres.';
+        } else if (err.toString().includes('NotFoundError')) {
+          errorMsg = 'Aucune caméra trouvée.';
+        }
+        
+        alert(errorMsg);
         stopScanner();
-      });
+      }
     }
     
     function stopScanner() {
-      showScreen('home');
-      
       if (html5QrCode) {
-        html5QrCode.stop().then(() => {
-          html5QrCode = null;
-        }).catch(err => console.log('Stop error:', err));
+        html5QrCode.stop().then(() => { html5QrCode = null; }).catch(() => {});
       }
+      showScreen('home');
     }
     
     function onScanSuccess(decodedText) {
-      console.log('Scanned:', decodedText);
+      if (navigator.vibrate) navigator.vibrate(200);
       
-      // Vibrate
-      if (navigator.vibrate) {
-        navigator.vibrate(200);
-      }
-      
-      // Extract establishment ID from URL or direct ID
       let id = null;
       
       if (decodedText.includes('establishmentId=')) {
         const match = decodedText.match(/establishmentId=([^&]+)/);
         id = match ? match[1] : null;
-      } else if (decodedText.includes('/pwa/') || decodedText.includes('/client')) {
+      } else if (decodedText.includes('id=')) {
         const match = decodedText.match(/id=([^&]+)/);
         id = match ? match[1] : null;
-      } else if (decodedText.includes('/r/')) {
-        const match = decodedText.match(/\/r\/([^?]+)/);
-        id = match ? match[1] : null;
       } else {
-        // Assume it's a direct establishment ID
         id = decodedText;
       }
       
@@ -751,77 +831,55 @@
       }
     }
     
-    function onScanFailure(error) {
-      // Silent fail
-    }
-    
-    // Client Functions
     async function openClient(id) {
       establishmentId = id;
       
       try {
         const res = await fetch(`${API_URL}/establishments/${id}`);
-        
-        if (!res.ok) {
-          alert('Établissement non trouvé');
-          showScreen('home');
-          return;
-        }
+        if (!res.ok) throw new Error();
         
         const establishment = await res.json();
-        
         document.getElementById('establishmentName').textContent = establishment.name || 'Établissement';
         
-        // Show client screen
         showScreen('client');
-        
-        // Reset tabs to playlist
-        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-        document.querySelectorAll('.content').forEach(c => c.classList.remove('active'));
-        document.getElementById('playlistTab').classList.add('active');
-        document.querySelector('.tab[onclick*="playlist"]').classList.add('active');
-        
-        // Load playlists
+        switchTab('playlist');
         loadPlaylists();
-        
       } catch (err) {
-        console.error('Error:', err);
-        alert('Erreur de connexion');
+        alert('Établissement non trouvé');
         showScreen('home');
       }
     }
     
     async function loadPlaylists() {
       const container = document.getElementById('playlistsContainer');
-      container.innerHTML = '<div class="loading">Chargement...</div>';
+      container.innerHTML = '<div class="loading"><div class="loading-spinner">⏳</div>Chargement...</div>';
       
       try {
         const res = await fetch(`${API_URL}/playlists/public?establishmentId=${establishmentId}`);
         const playlists = await res.json();
         
-        if (playlists.length === 0) {
-          container.innerHTML = '<div class="loading">Aucune playlist.<br>Utilisez l\'onglet recherche.</div>';
+        if (!playlists.length) {
+          container.innerHTML = '<div class="playlist-empty"><div class="playlist-empty-icon">🎵</div>Aucune chanson dans la playlist.<br>Utilisez l\'onglet Recherche.</div>';
           return;
         }
         
-        let html = '';
+        let html = '<div class="song-list">';
         playlists.forEach(playlist => {
-          html += `<div style="margin-bottom: 20px;">`;
           playlist.songs?.forEach(song => {
             html += `
               <div class="song-item" onclick="selectSong(${JSON.stringify(song).replace(/"/g, '&quot;')})">
-                ${song.thumbnail ? `<img src="${song.thumbnail}" class="song-thumb">` : '<div class="song-thumb" style="background:#333;"></div>'}
+                ${song.thumbnail ? `<img src="${song.thumbnail}" class="song-thumb">` : '<div class="song-thumb" style="display:flex;align-items:center;justify-content:center;font-size:1.5rem;">🎵</div>'}
                 <div class="song-info">
                   <div class="song-title">${song.title}</div>
                   <div class="song-artist">${song.artist || 'Artiste inconnu'}</div>
                 </div>
+                <span class="song-add">+</span>
               </div>
             `;
           });
-          html += '</div>';
         });
+        html += '</div>';
         container.innerHTML = html;
-        
       } catch (err) {
         container.innerHTML = '<div class="loading">Erreur de chargement</div>';
       }
@@ -834,18 +892,18 @@
       if (!query) return;
       
       const container = document.getElementById('searchResults');
-      container.innerHTML = '<div class="loading">Recherche...</div>';
+      container.innerHTML = '<div class="loading"><div class="loading-spinner">🔍</div>Recherche...</div>';
       
       try {
         const res = await fetch(`${API_URL}/youtube/search?q=${encodeURIComponent(query)}`);
         const data = await res.json();
         
         if (!data.items?.length) {
-          container.innerHTML = '<div class="loading">Aucun résultat</div>';
+          container.innerHTML = '<div class="playlist-empty">Aucun résultat trouvé</div>';
           return;
         }
         
-        let html = '';
+        let html = '<div class="song-list">';
         data.items.forEach(video => {
           const thumb = video.snippet?.thumbnails?.medium?.url || '';
           html += `
@@ -860,38 +918,28 @@
                 <div class="song-title">${video.snippet.title}</div>
                 <div class="song-artist">${video.snippet.channelTitle}</div>
               </div>
+              <span class="song-add">+</span>
             </div>
           `;
         });
+        html += '</div>';
         container.innerHTML = html;
-        
       } catch (err) {
         container.innerHTML = '<div class="loading">Erreur</div>';
       }
     }
     
-    // Navigation
-    function goHome() {
-      establishmentId = null;
-      showScreen('home');
-    }
-    
-    function scanAnother() {
-      showScreen('scanner');
-    }
-    
-    // Tab switching
     function switchTab(tab) {
       document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
       document.querySelectorAll('.content').forEach(c => c.classList.remove('active'));
-      event.target.classList.add('active');
+      document.querySelector(`.tab[onclick*="${tab}"]`).classList.add('active');
       document.getElementById(tab + 'Tab').classList.add('active');
     }
     
-    // Song selection
     function selectSong(song) {
       selectedSong = song;
       document.getElementById('modalThumb').src = song.thumbnail || '';
+      document.getElementById('modalThumb').style.display = song.thumbnail ? 'block' : 'none';
       document.getElementById('modalTitle').textContent = song.title;
       document.getElementById('modalArtist').textContent = song.artist || 'Artiste inconnu';
       document.getElementById('messageInput').value = '';
@@ -903,14 +951,13 @@
       selectedSong = null;
     }
     
-    // Submit request
     async function submitRequest() {
       if (!selectedSong) return;
       
       const message = document.getElementById('messageInput').value.trim();
       
       try {
-        const res = await fetch(`${API_URL}/requests`, {
+        await fetch(`${API_URL}/requests`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -923,9 +970,6 @@
           })
         });
         
-        if (!res.ok) throw new Error();
-        
-        // Save
         localStorage.setItem(`pms_request_${establishmentId}`, JSON.stringify({
           ...selectedSong,
           message,
@@ -934,28 +978,18 @@
         
         closeModal();
         showScreen('success');
-        
       } catch (err) {
         alert('Erreur lors de l\'envoi');
       }
     }
     
-    // PWA Install
-    function installApp() {
-      if (deferredPrompt) {
-        deferredPrompt.prompt();
-        deferredPrompt.userChoice.then((choiceResult) => {
-          if (choiceResult.outcome === 'accepted') {
-            localStorage.setItem('pwa_installed', 'true');
-          }
-          deferredPrompt = null;
-          hideInstallBanner();
-        });
-      }
+    function goHome() {
+      establishmentId = null;
+      showScreen('home');
     }
     
-    function hideInstallBanner() {
-      document.getElementById('installBanner').classList.add('hidden');
+    function scanAnother() {
+      startScanner();
     }
   </script>
 </body>
