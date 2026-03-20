@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { io } from "socket.io-client";
-import API_URL from "../config";
+import API_URL, { SOCKET_URL } from "../config";
 
 function UserDashboard() {
   const [user, setUser] = useState(null);
@@ -35,12 +35,15 @@ function UserDashboard() {
   useEffect(() => {
     if (!establishment?.id) return;
 
-    const socket = io(API_URL, {
-      transports: ["websocket"],
-      reconnection: true
+    const socket = io(SOCKET_URL, {
+      transports: ["polling", "websocket"],
+      reconnection: true,
+      reconnectionAttempts: 5,
+      reconnectionDelay: 1000
     });
 
     socket.on("connect", () => {
+      console.log("Socket connected:", socket.id);
       socket.emit("join_establishment", establishment.id);
     });
 

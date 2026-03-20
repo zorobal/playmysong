@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { io } from "socket.io-client";
-import API_URL from "../config";
+import API_URL, { SOCKET_URL } from "../config";
 
 function AdminDashboard() {
   const [admin, setAdmin] = useState(null);
@@ -33,16 +33,20 @@ function AdminDashboard() {
   useEffect(() => {
     if (!establishmentId) return;
 
-    const socket = io(API_URL, {
-      transports: ["websocket"],
-      reconnection: true
+    const socket = io(SOCKET_URL, {
+      transports: ["polling", "websocket"],
+      reconnection: true,
+      reconnectionAttempts: 5,
+      reconnectionDelay: 1000
     });
 
     socket.on("connect", () => {
+      console.log("Socket connected:", socket.id);
       socket.emit("join_establishment", establishmentId);
     });
 
     socket.on("new_request", (data) => {
+      console.log("New request received:", data);
       setPendingRequests(prev => [...prev, data.request || data]);
       setStats(prev => ({ ...prev, total: prev.total + 1 }));
     });
@@ -74,7 +78,7 @@ function AdminDashboard() {
     });
 
     return () => socket.disconnect();
-  }, [establishmentId, pendingRequests]);
+  }, [establishmentId]);
 
   async function loadInitialData() {
     try {
