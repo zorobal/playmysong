@@ -49,22 +49,26 @@ function AdminDashboard() {
       setAdmin(adminData);
 
       if (adminData.establishmentId) {
+        // Load users
         const usersRes = await fetch(`${API_URL}/users?establishmentId=${adminData.establishmentId}`, { headers });
         const usersData = await usersRes.json();
         setUsers(Array.isArray(usersData) ? usersData : []);
 
+        // Load playlists - public endpoint doesn't need auth
         const playlistsRes = await fetch(`${API_URL}/playlists/by-establishment/${adminData.establishmentId}`);
         const playlistsData = await playlistsRes.json();
         setPlaylists(Array.isArray(playlistsData) ? playlistsData : []);
         
-        // Find establishment playlist (marked with isEstablishmentPlaylist)
+        // Find establishment playlist
         const estPlaylist = playlistsData.find(p => p.isEstablishmentPlaylist);
         setEstablishmentPlaylist(estPlaylist || null);
 
+        // Load requests
         const requestsRes = await fetch(`${API_URL}/request/pending?establishmentId=${adminData.establishmentId}`, { headers });
         const requestsData = await requestsRes.json();
         setPendingRequests(Array.isArray(requestsData) ? requestsData : []);
 
+        // Load current playlist/queue
         const playlistRes = await fetch(`${API_URL}/request/playlist/current?establishmentId=${adminData.establishmentId}`);
         const playlistData = await playlistRes.json();
         setNowPlaying(playlistData.nowPlaying);
@@ -74,6 +78,24 @@ function AdminDashboard() {
       console.error("Erreur chargement:", err);
     } finally {
       setLoading(false);
+    }
+  }
+
+  async function loadPlaylistsOnly() {
+    // Just refresh playlists without full reload
+    try {
+      const token = localStorage.getItem("token");
+      const adminId = admin?.establishmentId;
+      if (!adminId) return;
+      
+      const playlistsRes = await fetch(`${API_URL}/playlists/by-establishment/${adminId}`);
+      const playlistsData = await playlistsRes.json();
+      setPlaylists(Array.isArray(playlistsData) ? playlistsData : []);
+      
+      const estPlaylist = playlistsData.find(p => p.isEstablishmentPlaylist);
+      setEstablishmentPlaylist(estPlaylist || null);
+    } catch (err) {
+      console.error("Erreur chargement playlists:", err);
     }
   }
 
@@ -175,7 +197,7 @@ function AdminDashboard() {
           <span className="establishment-name">{admin?.establishment?.name || "Établissement"}</span>
         </div>
         <div className="header-right">
-          <button className="btn-refresh" onClick={loadInitialData} title="Actualiser">🔄</button>
+          <button className="btn-refresh" onClick={loadPlaylistsOnly} title="Actualiser">🔄</button>
           <button className="btn-logout" onClick={logout}>Déconnexion</button>
         </div>
       </header>
@@ -303,8 +325,8 @@ function AdminDashboard() {
                 console.log("Playlist response:", res.status);
                 if (res.ok) {
                   setNewPlaylist({ name: "" });
-                  // Refresh all data
-                  loadInitialData();
+                  // Refresh playlists only
+                  loadPlaylistsOnly();
                 } else {
                   const err = await res.json();
                   alert("Erreur: " + (err.error || "Inconnu"));
