@@ -9,6 +9,7 @@ function AdminDashboard() {
   const [validatedRequests, setValidatedRequests] = useState([]);
   const [users, setUsers] = useState([]);
   const [playlists, setPlaylists] = useState([]);
+  const [establishmentPlaylist, setEstablishmentPlaylist] = useState(null);
   const [nowPlaying, setNowPlaying] = useState(null);
   const [stats, setStats] = useState({ total: 0, validated: 0, rejected: 0 });
   const [newUser, setNewUser] = useState({ name: "", email: "", password: "", phoneNumber: "" });
@@ -55,6 +56,10 @@ function AdminDashboard() {
         const playlistsRes = await fetch(`${API_URL}/playlists?establishmentId=${adminData.establishmentId}`, { headers });
         const playlistsData = await playlistsRes.json();
         setPlaylists(Array.isArray(playlistsData) ? playlistsData : []);
+        
+        // Find establishment playlist (marked with isEstablishmentPlaylist)
+        const estPlaylist = playlistsData.find(p => p.isEstablishmentPlaylist);
+        setEstablishmentPlaylist(estPlaylist || null);
 
         const requestsRes = await fetch(`${API_URL}/request/pending?establishmentId=${adminData.establishmentId}`, { headers });
         const requestsData = await requestsRes.json();
@@ -378,67 +383,150 @@ function AdminDashboard() {
               Cette playlist est jouée automatiquement quand la file d'attente est vide.
             </p>
             
-            {playlists.length === 0 ? (
+            {!establishmentPlaylist ? (
               <div style={{textAlign: 'center', padding: 40}}>
-                <p>Aucune playlist trouvée.</p>
-                <p>Créez d'abord une playlist dans l'onglet "Playlist"</p>
+                <p style={{marginBottom: 20}}>Aucune Playlist Établissement définie.</p>
+                <p style={{marginBottom: 20, color: '#666'}}>Sélectionnez une playlist existante ou créez-en une :</p>
+                
+                <select 
+                  onChange={async (e) => {
+                    if (e.target.value) {
+                      const token = localStorage.getItem("token");
+                      await fetch(`${API_URL}/playlists/${e.target.value}/set-establishment`, {
+                        method: 'POST',
+                        headers: { Authorization: `Bearer ${token}` }
+                      });
+                      loadInitialData();
+                    }
+                  }}
+                  style={{padding: '12px 20px', borderRadius: 8, border: '1px solid #ddd', fontSize: '1rem', marginBottom: 20}}
+                >
+                  <option value="">-- Sélectionner une playlist --</option>
+                  {playlists.filter(p => !p.isEstablishmentPlaylist).map(pl => (
+                    <option key={pl.id} value={pl.id}>{pl.name} ({pl.songs?.length || 0} chansons)</option>
+                  ))}
+                </select>
+                
+                <br />
+                
+                <div style={{display: 'flex', gap: 10, justifyContent: 'center'}}>
+                  <input 
+                    placeholder="Nom de la playlist"
+                    value={newPlaylist.name}
+                    onChange={e => setNewPlaylist({ name: e.target.value })}
+                    style={{padding: '12px 20px', borderRadius: 8, border: '1px solid #ddd', fontSize: '1rem', width: 200}}
+                  />
+                  <button 
+                    onClick={async () => {
+                      if (!newPlaylist.name.trim()) return;
+                      const token = localStorage.getItem("token");
+                      const res = await fetch(`${API_URL}/playlists`, {
+                        method: 'POST',
+                        headers: { 
+                          'Content-Type': 'application/json',
+                          Authorization: `Bearer ${token}` 
+                        },
+                        body: JSON.stringify({ 
+                          name: newPlaylist.name,
+                          establishmentId,
+                          createdBy: admin?.id,
+                          isEstablishmentPlaylist: true
+                        })
+                      });
+                      if (res.ok) {
+                        setNewPlaylist({ name: "" });
+                        loadInitialData();
+                      }
+                    }}
+                    style={{
+                      background: 'linear-gradient(135deg, #10b981, #059669)',
+                      color: 'white',
+                      border: 'none',
+                      padding: '12px 24px',
+                      borderRadius: 8,
+                      cursor: 'pointer',
+                      fontSize: '1rem'
+                    }}
+                  >
+                    Créer
+                  </button>
+                </div>
               </div>
             ) : (
-              <div className="playlists-list">
-                {playlists.map(pl => (
-                  <div key={pl.id} className="playlist-card" style={{marginBottom: 20, padding: 15, background: '#f9f9f9', borderRadius: 12}}>
-                    <div className="playlist-header" style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 15}}>
-                      <h3 style={{margin: 0}}>{pl.name}</h3>
-                      <span style={{fontSize: '0.85rem', color: '#666'}}>{pl.songs?.length || 0} chanson(s)</span>
-                    </div>
-                    
-                    <div className="playlist-songs">
-                      {(pl.songs || []).map(song => (
-                        <div key={song.id} className="playlist-song-item" style={{display: 'flex', alignItems: 'center', gap: 12, padding: '8px 0', borderBottom: '1px solid #eee'}}>
-                          {song.thumbnail && <img src={song.thumbnail} alt="" style={{width: 50, height: 50, borderRadius: 8, objectFit: 'cover'}} />}
-                          <div style={{flex: 1, minWidth: 0}}>
-                            <p style={{fontWeight: 600, margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap'}}>{song.title}</p>
-                            <p style={{fontSize: '0.85rem', color: '#666', margin: 0}}>{song.artist || 'Artiste inconnu'}</p>
-                          </div>
-                          <button 
-                            onClick={async () => {
-                              if (!confirm('Supprimer cette chanson ?')) return;
-                              const token = localStorage.getItem("token");
-                              await fetch(`${API_URL}/songs/${song.id}`, {
-                                method: 'DELETE',
-                                headers: { Authorization: `Bearer ${token}` }
-                              });
-                              loadInitialData();
-                            }}
-                            style={{background: '#ef4444', color: 'white', border: 'none', padding: '8px 12px', borderRadius: 6, cursor: 'pointer'}}
-                          >
-                            🗑️
-                          </button>
-                        </div>
-                      ))}
-                      {(!pl.songs || pl.songs.length === 0) && (
-                        <p style={{color: '#999', textAlign: 'center', padding: 20}}>Aucune chanson dans cette playlist</p>
-                      )}
-                    </div>
-                    
-                    <div style={{marginTop: 15}}>
+              <div className="playlist-card" style={{marginBottom: 20, padding: 15, background: '#f0f9ff', borderRadius: 12, border: '2px solid #10b981'}}>
+                <div className="playlist-header" style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 15}}>
+                  <div>
+                    <h3 style={{margin: 0}}>🎵 {establishmentPlaylist.name}</h3>
+                    <span style={{fontSize: '0.85rem', color: '#10b981'}}>Playlist Établissement</span>
+                  </div>
+                  <span style={{fontSize: '0.85rem', color: '#666'}}>{establishmentPlaylist.songs?.length || 0} chanson(s)</span>
+                </div>
+                
+                <div className="playlist-songs">
+                  {(establishmentPlaylist.songs || []).map(song => (
+                    <div key={song.id} className="playlist-song-item" style={{display: 'flex', alignItems: 'center', gap: 12, padding: '8px 0', borderBottom: '1px solid #eee'}}>
+                      {song.thumbnail && <img src={song.thumbnail} alt="" style={{width: 50, height: 50, borderRadius: 8, objectFit: 'cover'}} />}
+                      <div style={{flex: 1, minWidth: 0}}>
+                        <p style={{fontWeight: 600, margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap'}}>{song.title}</p>
+                        <p style={{fontSize: '0.85rem', color: '#666', margin: 0}}>{song.artist || 'Artiste inconnu'}</p>
+                      </div>
                       <button 
-                        onClick={() => handleFileSelect(pl.id)} 
-                        style={{
-                          background: 'linear-gradient(135deg, #10b981, #059669)',
-                          color: 'white',
-                          border: 'none',
-                          padding: '12px 24px',
-                          borderRadius: 8,
-                          cursor: 'pointer',
-                          fontSize: '1rem'
+                        onClick={async () => {
+                          if (!confirm('Supprimer cette chanson ?')) return;
+                          const token = localStorage.getItem("token");
+                          await fetch(`${API_URL}/songs/${song.id}`, {
+                            method: 'DELETE',
+                            headers: { Authorization: `Bearer ${token}` }
+                          });
+                          loadInitialData();
                         }}
+                        style={{background: '#ef4444', color: 'white', border: 'none', padding: '8px 12px', borderRadius: 6, cursor: 'pointer'}}
                       >
-                        ➕ Ajouter une chanson YouTube
+                        🗑️
                       </button>
                     </div>
-                  </div>
-                ))}
+                  ))}
+                  {(!establishmentPlaylist.songs || establishmentPlaylist.songs.length === 0) && (
+                    <p style={{color: '#999', textAlign: 'center', padding: 20}}>Aucune chanson dans cette playlist</p>
+                  )}
+                </div>
+                
+                <div style={{marginTop: 15, display: 'flex', gap: 10}}>
+                  <button 
+                    onClick={() => handleFileSelect(establishmentPlaylist.id)} 
+                    style={{
+                      background: 'linear-gradient(135deg, #10b981, #059669)',
+                      color: 'white',
+                      border: 'none',
+                      padding: '12px 24px',
+                      borderRadius: 8,
+                      cursor: 'pointer',
+                      fontSize: '1rem'
+                    }}
+                  >
+                    ➕ Ajouter une chanson YouTube
+                  </button>
+                  
+                  <select 
+                    onChange={async (e) => {
+                      if (e.target.value) {
+                        const token = localStorage.getItem("token");
+                        await fetch(`${API_URL}/playlists/${e.target.value}/set-establishment`, {
+                          method: 'POST',
+                          headers: { Authorization: `Bearer ${token}` }
+                        });
+                        loadInitialData();
+                      }
+                      e.target.value = '';
+                    }}
+                    style={{padding: '12px 20px', borderRadius: 8, border: '1px solid #ddd', fontSize: '1rem'}}
+                  >
+                    <option value="">Changer de playlist...</option>
+                    {playlists.filter(p => !p.isEstablishmentPlaylist).map(pl => (
+                      <option key={pl.id} value={pl.id}>{pl.name}</option>
+                    ))}
+                  </select>
+                </div>
               </div>
             )}
           </div>

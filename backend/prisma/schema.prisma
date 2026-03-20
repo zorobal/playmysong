@@ -54,12 +54,13 @@ model Establishment {
 }
 
 model Playlist {
-  id              String        @id @default(cuid())
-  establishment   Establishment @relation(fields: [establishmentId], references: [id])
-  establishmentId String
-  name            String
-  createdBy       String?
-  createdAt       DateTime      @default(now())
+  id                    String        @id @default(cuid())
+  establishment         Establishment @relation(fields: [establishmentId], references: [id])
+  establishmentId       String
+  name                  String
+  createdBy             String?
+  createdAt             DateTime      @default(now())
+  isEstablishmentPlaylist Boolean      @default(false)
 
   songs Song[]
 }

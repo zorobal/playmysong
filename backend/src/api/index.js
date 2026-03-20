@@ -386,15 +386,54 @@ app.get('/api/playlists/public', async (req, res) => {
 
 app.post('/api/playlists', async (req, res) => {
   try {
-    const { name, establishmentId, createdBy } = req.body;
+    const { name, establishmentId, createdBy, isEstablishmentPlaylist } = req.body;
+    
+    // If this is the establishment playlist, unset any existing one
+    if (isEstablishmentPlaylist) {
+      await prisma.playlist.updateMany({
+        where: { establishmentId, isEstablishmentPlaylist: true },
+        data: { isEstablishmentPlaylist: false }
+      });
+    }
+    
     const playlist = await prisma.playlist.create({
       data: {
         name,
         establishmentId,
-        createdBy
+        createdBy,
+        isEstablishmentPlaylist: isEstablishmentPlaylist || false
       }
     });
     res.json(playlist);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Set playlist as establishment playlist
+app.post('/api/playlists/:id/set-establishment', async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    // Get the playlist to find its establishmentId
+    const playlistToUpdate = await prisma.playlist.findUnique({ where: { id } });
+    if (!playlistToUpdate) {
+      return res.status(404).json({ error: "Playlist non trouvée" });
+    }
+    
+    // Unset any existing establishment playlist for this establishment
+    await prisma.playlist.updateMany({
+      where: { establishmentId: playlistToUpdate.establishmentId, isEstablishmentPlaylist: true },
+      data: { isEstablishmentPlaylist: false }
+    });
+    
+    // Set this playlist as the establishment playlist
+    const updated = await prisma.playlist.update({
+      where: { id },
+      data: { isEstablishmentPlaylist: true }
+    });
+    
+    res.json(updated);
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -724,15 +763,16 @@ app.get('/api/request/playlist/current', async (req, res) => {
       orderBy: { createdAt: 'asc' }
     });
     
-    // Get establishment playlist (first playlist)
-    const playlists = await prisma.playlist.findMany({
-      where: { establishmentId },
-      include: { songs: true },
-      orderBy: { createdAt: 'asc' },
-      take: 1
+    // Get establishment playlist (marked with isEstablishmentPlaylist)
+    const establishmentPlaylistData = await prisma.playlist.findFirst({
+      where: { 
+        establishmentId,
+        isEstablishmentPlaylist: true
+      },
+      include: { songs: true }
     });
     
-    const establishmentPlaylist = playlists.length > 0 ? playlists[0].songs : [];
+    const establishmentPlaylist = establishmentPlaylistData ? establishmentPlaylistData.songs : [];
     
     res.json({ nowPlaying, queue, establishmentPlaylist });
   } catch (error) {
