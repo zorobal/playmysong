@@ -1,0 +1,29 @@
+{
+  "id": "env-12345678",
+  "name": "PlayMySong Runner Environment",
+  "values": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:4000",
+      "enabled": true
+    },
+    {
+      "key": "userToken",
+      "value": "",
+      "enabled": true
+    },
+    {
+      "key": "adminToken",
+      "value": "",
+      "enabled": true
+    },
+    {
+      "key": "lastRequestId",
+      "value": "",
+      "enabled": true
+    }
+  ],
+  "_postman_variable_scope": "environment",
+  "_postman_exported_at": "2026-02-13T05:40:00.000Z",
+  "_postman_exported_using": "Postman/10.0.0"
+}

@@ -1,0 +1,22 @@
+{
+  "name": "playmysong-electron",
+  "version": "1.0.0",
+  "description": "Écran géant pour PlayMySong",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "dev": "electron . --enable-logging"
+  },
+  "author": "PlayMySong",
+  "license": "MIT",
+  "dependencies": {
+    "gsap": "^3.14.2",
+    "socket.io-client": "^4.7.1"
+  },
+  "devDependencies": {
+    "electron": "^28.0.0"
+  },
+  "config": {
+    "electron_mirror": "https://npmmirror.com/mirrors/electron/"
+  }
+}

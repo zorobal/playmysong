@@ -1,0 +1,139 @@
+{
+  "info": {
+    "name": "PlayMySong Backend Tests",
+    "_postman_id": "12345678-abcd-efgh-ijkl-987654321000",
+    "description": "Collection de tests pour PlayMySong (login user/admin, requêtes, playlist)",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Login User",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"email\": \"user@playmysong.local\",\n  \"password\": \"changeme\"\n}"
+        },
+        "url": {
+          "raw": "http://localhost:4000/auth/login",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "4000",
+          "path": ["auth", "login"]
+        }
+      }
+    },
+    {
+      "name": "Login Admin",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"email\": \"admin@playmysong.local\",\n  \"password\": \"changeme\"\n}"
+        },
+        "url": {
+          "raw": "http://localhost:4000/auth/login",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "4000",
+          "path": ["auth", "login"]
+        }
+      }
+    },
+    {
+      "name": "Créer une requête (User)",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{userToken}}" },
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"establishmentId\": 1,\n  \"youtubeId\": \"abc123\",\n  \"title\": \"Billie Jean\",\n  \"artist\": \"Michael Jackson\",\n  \"durationSec\": 240,\n  \"message\": \"Play this classic!\"\n}"
+        },
+        "url": {
+          "raw": "http://localhost:4000/request",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "4000",
+          "path": ["request"]
+        }
+      }
+    },
+    {
+      "name": "Voir requêtes en attente (Admin)",
+      "request": {
+        "method": "GET",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{adminToken}}" }
+        ],
+        "url": {
+          "raw": "http://localhost:4000/request/pending",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "4000",
+          "path": ["request", "pending"]
+        }
+      }
+    },
+    {
+      "name": "Valider une requête (Admin)",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{adminToken}}" }
+        ],
+        "url": {
+          "raw": "http://localhost:4000/request/{{REQUEST_ID}}/validate",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "4000",
+          "path": ["request", "{{REQUEST_ID}}", "validate"]
+        }
+      }
+    },
+    {
+      "name": "Rejeter une requête (Admin)",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{adminToken}}" },
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"reason\": \"Not appropriate\"\n}"
+        },
+        "url": {
+          "raw": "http://localhost:4000/request/{{REQUEST_ID}}/reject",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "4000",
+          "path": ["request", "{{REQUEST_ID}}", "reject"]
+        }
+      }
+    },
+    {
+      "name": "Playlist courante (Public)",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "http://localhost:4000/request/playlist/current?establishmentId=1",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "4000",
+          "path": ["request", "playlist", "current"],
+          "query": [{ "key": "establishmentId", "value": "1" }]
+        }
+      }
+    }
+  ],
+  "variable": [
+    { "key": "userToken", "value": "" },
+    { "key": "adminToken", "value": "" }
+  ]
+}

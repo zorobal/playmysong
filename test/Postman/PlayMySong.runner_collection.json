@@ -1,0 +1,136 @@
+{
+  "info": {
+    "name": "PlayMySong Runner Workflow",
+    "_postman_id": "workflow-1234",
+    "description": "Workflow complet: login user → créer requête → login admin → voir requêtes → valider → playlist courante",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Login User",
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"email\": \"user@playmysong.local\",\n  \"password\": \"changeme\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/auth/login",
+          "host": ["{{baseUrl}}"],
+          "path": ["auth", "login"]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "const jsonData = pm.response.json();",
+              "pm.environment.set(\"userToken\", jsonData.token);"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Créer une requête (User)",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{userToken}}" },
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"establishmentId\": 1,\n  \"youtubeId\": \"abc123\",\n  \"title\": \"Billie Jean\",\n  \"artist\": \"Michael Jackson\",\n  \"durationSec\": 240,\n  \"message\": \"Play this classic!\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/request",
+          "host": ["{{baseUrl}}"],
+          "path": ["request"]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "const jsonData = pm.response.json();",
+              "pm.environment.set(\"lastRequestId\", jsonData.requestId);"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Login Admin",
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"email\": \"admin@playmysong.local\",\n  \"password\": \"changeme\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/auth/login",
+          "host": ["{{baseUrl}}"],
+          "path": ["auth", "login"]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "const jsonData = pm.response.json();",
+              "pm.environment.set(\"adminToken\", jsonData.token);"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Voir requêtes en attente (Admin)",
+      "request": {
+        "method": "GET",
+        "header": [{ "key": "Authorization", "value": "Bearer {{adminToken}}" }],
+        "url": {
+          "raw": "{{baseUrl}}/request/pending",
+          "host": ["{{baseUrl}}"],
+          "path": ["request", "pending"]
+        }
+      }
+    },
+    {
+      "name": "Valider requête (Admin)",
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Authorization", "value": "Bearer {{adminToken}}" }],
+        "url": {
+          "raw": "{{baseUrl}}/request/{{lastRequestId}}/validate",
+          "host": ["{{baseUrl}}"],
+          "path": ["request", "{{lastRequestId}}", "validate"]
+        }
+      }
+    },
+    {
+      "name": "Playlist courante (Public)",
+      "request": {
+        "method": "GET",
+        "url": {
+          "raw": "{{baseUrl}}/request/playlist/current?establishmentId=1",
+          "host": ["{{baseUrl}}"],
+          "path": ["request", "playlist", "current"],
+          "query": [{ "key": "establishmentId", "value": "1" }]
+        }
+      }
+    }
+  ],
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:4000" },
+    { "key": "userToken", "value": "" },
+    { "key": "adminToken", "value": "" },
+    { "key": "lastRequestId", "value": "" }
+  ]
+}

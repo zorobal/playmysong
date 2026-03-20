@@ -1,0 +1,19 @@
+{
+  "name": "playmysong",
+  "version": "1.0.0",
+  "private": true,
+  "workspaces": [
+    "backend",
+    "tests"
+  ],
+  "scripts": {
+    "dev": "npm --prefix backend run dev",
+    "start": "npm --prefix backend run start",
+    "lint": "npm --prefix backend run lint",
+    "test": "npm --prefix tests run test",
+    "backend:install": "npm --prefix backend install",
+    "tests:install": "npm --prefix tests install"
+  },
+  "dependencies": {},
+  "devDependencies": {}
+}

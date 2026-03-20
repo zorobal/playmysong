@@ -322,7 +322,71 @@
       display: block;
     }
     
-    /* Playlist */
+    /* Playlists */
+    .playlists-container {
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+    }
+    
+    .playlist-section {
+      background: rgba(255,255,255,0.05);
+      border-radius: 15px;
+      overflow: hidden;
+    }
+    
+    .playlist-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 15px 18px;
+      background: rgba(255,255,255,0.08);
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    
+    .playlist-header:active {
+      background: rgba(255,255,255,0.12);
+    }
+    
+    .playlist-info {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    
+    .playlist-icon {
+      font-size: 1.3rem;
+    }
+    
+    .playlist-name {
+      font-weight: 600;
+      font-size: 1rem;
+    }
+    
+    .playlist-count {
+      font-size: 0.85rem;
+      color: rgba(255,255,255,0.5);
+    }
+    
+    .playlist-arrow {
+      font-size: 0.8rem;
+      color: rgba(255,255,255,0.5);
+      transition: transform 0.2s;
+    }
+    
+    .playlist-songs {
+      padding: 10px;
+    }
+    
+    .playlist-empty-songs {
+      text-align: center;
+      padding: 20px;
+      color: rgba(255,255,255,0.4);
+      font-size: 0.9rem;
+    }
+    
+    /* Playlist Empty */
     .playlist-empty {
       text-align: center;
       padding: 40px 20px;
@@ -832,23 +896,31 @@
     }
     
     async function openClient(id) {
+      console.log('openClient called with id:', id);
       establishmentId = id;
       
       try {
         const res = await fetch(`${API_URL}/establishments/${id}`);
-        if (!res.ok) throw new Error();
+        console.log('Establishment response status:', res.status);
+        
+        if (!res.ok) {
+          throw new Error('Establishment not found');
+        }
         
         const establishment = await res.json();
+        console.log('Establishment:', establishment);
         document.getElementById('establishmentName').textContent = establishment.name || 'Établissement';
         
         showScreen('client');
         
         // Wait for DOM to update then load playlists
         setTimeout(() => {
+          console.log('Calling switchTab and loadPlaylists');
           switchTab('playlist');
           loadPlaylists();
-        }, 100);
+        }, 200);
       } catch (err) {
+        console.error('Error opening client:', err);
         alert('Établissement non trouvé');
         showScreen('home');
       }
@@ -857,47 +929,77 @@
     async function loadPlaylists() {
       const container = document.getElementById('playlistsContainer');
       console.log('loadPlaylists called, establishmentId:', establishmentId);
+      
+      if (!establishmentId) {
+        container.innerHTML = '<div class="loading">Erreur: ID établissement manquant</div>';
+        return;
+      }
+      
       container.innerHTML = '<div class="loading"><div class="loading-spinner">⏳</div>Chargement...</div>';
       
       try {
         const url = `${API_URL}/playlists/public?establishmentId=${establishmentId}`;
         console.log('Fetching:', url);
+        
         const res = await fetch(url);
         console.log('Response status:', res.status);
         
         if (!res.ok) {
-          throw new Error('Failed to fetch playlists');
+          const text = await res.text();
+          console.error('Error response:', text);
+          throw new Error('Status: ' + res.status);
         }
         
         const playlists = await res.json();
         console.log('Playlists loaded:', playlists);
         
-        if (!playlists || !playlists.length) {
+        if (!playlists || playlists.length === 0) {
           container.innerHTML = '<div class="playlist-empty"><div class="playlist-empty-icon">🎵</div>Aucune chanson dans la playlist.<br>Utilisez l\'onglet Recherche.</div>';
           return;
         }
         
-        let html = '<div class="song-list">';
-        playlists.forEach(playlist => {
-          console.log('Playlist:', playlist.name, 'Songs:', playlist.songs?.length);
-          playlist.songs?.forEach(song => {
-            html += `
-              <div class="song-item" onclick="selectSong(${JSON.stringify(song).replace(/"/g, '&quot;')})">
-                ${song.thumbnail ? `<img src="${song.thumbnail}" class="song-thumb">` : '<div class="song-thumb" style="display:flex;align-items:center;justify-content:center;font-size:1.5rem;">🎵</div>'}
-                <div class="song-info">
-                  <div class="song-title">${song.title}</div>
-                  <div class="song-artist">${song.artist || 'Artiste inconnu'}</div>
+        let html = '<div class="playlists-container">';
+        playlists.forEach((playlist, pIndex) => {
+          const isOpen = pIndex === 0; // First playlist open by default
+          html += `
+            <div class="playlist-section">
+              <div class="playlist-header" onclick="togglePlaylist(${pIndex})">
+                <div class="playlist-info">
+                  <span class="playlist-icon">📁</span>
+                  <span class="playlist-name">${playlist.name}</span>
+                  <span class="playlist-count">(${playlist.songs?.length || 0})</span>
                 </div>
-                <span class="song-add">+</span>
+                <span class="playlist-arrow" id="arrow-${pIndex}">▼</span>
               </div>
-            `;
-          });
+              <div class="playlist-songs" id="playlist-songs-${pIndex}" style="display: ${isOpen ? 'block' : 'none'}">
+          `;
+          
+          if (playlist.songs && playlist.songs.length > 0) {
+            playlist.songs.forEach(song => {
+              html += `
+                <div class="song-item" onclick="selectSong(${JSON.stringify(song).replace(/"/g, '&quot;')})">
+                  ${song.thumbnail ? `<img src="${song.thumbnail}" class="song-thumb">` : '<div class="song-thumb" style="display:flex;align-items:center;justify-content:center;font-size:1.5rem;">🎵</div>'}
+                  <div class="song-info">
+                    <div class="song-title">${song.title}</div>
+                    <div class="song-artist">${song.artist || 'Artiste inconnu'}</div>
+                  </div>
+                  <span class="song-add">+</span>
+                </div>
+              `;
+            });
+          } else {
+            html += '<div class="playlist-empty-songs">Aucune chanson dans cette playlist</div>';
+          }
+          
+          html += '</div></div>';
         });
         html += '</div>';
         container.innerHTML = html;
+        console.log('HTML set. Songs in DOM:', document.querySelectorAll('.song-item').length);
+        console.log('Container visible:', window.getComputedStyle(document.getElementById('playlistTab')).display);
       } catch (err) {
         console.error('Error loading playlists:', err);
-        container.innerHTML = '<div class="loading">Erreur de chargement<br><small>' + err.message + '</small></div>';
+        container.innerHTML = '<div class="loading">Erreur de chargement<br><small>' + err.message + '</small><br><button onclick="loadPlaylists()">Réessayer</button></div>';
       }
     }
     
@@ -950,6 +1052,19 @@
       document.querySelectorAll('.content').forEach(c => c.classList.remove('active'));
       document.querySelector(`.tab[onclick*="${tab}"]`).classList.add('active');
       document.getElementById(tab + 'Tab').classList.add('active');
+    }
+    
+    function togglePlaylist(index) {
+      const songsDiv = document.getElementById(`playlist-songs-${index}`);
+      const arrow = document.getElementById(`arrow-${index}`);
+      
+      if (songsDiv.style.display === 'none') {
+        songsDiv.style.display = 'block';
+        arrow.textContent = '▲';
+      } else {
+        songsDiv.style.display = 'none';
+        arrow.textContent = '▼';
+      }
     }
     
     function selectSong(song) {

@@ -1,0 +1,11 @@
+{
+  "name": "playmysong-tests",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "test": "echo \"Running PlayMySong tests...\""
+  },
+  "dependencies": {
+    "jest": "^29.0.0"
+  }
+}

@@ -1,0 +1,7 @@
+{
+  "llm": {
+    "provider": "openrouter",
+    "model": "deepseek/deepseek-coder-6.7b-instruct",
+    "baseUrl": "https://openrouter.ai/api/v1"
+  }
+}
