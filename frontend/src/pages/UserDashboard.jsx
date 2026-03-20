@@ -31,22 +31,7 @@ function UserDashboard() {
     loadData();
   }, [accessToken, navigate]);
 
-  useEffect(() => {
-    if (!establishment?.id) return;
-
-    let lastRefresh = Date.now();
-    
-    const refreshInterval = setInterval(() => {
-      // Skip if refreshed in last 3 seconds (to avoid conflicts after actions)
-      if (Date.now() - lastRefresh > 3000) {
-        console.log("Auto-refreshing data...");
-        loadData();
-        lastRefresh = Date.now();
-      }
-    }, 3000);
-
-    return () => clearInterval(refreshInterval);
-  }, [establishment?.id]);
+  // Pas de polling - mise à jour locale immédiate
 
   async function loadData() {
     try {
@@ -317,6 +302,7 @@ function UserDashboard() {
           </span>
         </div>
         <div className="header-right">
+          <button className="btn-refresh" onClick={loadData} title="Actualiser">🔄</button>
           <button className="btn-logout" onClick={logout}>Déconnexion</button>
         </div>
       </header>
@@ -560,6 +546,19 @@ function UserDashboard() {
           padding: 8px 16px;
           border-radius: 6px;
           cursor: pointer;
+        }
+        .btn-refresh {
+          background: rgba(255,255,255,0.2);
+          border: none;
+          color: white;
+          padding: 8px 12px;
+          border-radius: 6px;
+          cursor: pointer;
+          font-size: 1.2rem;
+          margin-right: 10px;
+        }
+        .btn-refresh:hover {
+          background: rgba(255,255,255,0.3);
         }
         .dashboard-tabs {
           display: flex;

@@ -29,22 +29,7 @@ function AdminDashboard() {
     loadInitialData();
   }, [accessToken, navigate]);
 
-  useEffect(() => {
-    if (!establishmentId) return;
-
-    let lastRefresh = Date.now();
-    
-    const refreshInterval = setInterval(() => {
-      // Skip if refreshed in last 3 seconds (to avoid conflicts after actions)
-      if (Date.now() - lastRefresh > 3000) {
-        console.log("Auto-refreshing data...");
-        loadInitialData();
-        lastRefresh = Date.now();
-      }
-    }, 3000);
-
-    return () => clearInterval(refreshInterval);
-  }, [establishmentId]);
+  // Pas de polling - mise à jour locale immédiate
 
   async function loadInitialData() {
     try {
@@ -185,6 +170,7 @@ function AdminDashboard() {
           <span className="establishment-name">{admin?.establishment?.name || "Établissement"}</span>
         </div>
         <div className="header-right">
+          <button className="btn-refresh" onClick={loadInitialData} title="Actualiser">🔄</button>
           <button className="btn-logout" onClick={logout}>Déconnexion</button>
         </div>
       </header>
@@ -594,6 +580,19 @@ function AdminDashboard() {
           padding: 8px 16px;
           border-radius: 6px;
           cursor: pointer;
+        }
+        .btn-refresh {
+          background: rgba(255,255,255,0.2);
+          border: none;
+          color: white;
+          padding: 8px 12px;
+          border-radius: 6px;
+          cursor: pointer;
+          font-size: 1.2rem;
+          margin-right: 10px;
+        }
+        .btn-refresh:hover {
+          background: rgba(255,255,255,0.3);
         }
         .dashboard-tabs {
           display: flex;
