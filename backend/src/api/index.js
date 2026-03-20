@@ -604,9 +604,9 @@ app.post('/api/request/:id/validate', async (req, res) => {
       data: { status: 'VALIDATED' }
     });
     
-    // Emit socket event
+    // Emit socket event to the correct room
     if (global.io) {
-      global.io.to(request.establishmentId).emit('request_validated', { 
+      global.io.to(`est_${request.establishmentId}`).emit('request_validated', { 
         requestId: id,
         request 
       });
@@ -630,9 +630,9 @@ app.post('/api/request/:id/reject', async (req, res) => {
       }
     });
     
-    // Emit socket event
+    // Emit socket event to the correct room
     if (global.io) {
-      global.io.to(request.establishmentId).emit('request_rejected', { 
+      global.io.to(`est_${request.establishmentId}`).emit('request_rejected', { 
         requestId: id,
         request 
       });

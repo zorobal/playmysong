@@ -770,8 +770,32 @@
       <label class="form-label">💬 Message pour le DJ (optionnel)</label>
       <textarea class="form-textarea" id="messageInput" placeholder="Ex: Bonne fête Marie ! 🎉"></textarea>
       
+      <!-- Selfie Section -->
+      <div id="selfieSection">
+        <label class="form-label">📸 Selfie (optionnel)</label>
+        <div id="selfiePreviewContainer" style="display:none; margin-bottom:10px;">
+          <img src="" alt="Selfie" id="selfiePreview" style="width:100px;height:100px;border-radius:12px;object-fit:cover;">
+          <button onclick="removeSelfie()" style="background:#ef4444;color:white;border:none;padding:5px 10px;border-radius:6px;cursor:pointer;margin-left:10px;">✕</button>
+        </div>
+        <button class="btn btn-secondary" onclick="openSelfieCamera()" style="margin-bottom:15px;">📷 Ajouter un selfie</button>
+      </div>
+      
       <button class="btn btn-primary" onclick="submitRequest()">🎵 Envoyer la demande</button>
       <button class="btn btn-secondary" onclick="closeModal()">Annuler</button>
+    </div>
+  </div>
+
+  <!-- Selfie Camera Modal -->
+  <div id="selfieModal" class="modal">
+    <div class="modal-content" style="max-width:350px;">
+      <div class="modal-handle"></div>
+      <h3 style="text-align:center;margin-bottom:15px;">📸 Take a Selfie</h3>
+      <div id="selfieVideoContainer" style="width:100%;height:300px;background:#000;border-radius:12px;overflow:hidden;margin-bottom:15px;">
+        <video id="selfieVideo" autoplay playsinline style="width:100%;height:100%;object-fit:cover;"></video>
+        <canvas id="selfieCanvas" style="display:none;"></canvas>
+      </div>
+      <button class="btn btn-primary" onclick="captureSelfie()" style="margin-bottom:10px;">📷 Capturer</button>
+      <button class="btn btn-secondary" onclick="closeSelfieCamera()">Annuler</button>
     </div>
   </div>
 
@@ -783,6 +807,8 @@
     let html5QrCode = null;
     let establishmentId = null;
     let selectedSong = null;
+    let selfieStream = null;
+    let selfieData = null;
     
     window.addEventListener('load', () => {
       const urlParams = new URLSearchParams(window.location.search);
@@ -1069,17 +1095,60 @@
     
     function selectSong(song) {
       selectedSong = song;
+      selfieData = null; // Reset selfie
       document.getElementById('modalThumb').src = song.thumbnail || '';
       document.getElementById('modalThumb').style.display = song.thumbnail ? 'block' : 'none';
       document.getElementById('modalTitle').textContent = song.title;
       document.getElementById('modalArtist').textContent = song.artist || 'Artiste inconnu';
       document.getElementById('messageInput').value = '';
+      document.getElementById('selfiePreviewContainer').style.display = 'none';
       document.getElementById('requestModal').classList.add('active');
     }
     
     function closeModal() {
       document.getElementById('requestModal').classList.remove('active');
       selectedSong = null;
+    }
+    
+    async function openSelfieCamera() {
+      try {
+        selfieStream = await navigator.mediaDevices.getUserMedia({ 
+          video: { facingMode: 'user' },
+          audio: false 
+        });
+        document.getElementById('selfieVideo').srcObject = selfieStream;
+        document.getElementById('selfieModal').classList.add('active');
+      } catch (err) {
+        alert('Erreur accès caméra: ' + err.message);
+      }
+    }
+    
+    function captureSelfie() {
+      const video = document.getElementById('selfieVideo');
+      const canvas = document.getElementById('selfieCanvas');
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+      canvas.getContext('2d').drawImage(video, 0, 0);
+      selfieData = canvas.toDataURL('image/jpeg', 0.7);
+      
+      // Show preview
+      document.getElementById('selfiePreview').src = selfieData;
+      document.getElementById('selfiePreviewContainer').style.display = 'block';
+      
+      closeSelfieCamera();
+    }
+    
+    function closeSelfieCamera() {
+      document.getElementById('selfieModal').classList.remove('active');
+      if (selfieStream) {
+        selfieStream.getTracks().forEach(track => track.stop());
+        selfieStream = null;
+      }
+    }
+    
+    function removeSelfie() {
+      selfieData = null;
+      document.getElementById('selfiePreviewContainer').style.display = 'none';
     }
     
     async function submitRequest() {
@@ -1097,13 +1166,15 @@
             title: selectedSong.title,
             artist: selectedSong.artist,
             thumbnail: selectedSong.thumbnail,
-            message
+            message,
+            selfieUrl: selfieData
           })
         });
         
         localStorage.setItem(`pms_request_${establishmentId}`, JSON.stringify({
           ...selectedSong,
           message,
+          selfieUrl: selfieData,
           timestamp: Date.now()
         }));
         
