@@ -597,13 +597,29 @@
     
     // Initialize
     (function init() {
+      console.log('PWA Init starting...');
+      
+      // UNREGISTER old service workers first
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.getRegistrations().then(registrations => {
+          for (let reg of registrations) {
+            reg.unregister();
+            console.log('Old SW unregistered');
+          }
+        });
+      }
+      
+      // Clear any old data
+      sessionStorage.clear();
+      
       // Check if opened with QR data (direct link from QR code)
       const urlParams = new URLSearchParams(window.location.search);
       const id = urlParams.get('id');
       
-      console.log('Init - ID:', id);
+      console.log('Init - ID from URL:', id);
       
-      if (id) {
+      // Always show home screen first unless we have a valid ID
+      if (id && id.length > 5) {
         // Direct link - open client directly
         establishmentId = id;
         showScreen('client');
@@ -615,7 +631,7 @@
       
       // Register service worker
       if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.register('/pwa/sw.js?' + Date.now())
+        navigator.serviceWorker.register('/pwa/sw.js')
           .then(reg => console.log('SW registered'))
           .catch(err => console.log('SW failed:', err));
       }
@@ -632,30 +648,42 @@
     
     // Screen management
     function showScreen(screen) {
+      console.log('showScreen called with:', screen);
+      
       const home = document.getElementById('homeScreen');
       const client = document.getElementById('clientScreen');
       const success = document.getElementById('successScreen');
       const scanner = document.getElementById('scannerScreen');
       
-      // Hide all
+      // Hide all first
       home.style.display = 'none';
       client.style.display = 'none';
+      client.classList.remove('active');
       success.style.display = 'none';
+      success.classList.remove('active');
       scanner.style.display = 'none';
+      scanner.classList.remove('active');
       
-      // Show requested
+      // Show requested screen
       switch(screen) {
         case 'home':
           home.style.display = 'flex';
+          console.log('Home screen shown');
           break;
         case 'client':
           client.style.display = 'block';
+          client.classList.add('active');
+          console.log('Client screen shown');
           break;
         case 'success':
           success.style.display = 'block';
+          success.classList.add('active');
+          console.log('Success screen shown');
           break;
         case 'scanner':
           scanner.style.display = 'flex';
+          scanner.classList.add('active');
+          console.log('Scanner screen shown');
           break;
       }
     }
