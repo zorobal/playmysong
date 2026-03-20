@@ -25,14 +25,31 @@
     
     .main-content { display: flex; gap: 20px; flex-wrap: wrap; }
     
+    .now-playing-container {
+      flex: 1;
+      display: flex;
+      gap: 20px;
+      min-width: 100%;
+    }
+    
     .now-playing {
       flex: 1;
-      min-width: 400px;
+      min-width: 350px;
       background: linear-gradient(135deg, #e94560 0%, #533483 100%);
       border-radius: 25px;
       padding: 30px;
       text-align: center;
       box-shadow: 0 20px 60px rgba(233,69,96,0.4);
+    }
+    
+    .waiting-panel {
+      flex: 0.8;
+      min-width: 300px;
+    }
+    
+    .now-playing.waiting {
+      background: linear-gradient(135deg, #1e3a5f 0%, #0d1b2a 100%);
+      border: 2px solid #e94560;
     }
     .now-playing h2 {
       font-size: 0.9rem;
@@ -52,6 +69,16 @@
     .song-thumbnail img { width: 100%; height: 100%; object-fit: cover; }
     .song-title { font-size: 2.5rem; font-weight: bold; margin-bottom: 10px; }
     .artist { font-size: 1.3rem; opacity: 0.9; margin-bottom: 15px; }
+    .source-badge {
+      display: inline-block;
+      background: rgba(255,255,255,0.2);
+      padding: 5px 15px;
+      border-radius: 20px;
+      font-size: 0.8rem;
+      margin-bottom: 15px;
+    }
+    .source-badge.playlist { background: #10b981; }
+    .source-badge.queue { background: #e94560; }
     .message-box {
       background: rgba(255,255,255,0.2);
       border-radius: 15px;
@@ -85,11 +112,6 @@
       left: 0;
       width: 100%;
       height: 100%;
-    }
-    .audio-player {
-      width: 100%;
-      margin-top: 15px;
-      border-radius: 10px;
     }
     
     .queue {
@@ -129,6 +151,61 @@
     .queue-title { font-size: 1rem; font-weight: 600; }
     .queue-artist { font-size: 0.8rem; opacity: 0.7; }
     .queue-message { font-size: 0.85rem; font-style: italic; color: #fbbf24; }
+    .queue-empty { text-align: center; padding: 20px; opacity: 0.6; }
+    
+    .waiting-screen {
+      text-align: center;
+      padding: 25px 15px;
+      background: linear-gradient(135deg, #1e3a5f 0%, #0d1b2a 100%);
+      border-radius: 25px;
+      border: 2px solid #e94560;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+    .waiting-icon {
+      font-size: 4rem;
+      margin-bottom: 15px;
+      animation: pulse 2s infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { transform: scale(1); opacity: 1; }
+      50% { transform: scale(1.1); opacity: 0.8; }
+    }
+    .waiting-title { font-size: 1.8rem; margin-bottom: 8px; font-weight: bold; }
+    .waiting-subtitle { font-size: 1rem; opacity: 0.9; margin-bottom: 15px; }
+    .waiting-est-name { 
+      font-size: 1.3rem; 
+      color: #e94560; 
+      margin-bottom: 15px; 
+      font-weight: bold;
+    }
+    .qr-box {
+      background: rgba(255,255,255,0.15);
+      border: 2px solid rgba(255,255,255,0.3);
+      border-radius: 15px;
+      padding: 15px 20px;
+      display: inline-block;
+      margin-top: 15px;
+    }
+    .qr-icon { font-size: 2rem; margin-bottom: 10px; }
+    .qr-text { font-size: 1rem; font-weight: bold; margin-bottom: 5px; }
+    .qr-instruction { font-size: 0.85rem; opacity: 0.8; }
+    .waiting-features {
+      display: flex;
+      justify-content: center;
+      gap: 15px;
+      margin-top: 20px;
+      flex-wrap: wrap;
+    }
+    .feature-item {
+      background: rgba(255,255,255,0.1);
+      padding: 10px 15px;
+      border-radius: 10px;
+    }
+    .feature-icon { font-size: 1.2rem; margin-bottom: 3px; }
+    .feature-text { font-size: 0.75rem; opacity: 0.9; }
     
     .controls { display: flex; gap: 10px; justify-content: center; margin-top: 15px; }
     .controls button {
@@ -141,11 +218,8 @@
     }
     .controls button:hover { transform: scale(1.05); }
     .btn-skip { background: #fbbf24; color: #1a1a2e; }
-    .btn-remove { background: #ef4444; color: white; }
     
     .loading { text-align: center; padding: 50px; font-size: 1.5rem; opacity: 0.7; }
-    .error { text-align: center; padding: 50px; color: #e94560; }
-    .empty-queue { text-align: center; padding: 20px; opacity: 0.6; }
   </style>
 </head>
 <body>
@@ -160,21 +234,42 @@
     </div>
   </div>
 
+  <div id="youtubePlayerWrapper" style="display:none;">
+    <div id="youtubePlayer"></div>
+  </div>
+
   <script src="https://www.youtube.com/iframe_api"></script>
+  <script src="https://cdn.socket.io/4.7.4/socket.io.min.js"></script>
   <script>
     const API_URL = 'https://playmysong-mu.vercel.app/api';
+    const SOCKET_URL = 'https://playmysong-mu.vercel.app';
     const urlParams = new URLSearchParams(window.location.search);
     const establishmentId = urlParams.get('establishmentId') || 'cmmke5nms0001ik0424nh0517';
 
-    let queue = [];
-    let currentSongId = null;
-    let player = null;
-    let audioPlayer = null;
+    // Socket connection
+    const socket = io(SOCKET_URL, { transports: ['polling'] });
+    
+    socket.on('connect', () => {
+      console.log('Socket connected');
+      socket.emit('join_establishment', establishmentId);
+    });
+
+    socket.on('now_playing_updated', () => loadData());
+    socket.on('request_validated', () => loadData());
+    socket.on('request_completed', () => loadData());
+
+    // State
     let currentNowPlaying = null;
     let currentQueue = [];
+    let establishmentPlaylist = [];
+    let currentPlaylistIndex = 0;
+    let player = null;
+    let isPlayerReady = false;
+    let lastRenderedSongId = null;
 
     function onYouTubeIframeAPIReady() {
       console.log('YouTube API ready');
+      isPlayerReady = true;
     }
 
     async function loadData() {
@@ -183,100 +278,313 @@
         const establishment = await estRes.json();
         document.getElementById('establishmentName').textContent = establishment.name || 'Établissement';
 
-        // Use the proper endpoint for current playlist
         const playlistRes = await fetch(`${API_URL}/request/playlist/current?establishmentId=${establishmentId}`);
         const playlistData = await playlistRes.json();
         
-        // If there's a nowPlaying, use it; otherwise use first validated as now playing
-        let nowPlaying = playlistData.nowPlaying;
-        let queue = playlistData.queue || [];
+        const nowPlaying = playlistData.nowPlaying;
+        const queue = playlistData.queue || [];
+        establishmentPlaylist = playlistData.establishmentPlaylist || [];
         
-        // If no nowPlaying but queue has items, start playing the first one
-        if (!nowPlaying && queue.length > 0) {
-          nowPlaying = queue[0];
-          queue = queue.slice(1);
-          // Mark as playing
-          try {
-            await fetch(`${API_URL}/request/${nowPlaying.id}/play`, { method: 'POST' });
-          } catch (e) {
-            console.log('Could not mark as playing:', e);
+        // Determine what to play
+        let songToPlay = nowPlaying;
+        
+        // If nothing playing, start with playlist
+        if (!songToPlay && establishmentPlaylist.length > 0) {
+          // If we have a current playlist song, continue from where we are
+          if (currentNowPlaying && currentNowPlaying.isPlaylistSong && currentNowPlaying.youtubeId) {
+            // Find if current song still exists in the updated playlist
+            const currentIdx = establishmentPlaylist.findIndex(s => s.youtubeId === currentNowPlaying.youtubeId);
+            if (currentIdx >= 0) {
+              currentPlaylistIndex = currentIdx;
+              songToPlay = { ...establishmentPlaylist[currentIdx], isPlaylistSong: true };
+            } else {
+              // Current song was removed from playlist, restart from beginning
+              currentPlaylistIndex = 0;
+              songToPlay = { ...establishmentPlaylist[0], isPlaylistSong: true };
+            }
+          } else {
+            // No current song, start from beginning
+            currentPlaylistIndex = 0;
+            songToPlay = { ...establishmentPlaylist[0], isPlaylistSong: true };
           }
         }
-
-        // Store globally
-        currentNowPlaying = nowPlaying;
+        
+        // Update queue display
         currentQueue = queue;
-
-        console.log('NowPlaying:', nowPlaying);
-        console.log('Queue:', queue);
-
-        renderContent(establishment, nowPlaying, queue);
+        
+        // Only update display if song changed or we need to show waiting screen
+        const songId = songToPlay?.id || songToPlay?.youtubeId || 'none';
+        
+        if (songId !== lastRenderedSongId) {
+          console.log('Song changed, rendering:', songId);
+          lastRenderedSongId = songId;
+          currentNowPlaying = songToPlay;
+          
+          // Render the UI
+          renderAll(establishment, songToPlay, queue);
+          
+          // Initialize player if we have a YouTube video (with delay to ensure DOM is ready)
+          if (songToPlay?.youtubeId) {
+            setTimeout(() => {
+              initYouTubePlayer(songToPlay.youtubeId);
+            }, 500);
+          }
+        } else if (songId === 'none' && lastRenderedSongId !== 'none') {
+          // Show waiting screen
+          lastRenderedSongId = 'none';
+          renderAll(establishment, null, queue);
+        } else if (JSON.stringify(queue.map(q => q.id)) !== JSON.stringify(currentQueue.map(q => q.id))) {
+          // Only update queue
+          updateQueueDisplay(queue);
+        }
+        
       } catch (error) {
         console.error('Error:', error);
-        document.getElementById('content').innerHTML = `<div class="error">Erreur: ${error.message}</div>`;
       }
     }
 
-    function renderContent(establishment, nowPlayingParam, queueParam) {
-      const nowPlaying = nowPlayingParam;
-      const waitingQueue = queueParam || [];
-      currentSongId = nowPlaying?.id;
+    function initYouTubePlayer(videoId) {
+      if (!videoId) return;
+      
+      // Check if same video is already playing
+      if (player && player.getVideoData) {
+        try {
+          const currentVideo = player.getVideoData();
+          if (currentVideo && currentVideo.video_id === videoId) {
+            console.log('Same video already playing');
+            if (player.getPlayerState() !== 1) {
+              player.playVideo();
+            }
+            return;
+          }
+        } catch(e) {}
+      }
 
+      // Destroy old player
+      if (player) {
+        try { player.destroy(); } catch(e) {}
+        player = null;
+      }
+
+      // Wait for container
+      const container = document.getElementById('youtubePlayer');
+      if (!container) {
+        console.log('Container not ready');
+        return;
+      }
+
+      console.log('Creating player for:', videoId);
+      
+      player = new YT.Player('youtubePlayer', {
+        height: '100%',
+        width: '100%',
+        videoId: videoId,
+        playerVars: { 
+          autoplay: 1, 
+          controls: 1, 
+          modestbranding: 1, 
+          rel: 0, 
+          playsinline: 1
+        },
+        events: {
+          onReady: function(event) {
+            console.log('Player ready');
+            event.target.playVideo();
+          },
+          onStateChange: function(event) {
+            if (event.data === YT.PlayerState.ENDED) {
+              playNext();
+            }
+          }
+        }
+      });
+    }
+
+    async function playNext() {
+      // Mark current as completed if it was a queue song
+      if (currentNowPlaying && !currentNowPlaying.isPlaylistSong && currentNowPlaying.id) {
+        try {
+          await fetch(`${API_URL}/request/${currentNowPlaying.id}/complete`, { method: 'POST' });
+        } catch(e) {}
+      }
+      
+      // Get fresh queue data
+      try {
+        const playlistRes = await fetch(`${API_URL}/request/playlist/current?establishmentId=${establishmentId}`);
+        const playlistData = await playlistRes.json();
+        
+        const queue = playlistData.queue || [];
+        establishmentPlaylist = playlistData.establishmentPlaylist || [];
+        
+        // If we have queue songs, play first queue song
+        if (queue.length > 0) {
+          const nextSong = queue[0];
+          // Mark as playing
+          await fetch(`${API_URL}/request/${nextSong.id}/play`, { method: 'POST' });
+          
+          // Just update player - don't re-render entire UI
+          currentNowPlaying = nextSong;
+          currentQueue = queue;
+          currentPlaylistIndex = 0;
+          
+          // Update queue display only
+          updateQueueDisplay(queue);
+          
+          // Update song info in DOM without full re-render
+          updateNowPlayingDisplay(nextSong);
+          
+          // Reinit player if different video
+          if (!player || (player.getVideoData && player.getVideoData().video_id !== nextSong.youtubeId)) {
+            setTimeout(() => initYouTubePlayer(nextSong.youtubeId), 500);
+          }
+        } 
+        // Otherwise play next playlist song - find it by current youtubeId
+        else if (establishmentPlaylist.length > 0) {
+          // Find current song in the refreshed playlist to get correct index
+          let currentIdx = -1;
+          if (currentNowPlaying && currentNowPlaying.youtubeId) {
+            currentIdx = establishmentPlaylist.findIndex(s => s.youtubeId === currentNowPlaying.youtubeId);
+          }
+          
+          // Calculate next index (loop back to 0 if at end)
+          let nextIdx;
+          if (currentIdx >= 0) {
+            nextIdx = (currentIdx + 1) % establishmentPlaylist.length;
+          } else {
+            // Current song not found in playlist (might have been removed), start from beginning
+            nextIdx = 0;
+          }
+          
+          const nextSong = { ...establishmentPlaylist[nextIdx], isPlaylistSong: true };
+          currentPlaylistIndex = nextIdx;
+          
+          currentNowPlaying = nextSong;
+          currentQueue = [];
+          
+          // Re-render for playlist song (safer)
+          lastRenderedSongId = null;
+          renderAll(null, nextSong, []);
+          
+          setTimeout(() => initYouTubePlayer(nextSong.youtubeId), 500);
+        } else {
+          // Nothing to play - show waiting
+          currentNowPlaying = null;
+          lastRenderedSongId = 'none';
+          renderAll(null, null, []);
+        }
+      } catch(e) {
+        console.error('Error in playNext:', e);
+      }
+    }
+    
+    function updateNowPlayingDisplay(song) {
+      // Only update specific elements without full re-render
+      const titleEl = document.querySelector('.song-title');
+      const artistEl = document.querySelector('.artist');
+      const thumbEl = document.querySelector('.song-thumbnail img');
+      const badgeEl = document.querySelector('.source-badge');
+      const controlsEl = document.querySelector('.controls');
+      
+      if (titleEl) titleEl.textContent = song.title;
+      if (artistEl) artistEl.textContent = song.artist || 'Artiste inconnu';
+      if (thumbEl && song.thumbnail) thumbEl.src = song.thumbnail;
+      if (badgeEl) {
+        badgeEl.className = 'source-badge queue';
+        badgeEl.textContent = '📩 Demande client';
+      }
+      if (controlsEl) {
+        controlsEl.innerHTML = '<button class="btn-skip" onclick="skipSong()">⏭️ Terminer</button>';
+      }
+    }
+
+    async function skipSong() {
+      await playNext();
+    }
+
+    function renderAll(establishment, nowPlaying, queue) {
       let html = '<div class="main-content">';
       
-      // Now Playing Section
-      html += '<div class="now-playing">';
+      // Check if we should show waiting side panel
+      const showWaiting = !nowPlaying || nowPlaying.isPlaylistSong;
+      const showQueue = queue.length > 0;
+      
+      // If there's a request playing (not from playlist), hide waiting
+      const hideWaiting = nowPlaying && !nowPlaying.isPlaylistSong;
+      
+      html += '<div class="now-playing-container">';
+      
+      // Left side: Current playing song
       if (nowPlaying) {
+        const sourceClass = nowPlaying.isPlaylistSong ? 'playlist' : 'queue';
+        const sourceLabel = nowPlaying.isPlaylistSong ? '🎼 Playlist Établissement' : '📩 Demande client';
+        
         html += `
-          <h2>🎶 En cours de lecture</h2>
-          ${nowPlaying.thumbnail ? `<div class="song-thumbnail"><img src="${escapeHtml(nowPlaying.thumbnail)}" alt="Thumbnail" onerror="this.parentElement.style.display='none'"></div>` : ''}
-          <div class="song-title">${escapeHtml(nowPlaying.title)}</div>
-          <div class="artist">${escapeHtml(nowPlaying.artist || 'Artiste inconnu')}</div>
-          ${nowPlaying.message ? `<div class="message-box">"${escapeHtml(nowPlaying.message)}"</div>` : ''}
-          ${nowPlaying.selfieUrl ? `<div class="selfie-display"><img src="${nowPlaying.selfieUrl}" alt="Selfie" onerror="this.style.display='none'"></div>` : ''}
-          
-          <div class="player-container">
-            ${nowPlaying.youtubeId ? `
-              <div class="youtube-container" id="youtubeContainer">
+          <div class="now-playing">
+            <h2>🎶 En cours de lecture</h2>
+            <div class="source-badge ${sourceClass}">${sourceLabel}</div>
+            ${nowPlaying.thumbnail ? `<div class="song-thumbnail"><img src="${escapeHtml(nowPlaying.thumbnail)}" alt="Thumbnail"></div>` : ''}
+            <div class="song-title">${escapeHtml(nowPlaying.title)}</div>
+            <div class="artist">${escapeHtml(nowPlaying.artist || 'Artiste inconnu')}</div>
+            ${nowPlaying.message ? `<div class="message-box">"${escapeHtml(nowPlaying.message)}"</div>` : ''}
+            ${nowPlaying.selfieUrl ? `<div class="selfie-display"><img src="${nowPlaying.selfieUrl}" alt="Selfie"></div>` : ''}
+            
+            <div class="player-container">
+              <div class="youtube-container">
                 <div id="youtubePlayer"></div>
               </div>
-            ` : nowPlaying.filePath && nowPlaying.filePath.includes('http') ? `
-              <audio id="audioPlayer" class="audio-player" controls autoplay>
-                <source src="${escapeHtml(nowPlaying.filePath)}" type="audio/mpeg">
-                Votre navigateur ne supporte pas la lecture audio
-              </audio>
-            ` : `
-              <div style="margin-top:20px;padding:20px;background:rgba(255,255,255,0.1);border-radius:15px;">
-                <p style="margin-bottom:10px;">🎵 ${escapeHtml(nowPlaying.title)}</p>
-                <p style="font-size:0.9rem;opacity:0.7;">Fichier local: ${escapeHtml(nowPlaying.filePath || 'Non défini')}</p>
-                <p style="font-size:0.8rem;opacity:0.5;margin-top:10px;">Pour jouer cette chanson, utilisez un fichier avec URL complète ou YouTube</p>
-              </div>
-            `}
+            </div>
+            
+            <div class="controls">
+              <button class="btn-skip" onclick="skipSong()">⏭️ ${nowPlaying.isPlaylistSong ? 'Suivante' : 'Terminer'}</button>
+            </div>
           </div>
-          
-          <div class="controls">
-            <button class="btn-skip" onclick="skipSong()">⏭️ Suivant</button>
-            <button class="btn-skip" style="background:#e94560;color:white;" onclick="playTestYouTube()">▶️ Tester YouTube</button>
-          </div>
-        `;
-      } else {
-        html += `
-          <h2>🎵 En attente de demandes</h2>
-          <div class="song-title" style="font-size: 1.8rem;">Scannez le QR Code!</div>
         `;
       }
-      html += '</div>';
-
-      // Queue Section
-      html += '<div class="queue"><h3>📋 File d\'attente</h3>';
-      if (waitingQueue.length === 0) {
-        html += '<div class="empty-queue">Aucune autre chanson</div>';
-      } else {
-        waitingQueue.forEach((item, index) => {
+      
+      // Right side: Waiting screen (only if playlist is playing and no queue)
+      if (!hideWaiting && !showQueue) {
+        html += `
+          <div class="waiting-panel">
+            <div class="waiting-screen">
+              <div class="waiting-icon">🎵</div>
+              <div class="waiting-title">En attente de demandes</div>
+              <div class="waiting-subtitle">Proposez vos chansons préférées!</div>
+              <div class="waiting-est-name">${establishment?.name || 'Établissement'}</div>
+              
+              <div class="qr-box">
+                <div class="qr-icon">📱</div>
+                <div class="qr-text">Scannez le QR Code</div>
+                <div class="qr-instruction">pour proposer une chanson</div>
+              </div>
+              
+              <div class="waiting-features">
+                <div class="feature-item">
+                  <div class="feature-icon">🎤</div>
+                  <div class="feature-text">Choisissez vos hits</div>
+                </div>
+                <div class="feature-item">
+                  <div class="feature-icon">💬</div>
+                  <div class="feature-text">Ajoutez un message</div>
+                </div>
+                <div class="feature-item">
+                  <div class="feature-icon">📸</div>
+                  <div class="feature-text">Envoyez un selfie</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        `;
+      }
+      
+      // Right side: Queue or Waiting
+      if (showQueue) {
+        // Show queue
+        html += '<div class="queue"><h3>📋 File d\'attente (' + queue.length + ')</h3>';
+        queue.forEach((item, index) => {
           html += `
             <div class="queue-item">
               <div class="queue-number">${index + 1}</div>
-              ${item.thumbnail ? `<div class="queue-thumb"><img src="${escapeHtml(item.thumbnail)}" alt="" onerror="this.parentElement.style.display='none'"></div>` : ''}
+              ${item.thumbnail ? `<div class="queue-thumb"><img src="${escapeHtml(item.thumbnail)}" alt=""></div>` : ''}
               <div class="queue-info">
                 <div class="queue-title">${escapeHtml(item.title)}</div>
                 <div class="queue-artist">${escapeHtml(item.artist || 'Artiste inconnu')}</div>
@@ -285,75 +593,40 @@
             </div>
           `;
         });
+        html += '</div>';
       }
+      
       html += '</div></div>';
 
       document.getElementById('content').innerHTML = html;
-
-      // Initialize player after DOM is ready
-      setTimeout(() => {
-        if (nowPlaying?.youtubeId) {
-          initYouTubePlayer(nowPlaying.youtubeId);
-        }
-        if (nowPlaying?.filePath) {
-          const audio = document.getElementById('audioPlayer');
-          if (audio) {
-            audio.play().catch(e => console.log('Auto-play blocked:', e));
-          }
-        }
-      }, 100);
     }
 
-    function initYouTubePlayer(videoId) {
-      if (player) {
-        player.loadVideoById(videoId);
+    function updateQueueDisplay(queue) {
+      const queueEl = document.querySelector('.queue');
+      if (!queueEl) return;
+      
+      let html = '<h3>📋 File d\'attente</h3>';
+      if (queue.length === 0) {
+        const playlistInfo = establishmentPlaylist.length > 0 
+          ? `<div style="font-size:0.85rem;opacity:0.7;margin-top:10px;">🎼 ${establishmentPlaylist.length} chanson(s) dans la playlist</div>`
+          : '';
+        html += `<div class="queue-empty">Aucune demande en attente${playlistInfo}</div>`;
       } else {
-        player = new YT.Player('youtubePlayer', {
-          height: '100%',
-          width: '100%',
-          videoId: videoId,
-          playerVars: {
-            autoplay: 1,
-            controls: 1,
-            modestbranding: 1,
-            rel: 0
-          },
-          events: {
-            onStateChange: onPlayerStateChange
-          }
+        queue.forEach((item, index) => {
+          html += `
+            <div class="queue-item">
+              <div class="queue-number">${index + 1}</div>
+              ${item.thumbnail ? `<div class="queue-thumb"><img src="${escapeHtml(item.thumbnail)}" alt=""></div>` : ''}
+              <div class="queue-info">
+                <div class="queue-title">${escapeHtml(item.title)}</div>
+                <div class="queue-artist">${escapeHtml(item.artist || 'Artiste inconnu')}</div>
+                ${item.message ? `<div class="queue-message">💬 ${escapeHtml(item.message)}"</div>` : ''}
+              </div>
+            </div>
+          `;
         });
       }
-    }
-
-    function onPlayerStateChange(event) {
-      // When video ends, go to next song
-      if (event.data === YT.PlayerState.ENDED) {
-        skipSong();
-      }
-    }
-
-    function playTestYouTube() {
-      // Test with a sample YouTube video
-      const testVideoId = 'dQw4w9WgXcQ'; // Never Gonna Give You Up
-      initYouTubePlayer(testVideoId);
-      if (player && player.playVideo) {
-        player.playVideo();
-      }
-    }
-
-    async function skipSong() {
-      // Mark current song as completed before skipping
-      if (currentNowPlaying) {
-        try {
-          await fetch(`${API_URL}/request/${currentNowPlaying.id}/complete`, {
-            method: 'POST'
-          });
-        } catch (e) {
-          console.log('Could not mark as completed:', e);
-        }
-      }
-      // Reload to get next song
-      loadData();
+      queueEl.innerHTML = html;
     }
 
     function escapeHtml(text) {
@@ -363,11 +636,39 @@
       return div.innerHTML;
     }
 
-    // Load on page load
+    // Initial load
     loadData();
     
-    // Auto-refresh every 10 seconds
-    setInterval(loadData, 10000);
+    // Auto-refresh every 30 seconds (avoid interfering with playback)
+    setInterval(() => {
+      // Only refresh queue data, don't re-render if playing
+      fetch(`${API_URL}/request/playlist/current?establishmentId=${establishmentId}`)
+        .then(res => res.json())
+        .then(playlistData => {
+          const queue = playlistData.queue || [];
+          const newPlaylist = playlistData.establishmentPlaylist || [];
+          
+          // Update playlist index if we're playing a playlist song
+          if (currentNowPlaying && currentNowPlaying.isPlaylistSong && currentNowPlaying.youtubeId) {
+            const idx = newPlaylist.findIndex(s => s.youtubeId === currentNowPlaying.youtubeId);
+            if (idx >= 0) {
+              currentPlaylistIndex = idx;
+            }
+          }
+          
+          establishmentPlaylist = newPlaylist;
+          
+          // Only update queue display, not the main player
+          if (currentNowPlaying && currentNowPlaying.youtubeId) {
+            // Just update queue, not full render
+            updateQueueDisplay(queue);
+          } else {
+            // If nothing playing, do full refresh
+            loadData();
+          }
+        })
+        .catch(e => console.log('Refresh error:', e));
+    }, 30000);
   </script>
 </body>
 </html>

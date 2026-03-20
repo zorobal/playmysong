@@ -6,13 +6,13 @@
   <meta name="theme-color" content="#e94560">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <meta name="apple-mobile-web-app-title" content="PlayMySong">
-  <meta name="description" content="Demandez vos chansons préférées">
+  <meta name="apple-mobile-web-app-title" content="PlayMySong Scanner">
+  <meta name="description" content="Scannez le QR Code pour demander vos chansons">
   
-  <title>PlayMySong</title>
+  <title>PlayMySong Scanner</title>
   
   <link rel="manifest" href="/pwa/manifest.json">
-  <link rel="apple-touch-icon" href="/pwa/icon-192.png">
+  <link rel="apple-touch-icon" href="/pwa/icon.svg">
   
   <style>
     * {
@@ -29,9 +29,10 @@
       overflow-x: hidden;
     }
     
+    /* Install Banner */
     .install-banner {
       background: linear-gradient(135deg, #10b981, #059669);
-      padding: 15px 20px;
+      padding: 12px 15px;
       display: flex;
       align-items: center;
       justify-content: space-between;
@@ -45,7 +46,7 @@
     }
     
     .install-banner-text {
-      font-size: 14px;
+      font-size: 13px;
       font-weight: 500;
     }
     
@@ -53,48 +54,215 @@
       background: white;
       color: #10b981;
       border: none;
-      padding: 8px 16px;
-      border-radius: 20px;
+      padding: 6px 12px;
+      border-radius: 15px;
       font-weight: bold;
       cursor: pointer;
-      font-size: 14px;
+      font-size: 12px;
     }
     
     .close-btn {
       background: transparent;
       border: none;
       color: white;
-      font-size: 20px;
+      font-size: 18px;
       cursor: pointer;
-      padding: 5px 10px;
+      padding: 5px 8px;
     }
     
+    /* Container */
     .container {
       padding: 20px;
       max-width: 500px;
       margin: 0 auto;
     }
     
-    .header {
+    /* Home Screen */
+    .home-screen {
+      display: none;
       text-align: center;
-      margin-bottom: 30px;
+      padding-top: 60px;
     }
     
-    .logo {
-      font-size: 4rem;
+    .home-screen.visible {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    
+    .home-logo {
+      font-size: 5rem;
+      margin-bottom: 20px;
+    }
+    
+    .home-title {
+      font-size: 2rem;
+      font-weight: bold;
       margin-bottom: 10px;
+    }
+    
+    .home-subtitle {
+      color: #cbd5e1;
+      margin-bottom: 40px;
+      font-size: 1rem;
+    }
+    
+    .scan-btn {
+      background: linear-gradient(135deg, #e94560, #db2777);
+      color: white;
+      border: none;
+      padding: 20px 40px;
+      border-radius: 50px;
+      font-size: 1.2rem;
+      font-weight: bold;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      box-shadow: 0 10px 30px rgba(233, 69, 96, 0.4);
+      transition: transform 0.2s;
+    }
+    
+    .scan-btn:active {
+      transform: scale(0.95);
+    }
+    
+    .home-features {
+      margin-top: 50px;
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+    }
+    
+    .feature-item {
+      background: rgba(255,255,255,0.1);
+      padding: 15px 20px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      gap: 15px;
+    }
+    
+    .feature-icon {
+      font-size: 2rem;
+    }
+    
+    .feature-text {
+      text-align: left;
+    }
+    
+    .feature-title {
+      font-weight: bold;
+      margin-bottom: 3px;
+    }
+    
+    .feature-desc {
+      font-size: 0.85rem;
+      color: #94a3b8;
+    }
+    
+    /* Scanner Screen */
+    .scanner-screen {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: black;
+      z-index: 2000;
+    }
+    
+    .scanner-screen.active {
+      display: flex;
+      flex-direction: column;
+    }
+    
+    .scanner-header {
+      padding: 15px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: rgba(0,0,0,0.5);
+    }
+    
+    .scanner-title {
+      font-size: 1rem;
+      font-weight: bold;
+    }
+    
+    .scanner-close {
+      background: rgba(255,255,255,0.2);
+      border: none;
+      color: white;
+      font-size: 20px;
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      cursor: pointer;
+    }
+    
+    .scanner-video {
+      flex: 1;
+      width: 100%;
+      object-fit: cover;
+    }
+    
+    .scanner-overlay {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 250px;
+      height: 250px;
+      border: 3px solid #e94560;
+      border-radius: 20px;
+    }
+    
+    .scanner-hint {
+      position: absolute;
+      bottom: 40px;
+      left: 0;
+      right: 0;
+      text-align: center;
+      color: white;
+      font-size: 0.9rem;
+      background: rgba(0,0,0,0.5);
+      padding: 15px;
+    }
+    
+    /* Client Screen */
+    .client-screen {
+      display: none;
+    }
+    
+    .client-screen.active {
+      display: block;
+    }
+    
+    .client-header {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+    
+    .back-btn {
+      background: rgba(255,255,255,0.1);
+      border: none;
+      color: white;
+      padding: 10px 15px;
+      border-radius: 10px;
+      margin-bottom: 15px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
     }
     
     .establishment-name {
       font-size: 1.5rem;
-      color: #e94560;
       font-weight: bold;
+      color: #e94560;
       margin-bottom: 5px;
-    }
-    
-    .establishment-type {
-      color: #cbd5e1;
-      font-size: 0.9rem;
     }
     
     .tab-container {
@@ -116,7 +284,6 @@
       font-weight: 600;
       cursor: pointer;
       border-radius: 8px;
-      transition: all 0.3s;
     }
     
     .tab.active {
@@ -132,35 +299,15 @@
       display: block;
     }
     
-    .playlist-card {
-      background: rgba(255,255,255,0.1);
-      border-radius: 12px;
-      padding: 15px;
-      margin-bottom: 15px;
-    }
-    
-    .playlist-name {
-      font-weight: bold;
-      margin-bottom: 10px;
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
-    
     .song-item {
       display: flex;
       align-items: center;
       gap: 12px;
       padding: 12px;
-      background: rgba(0,0,0,0.2);
+      background: rgba(255,255,255,0.1);
       border-radius: 10px;
-      margin-bottom: 8px;
+      margin-bottom: 10px;
       cursor: pointer;
-      transition: transform 0.2s;
-    }
-    
-    .song-item:active {
-      transform: scale(0.98);
     }
     
     .song-thumb {
@@ -185,10 +332,6 @@
       color: #94a3b8;
     }
     
-    .search-container {
-      margin-bottom: 20px;
-    }
-    
     .search-input {
       width: 100%;
       padding: 15px;
@@ -197,25 +340,12 @@
       background: rgba(255,255,255,0.1);
       color: white;
       font-size: 16px;
-    }
-    
-    .search-input::placeholder {
-      color: #64748b;
-    }
-    
-    .search-results {
-      margin-top: 15px;
+      margin-bottom: 15px;
     }
     
     .loading {
       text-align: center;
-      padding: 20px;
-      color: #94a3b8;
-    }
-    
-    .empty-state {
-      text-align: center;
-      padding: 40px 20px;
+      padding: 30px;
       color: #94a3b8;
     }
     
@@ -228,7 +358,7 @@
       right: 0;
       bottom: 0;
       background: rgba(0,0,0,0.8);
-      z-index: 1000;
+      z-index: 3000;
       align-items: center;
       justify-content: center;
       padding: 20px;
@@ -244,13 +374,6 @@
       padding: 25px;
       width: 100%;
       max-width: 400px;
-      max-height: 80vh;
-      overflow-y: auto;
-    }
-    
-    .modal-header {
-      text-align: center;
-      margin-bottom: 20px;
     }
     
     .modal-thumb {
@@ -258,22 +381,22 @@
       height: 120px;
       border-radius: 15px;
       margin: 0 auto 15px;
+      display: block;
       object-fit: cover;
     }
     
     .modal-title {
+      text-align: center;
       font-size: 1.2rem;
       font-weight: bold;
       margin-bottom: 5px;
     }
     
     .modal-artist {
+      text-align: center;
       color: #94a3b8;
       font-size: 0.9rem;
-    }
-    
-    .form-group {
-      margin-bottom: 15px;
+      margin-bottom: 20px;
     }
     
     .form-label {
@@ -281,16 +404,6 @@
       margin-bottom: 8px;
       font-size: 14px;
       color: #cbd5e1;
-    }
-    
-    .form-input {
-      width: 100%;
-      padding: 12px;
-      border: none;
-      border-radius: 10px;
-      background: rgba(255,255,255,0.1);
-      color: white;
-      font-size: 14px;
     }
     
     .form-textarea {
@@ -303,6 +416,7 @@
       font-size: 14px;
       resize: none;
       height: 80px;
+      margin-bottom: 15px;
     }
     
     .btn {
@@ -326,11 +440,11 @@
       color: white;
     }
     
-    /* Success screen */
+    /* Success */
     .success-screen {
       display: none;
       text-align: center;
-      padding: 40px 20px;
+      padding-top: 60px;
     }
     
     .success-screen.active {
@@ -359,72 +473,6 @@
       color: #94a3b8;
       margin-bottom: 30px;
     }
-    
-    /* Camera */
-    .camera-container {
-      display: none;
-      position: fixed;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      background: black;
-      z-index: 2000;
-    }
-    
-    .camera-container.active {
-      display: block;
-    }
-    
-    .camera-video {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-    }
-    
-    .camera-close {
-      position: absolute;
-      top: 20px;
-      right: 20px;
-      background: rgba(0,0,0,0.5);
-      border: none;
-      color: white;
-      font-size: 30px;
-      width: 50px;
-      height: 50px;
-      border-radius: 50%;
-      cursor: pointer;
-    }
-    
-    .camera-capture {
-      position: absolute;
-      bottom: 40px;
-      left: 50%;
-      transform: translateX(-50%);
-      width: 70px;
-      height: 70px;
-      border-radius: 50%;
-      background: white;
-      border: 4px solid #e94560;
-      cursor: pointer;
-    }
-    
-    .selfie-preview {
-      width: 80px;
-      height: 80px;
-      border-radius: 50%;
-      object-fit: cover;
-      margin: 10px auto;
-      display: block;
-    }
-    
-    .remove-selfie {
-      color: #ef4444;
-      font-size: 12px;
-      text-align: center;
-      cursor: pointer;
-      margin-top: 5px;
-    }
   </style>
 </head>
 <body>
@@ -435,12 +483,59 @@
     <button class="close-btn" onclick="hideInstallBanner()">×</button>
   </div>
 
-  <!-- Main Container -->
-  <div class="container" id="mainContainer">
-    <div class="header">
-      <div class="logo">🎵</div>
+  <!-- Home Screen -->
+  <div id="homeScreen" class="container home-screen">
+    <div class="home-logo">🎵</div>
+    <h1 class="home-title">PlayMySong</h1>
+    <p class="home-subtitle">Demandez vos chansons préférées dans votre établissement</p>
+    
+    <button class="scan-btn" onclick="startScanner()">
+      📷 Scanner le QR Code
+    </button>
+    
+    <div class="home-features">
+      <div class="feature-item">
+        <span class="feature-icon">🎤</span>
+        <div class="feature-text">
+          <div class="feature-title">Choisissez vos hits</div>
+          <div class="feature-desc">Recherchez parmi des millions de chansons</div>
+        </div>
+      </div>
+      <div class="feature-item">
+        <span class="feature-icon">💬</span>
+        <div class="feature-text">
+          <div class="feature-title">Ajoutez un message</div>
+          <div class="feature-desc">Personnalisez votre demande</div>
+        </div>
+      </div>
+      <div class="feature-item">
+        <span class="feature-icon">📸</span>
+        <div class="feature-text">
+          <div class="feature-title">Envoyez un selfie</div>
+          <div class="feature-desc">Montrez-vous au DJ</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Scanner Screen -->
+  <div id="scannerScreen" class="scanner-screen">
+    <div class="scanner-header">
+      <span class="scanner-title">Scanner le QR Code</span>
+      <button class="scanner-close" onclick="stopScanner()">×</button>
+    </div>
+    <video id="scannerVideo" class="scanner-video" autoplay playsinline></video>
+    <div class="scanner-overlay"></div>
+    <div class="scanner-hint">Placez le QR Code dans le cadre</div>
+    <canvas id="scannerCanvas" style="display:none;"></canvas>
+  </div>
+
+  <!-- Client Screen -->
+  <div id="clientScreen" class="container client-screen">
+    <button class="back-btn" onclick="goHome()">← Retour</button>
+    
+    <div class="client-header">
       <div class="establishment-name" id="establishmentName">Chargement...</div>
-      <div class="establishment-type" id="establishmentType"></div>
     </div>
 
     <div class="tab-container">
@@ -448,114 +543,78 @@
       <button class="tab" onclick="switchTab('search')">🔍 Rechercher</button>
     </div>
 
-    <!-- Playlist Tab -->
     <div id="playlistTab" class="content active">
       <div id="playlistsContainer">
-        <div class="loading">Chargement des playlists...</div>
+        <div class="loading">Chargement...</div>
       </div>
     </div>
 
-    <!-- Search Tab -->
     <div id="searchTab" class="content">
-      <div class="search-container">
-        <input 
-          type="text" 
-          class="search-input" 
-          id="searchInput" 
-          placeholder="Rechercher une chanson..."
-          onkeyup="handleSearch(event)"
-        >
-        <div id="searchResults" class="search-results"></div>
-      </div>
+      <input type="text" class="search-input" id="searchInput" placeholder="Rechercher..." onkeyup="handleSearch(event)">
+      <div id="searchResults"></div>
     </div>
+  </div>
 
-    <!-- Success Screen -->
-    <div id="successScreen" class="success-screen">
-      <div class="success-icon">✓</div>
-      <h2 class="success-title">Demande envoyée !</h2>
-      <p class="success-message">Votre demande sera bientôt validée.</p>
-      <button class="btn btn-secondary" onclick="resetForNewRequest()">
-        🔄 Nouvelle demande (scanner QR)
-      </button>
-    </div>
+  <!-- Success Screen -->
+  <div id="successScreen" class="container success-screen">
+    <div class="success-icon">✓</div>
+    <h2 class="success-title">Demande envoyée !</h2>
+    <p class="success-message">Votre demande sera bientôt validée.</p>
+    <button class="btn btn-primary" onclick="scanAnother()">📷 Scanner un autre QR Code</button>
+    <button class="btn btn-secondary" onclick="goHome()">🏠 Accueil</button>
   </div>
 
   <!-- Request Modal -->
   <div id="requestModal" class="modal">
     <div class="modal-content">
-      <div class="modal-header">
-        <img src="" alt="" class="modal-thumb" id="modalThumb">
-        <h3 class="modal-title" id="modalTitle">Titre</h3>
-        <p class="modal-artist" id="modalArtist">Artiste</p>
-      </div>
+      <img src="" alt="" class="modal-thumb" id="modalThumb">
+      <h3 class="modal-title" id="modalTitle">Titre</h3>
+      <p class="modal-artist" id="modalArtist">Artiste</p>
       
-      <div class="form-group">
-        <label class="form-label">💬 Message (optionnel)</label>
-        <textarea class="form-textarea" id="messageInput" placeholder="Un message pour le DJ..."></textarea>
-      </div>
+      <label class="form-label">💬 Message (optionnel)</label>
+      <textarea class="form-textarea" id="messageInput" placeholder="Un message pour le DJ..."></textarea>
       
-      <div class="form-group">
-        <label class="form-label">📸 Selfie (optionnel)</label>
-        <div id="selfiePreviewContainer" style="display:none;">
-          <img src="" alt="" class="selfie-preview" id="selfiePreview">
-          <span class="remove-selfie" onclick="removeSelfie()">✕ Supprimer</span>
-        </div>
-        <button class="btn btn-secondary" onclick="openCamera()">📷 Ajouter un selfie</button>
-      </div>
-      
-      <button class="btn btn-primary" onclick="submitRequest()">🎵 Envoyer la demande</button>
+      <button class="btn btn-primary" onclick="submitRequest()">🎵 Envoyer</button>
       <button class="btn btn-secondary" onclick="closeModal()">Annuler</button>
     </div>
   </div>
 
-  <!-- Camera Container -->
-  <div id="cameraContainer" class="camera-container">
-    <video id="cameraVideo" autoplay playsinline></video>
-    <button class="camera-close" onclick="closeCamera()">×</button>
-    <button class="camera-capture" onclick="capturePhoto()"></button>
-    <canvas id="cameraCanvas" style="display:none;"></canvas>
-  </div>
-
+  <!-- QR Code Scanner Library -->
+  <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+  
   <script>
     // Config
     const API_URL = 'https://playmysong-mu.vercel.app/api';
-    const SOCKET_URL = 'https://playmysong-mu.vercel.app';
     
     // State
+    let html5QrCode = null;
     let establishmentId = null;
-    let establishment = null;
-    let playlists = [];
     let selectedSong = null;
-    let selfieData = null;
     let deferredPrompt = null;
-    
-    // Get establishment ID from URL
-    const urlParams = new URLSearchParams(window.location.search);
-    establishmentId = urlParams.get('establishmentId') || urlParams.get('id');
-    
-    // Check if already requested
-    const existingRequest = localStorage.getItem(`pms_request_${establishmentId}`);
-    if (existingRequest) {
-      showSuccessScreen();
-    }
     
     // Initialize
     document.addEventListener('DOMContentLoaded', () => {
-      if (establishmentId) {
-        loadEstablishment();
-        loadPlaylists();
+      // Check if opened with QR data (direct link from QR code)
+      const urlParams = new URLSearchParams(window.location.search);
+      const id = urlParams.get('id');
+      
+      if (id) {
+        // Direct link - open client directly
+        establishmentId = id;
+        openClient(id);
       } else {
-        document.getElementById('establishmentName').textContent = 'QR Code invalide';
+        // No ID - show home screen
+        goHome();
       }
       
       // Register service worker
       if ('serviceWorker' in navigator) {
         navigator.serviceWorker.register('/pwa/sw.js')
           .then(reg => console.log('SW registered'))
-          .catch(err => console.log('SW registration failed:', err));
+          .catch(err => console.log('SW failed:', err));
       }
       
-      // Handle PWA install prompt
+      // Handle PWA install
       window.addEventListener('beforeinstallprompt', (e) => {
         e.preventDefault();
         deferredPrompt = e;
@@ -565,69 +624,167 @@
       });
     });
     
-    // Load establishment data
-    async function loadEstablishment() {
-      try {
-        const res = await fetch(`${API_URL}/establishments/${establishmentId}`);
-        establishment = await res.json();
-        document.getElementById('establishmentName').textContent = establishment.name || 'Établissement';
-        document.getElementById('establishmentType').textContent = establishment.type || '';
-      } catch (err) {
-        console.error('Error loading establishment:', err);
+    // Scanner Functions
+    function startScanner() {
+      document.getElementById('scannerScreen').classList.add('active');
+      
+      html5QrCode = new Html5Qrcode("scannerVideo");
+      
+      html5QrCode.start(
+        { facingMode: "environment" },
+        {
+          fps: 10,
+          qrbox: { width: 250, height: 250 }
+        },
+        onScanSuccess,
+        onScanFailure
+      ).catch(err => {
+        alert('Erreur caméra: ' + err);
+        stopScanner();
+      });
+    }
+    
+    function stopScanner() {
+      document.getElementById('scannerScreen').classList.remove('active');
+      
+      if (html5QrCode) {
+        html5QrCode.stop().then(() => {
+          html5QrCode = null;
+        }).catch(err => console.log('Stop error:', err));
       }
     }
     
-    // Load playlists
+    function onScanSuccess(decodedText) {
+      console.log('Scanned:', decodedText);
+      
+      // Vibrate
+      if (navigator.vibrate) {
+        navigator.vibrate(200);
+      }
+      
+      // Extract establishment ID from URL or direct ID
+      let id = null;
+      
+      if (decodedText.includes('establishmentId=')) {
+        const match = decodedText.match(/establishmentId=([^&]+)/);
+        id = match ? match[1] : null;
+      } else if (decodedText.includes('/pwa/') || decodedText.includes('/client')) {
+        const match = decodedText.match(/id=([^&]+)/);
+        id = match ? match[1] : null;
+      } else if (decodedText.includes('/r/')) {
+        const match = decodedText.match(/\/r\/([^?]+)/);
+        id = match ? match[1] : null;
+      } else {
+        // Assume it's a direct establishment ID
+        id = decodedText;
+      }
+      
+      if (id) {
+        stopScanner();
+        openClient(id);
+      } else {
+        alert('QR Code invalide');
+      }
+    }
+    
+    function onScanFailure(error) {
+      // Silent fail
+    }
+    
+    // Client Functions
+    async function openClient(id) {
+      establishmentId = id;
+      
+      // Hide home and success screens
+      document.getElementById('homeScreen').classList.remove('visible');
+      document.getElementById('homeScreen').style.display = 'none';
+      document.getElementById('successScreen').classList.remove('active');
+      document.getElementById('successScreen').style.display = 'none';
+      
+      try {
+        const res = await fetch(`${API_URL}/establishments/${id}`);
+        
+        if (!res.ok) {
+          alert('Établissement non trouvé');
+          goHome();
+          return;
+        }
+        
+        const establishment = await res.json();
+        
+        document.getElementById('establishmentName').textContent = establishment.name || 'Établissement';
+        
+        // Show client screen
+        document.getElementById('clientScreen').style.display = 'block';
+        document.getElementById('clientScreen').classList.add('active');
+        
+        // Reset tabs to playlist
+        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+        document.querySelectorAll('.content').forEach(c => c.classList.remove('active'));
+        document.getElementById('playlistTab').classList.add('active');
+        document.querySelector('.tab[onclick*="playlist"]').classList.add('active');
+        
+        // Load playlists
+        loadPlaylists();
+        
+      } catch (err) {
+        console.error('Error:', err);
+        alert('Erreur de connexion');
+        goHome();
+      }
+    }
+    
     async function loadPlaylists() {
+      const container = document.getElementById('playlistsContainer');
+      container.innerHTML = '<div class="loading">Chargement...</div>';
+      
       try {
         const res = await fetch(`${API_URL}/playlists/public?establishmentId=${establishmentId}`);
-        playlists = await res.json();
+        const playlists = await res.json();
         
-        const container = document.getElementById('playlistsContainer');
         if (playlists.length === 0) {
-          container.innerHTML = '<div class="empty-state">Aucune playlist disponible.<br>Utilisez l\'onglet recherche.</div>';
+          container.innerHTML = '<div class="loading">Aucune playlist.<br>Utilisez l\'onglet recherche.</div>';
           return;
         }
         
         let html = '';
         playlists.forEach(playlist => {
-          html += `
-            <div class="playlist-card">
-              <div class="playlist-name">📋 ${playlist.name}</div>
-              ${(playlist.songs || []).map(song => `
-                <div class="song-item" onclick="selectSong(${JSON.stringify(song).replace(/"/g, '&quot;')})">
-                  ${song.thumbnail ? `<img src="${song.thumbnail}" alt="" class="song-thumb">` : '<div class="song-thumb" style="background:#333;"></div>'}
-                  <div class="song-info">
-                    <div class="song-title">${song.title}</div>
-                    <div class="song-artist">${song.artist || 'Artiste inconnu'}</div>
-                  </div>
+          html += `<div style="margin-bottom: 20px;">`;
+          playlist.songs?.forEach(song => {
+            html += `
+              <div class="song-item" onclick="selectSong(${JSON.stringify(song).replace(/"/g, '&quot;')})">
+                ${song.thumbnail ? `<img src="${song.thumbnail}" class="song-thumb">` : '<div class="song-thumb" style="background:#333;"></div>'}
+                <div class="song-info">
+                  <div class="song-title">${song.title}</div>
+                  <div class="song-artist">${song.artist || 'Artiste inconnu'}</div>
                 </div>
-              `).join('')}
-            </div>
-          `;
+              </div>
+            `;
+          });
+          html += '</div>';
         });
         container.innerHTML = html;
+        
       } catch (err) {
-        console.error('Error loading playlists:', err);
+        container.innerHTML = '<div class="loading">Erreur de chargement</div>';
       }
     }
     
-    // Search YouTube
     async function handleSearch(event) {
       if (event.key !== 'Enter') return;
       
       const query = event.target.value.trim();
       if (!query) return;
       
-      document.getElementById('searchResults').innerHTML = '<div class="loading">Recherche en cours...</div>';
+      const container = document.getElementById('searchResults');
+      container.innerHTML = '<div class="loading">Recherche...</div>';
       
       try {
         const res = await fetch(`${API_URL}/youtube/search?q=${encodeURIComponent(query)}`);
         const data = await res.json();
         
-        const container = document.getElementById('searchResults');
-        if (!data.items || data.items.length === 0) {
-          container.innerHTML = '<div class="empty-state">Aucun résultat trouvé</div>';
+        if (!data.items?.length) {
+          container.innerHTML = '<div class="loading">Aucun résultat</div>';
           return;
         }
         
@@ -641,7 +798,7 @@
               artist: '${video.snippet.channelTitle.replace(/'/g, "\\'")}',
               thumbnail: '${thumb}'
             })">
-              <img src="${thumb}" alt="" class="song-thumb">
+              <img src="${thumb}" class="song-thumb">
               <div class="song-info">
                 <div class="song-title">${video.snippet.title}</div>
                 <div class="song-artist">${video.snippet.channelTitle}</div>
@@ -650,77 +807,61 @@
           `;
         });
         container.innerHTML = html;
+        
       } catch (err) {
-        console.error('Search error:', err);
-        document.getElementById('searchResults').innerHTML = '<div class="empty-state">Erreur de recherche</div>';
+        container.innerHTML = '<div class="loading">Erreur</div>';
       }
     }
     
-    // Select song
+    // Navigation
+    function goHome() {
+      establishmentId = null;
+      
+      // Hide all screens
+      document.getElementById('homeScreen').classList.add('visible');
+      document.getElementById('homeScreen').style.display = '';
+      document.getElementById('clientScreen').classList.remove('active');
+      document.getElementById('clientScreen').style.display = 'none';
+      document.getElementById('successScreen').classList.remove('active');
+      document.getElementById('successScreen').style.display = 'none';
+      document.getElementById('requestModal').classList.remove('active');
+      
+      // Reset tabs
+      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+      document.querySelectorAll('.content').forEach(c => c.classList.remove('active'));
+      const playlistTab = document.getElementById('playlistTab');
+      if (playlistTab) playlistTab.classList.add('active');
+      const playlistBtn = document.querySelector('.tab[onclick*="playlist"]');
+      if (playlistBtn) playlistBtn.classList.add('active');
+    }
+    
+    function scanAnother() {
+      document.getElementById('successScreen').classList.remove('active');
+      document.getElementById('successScreen').style.display = 'none';
+      startScanner();
+    }
+    
+    // Tab switching
+    function switchTab(tab) {
+      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+      document.querySelectorAll('.content').forEach(c => c.classList.remove('active'));
+      event.target.classList.add('active');
+      document.getElementById(tab + 'Tab').classList.add('active');
+    }
+    
+    // Song selection
     function selectSong(song) {
       selectedSong = song;
       document.getElementById('modalThumb').src = song.thumbnail || '';
       document.getElementById('modalTitle').textContent = song.title;
       document.getElementById('modalArtist').textContent = song.artist || 'Artiste inconnu';
+      document.getElementById('messageInput').value = '';
       document.getElementById('requestModal').classList.add('active');
     }
     
-    // Close modal
     function closeModal() {
       document.getElementById('requestModal').classList.remove('active');
       selectedSong = null;
-    }
-    
-    // Camera functions
-    let cameraStream = null;
-    
-    function openCamera() {
-      const container = document.getElementById('cameraContainer');
-      const video = document.getElementById('cameraVideo');
-      
-      navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' } })
-        .then(stream => {
-          cameraStream = stream;
-          video.srcObject = stream;
-          container.classList.add('active');
-        })
-        .catch(err => {
-          alert('Impossible d\'accéder à la caméra');
-          console.error('Camera error:', err);
-        });
-    }
-    
-    function closeCamera() {
-      const container = document.getElementById('cameraContainer');
-      const video = document.getElementById('cameraVideo');
-      
-      if (cameraStream) {
-        cameraStream.getTracks().forEach(track => track.stop());
-        cameraStream = null;
-      }
-      video.srcObject = null;
-      container.classList.remove('active');
-    }
-    
-    function capturePhoto() {
-      const video = document.getElementById('cameraVideo');
-      const canvas = document.getElementById('cameraCanvas');
-      const preview = document.getElementById('selfiePreview');
-      
-      canvas.width = video.videoWidth;
-      canvas.height = video.videoHeight;
-      canvas.getContext('2d').drawImage(video, 0, 0);
-      
-      selfieData = canvas.toDataURL('image/jpeg', 0.8);
-      preview.src = selfieData;
-      document.getElementById('selfiePreviewContainer').style.display = 'block';
-      
-      closeCamera();
-    }
-    
-    function removeSelfie() {
-      selfieData = null;
-      document.getElementById('selfiePreviewContainer').style.display = 'none';
     }
     
     // Submit request
@@ -730,61 +871,37 @@
       const message = document.getElementById('messageInput').value.trim();
       
       try {
-        const body = {
-          establishmentId,
-          youtubeId: selectedSong.youtubeId,
-          title: selectedSong.title,
-          artist: selectedSong.artist,
-          thumbnail: selectedSong.thumbnail,
-          message,
-          selfieUrl: selfieData
-        };
-        
         const res = await fetch(`${API_URL}/requests`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(body)
+          body: JSON.stringify({
+            establishmentId,
+            youtubeId: selectedSong.youtubeId,
+            title: selectedSong.title,
+            artist: selectedSong.artist,
+            thumbnail: selectedSong.thumbnail,
+            message
+          })
         });
         
-        if (!res.ok) throw new Error('Request failed');
+        if (!res.ok) throw new Error();
         
-        // Save to localStorage
+        // Save
         localStorage.setItem(`pms_request_${establishmentId}`, JSON.stringify({
           ...selectedSong,
           message,
-          selfiePreview: selfieData,
-          establishmentName: establishment?.name,
           timestamp: Date.now()
         }));
         
         closeModal();
-        showSuccessScreen();
+        document.getElementById('clientScreen').classList.remove('active');
+        document.getElementById('clientScreen').style.display = 'none';
+        document.getElementById('successScreen').style.display = 'block';
+        document.getElementById('successScreen').classList.add('active');
         
       } catch (err) {
         alert('Erreur lors de l\'envoi');
-        console.error('Submit error:', err);
       }
-    }
-    
-    // Show success screen
-    function showSuccessScreen() {
-      document.getElementById('mainContainer').style.display = 'none';
-      document.getElementById('successScreen').classList.add('active');
-    }
-    
-    // Reset for new request
-    function resetForNewRequest() {
-      // This will be handled by the QR scan - just redirect
-      window.location.href = '/pwa/';
-    }
-    
-    // Tab switching
-    function switchTab(tab) {
-      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-      document.querySelectorAll('.content').forEach(c => c.classList.remove('active'));
-      
-      event.target.classList.add('active');
-      document.getElementById(tab + 'Tab').classList.add('active');
     }
     
     // PWA Install
