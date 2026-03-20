@@ -596,30 +596,26 @@
     let deferredPrompt = null;
     
     // Initialize
-    window.addEventListener('load', () => {
-      // Small delay to ensure DOM is ready
-      setTimeout(() => {
-        initApp();
-      }, 100);
-    });
-    
-    function initApp() {
+    (function init() {
       // Check if opened with QR data (direct link from QR code)
       const urlParams = new URLSearchParams(window.location.search);
       const id = urlParams.get('id');
       
+      console.log('Init - ID:', id);
+      
       if (id) {
         // Direct link - open client directly
         establishmentId = id;
+        showScreen('client');
         openClient(id);
       } else {
         // No ID - show home screen
-        goHome();
+        showScreen('home');
       }
       
       // Register service worker
       if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.register('/pwa/sw.js')
+        navigator.serviceWorker.register('/pwa/sw.js?' + Date.now())
           .then(reg => console.log('SW registered'))
           .catch(err => console.log('SW failed:', err));
       }
@@ -632,11 +628,41 @@
           document.getElementById('installBanner').classList.remove('hidden');
         }
       });
+    })();
+    
+    // Screen management
+    function showScreen(screen) {
+      const home = document.getElementById('homeScreen');
+      const client = document.getElementById('clientScreen');
+      const success = document.getElementById('successScreen');
+      const scanner = document.getElementById('scannerScreen');
+      
+      // Hide all
+      home.style.display = 'none';
+      client.style.display = 'none';
+      success.style.display = 'none';
+      scanner.style.display = 'none';
+      
+      // Show requested
+      switch(screen) {
+        case 'home':
+          home.style.display = 'flex';
+          break;
+        case 'client':
+          client.style.display = 'block';
+          break;
+        case 'success':
+          success.style.display = 'block';
+          break;
+        case 'scanner':
+          scanner.style.display = 'flex';
+          break;
+      }
     }
     
     // Scanner Functions
     function startScanner() {
-      document.getElementById('scannerScreen').classList.add('active');
+      showScreen('scanner');
       
       html5QrCode = new Html5Qrcode("scannerVideo");
       
@@ -655,7 +681,7 @@
     }
     
     function stopScanner() {
-      document.getElementById('scannerScreen').classList.remove('active');
+      showScreen('home');
       
       if (html5QrCode) {
         html5QrCode.stop().then(() => {
@@ -705,18 +731,12 @@
     async function openClient(id) {
       establishmentId = id;
       
-      // Hide home and success screens
-      document.getElementById('homeScreen').classList.remove('visible');
-      document.getElementById('homeScreen').style.display = 'none';
-      document.getElementById('successScreen').classList.remove('active');
-      document.getElementById('successScreen').style.display = 'none';
-      
       try {
         const res = await fetch(`${API_URL}/establishments/${id}`);
         
         if (!res.ok) {
           alert('Établissement non trouvé');
-          goHome();
+          showScreen('home');
           return;
         }
         
@@ -725,8 +745,7 @@
         document.getElementById('establishmentName').textContent = establishment.name || 'Établissement';
         
         // Show client screen
-        document.getElementById('clientScreen').style.display = 'block';
-        document.getElementById('clientScreen').classList.add('active');
+        showScreen('client');
         
         // Reset tabs to playlist
         document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
@@ -740,7 +759,7 @@
       } catch (err) {
         console.error('Error:', err);
         alert('Erreur de connexion');
-        goHome();
+        showScreen('home');
       }
     }
     
@@ -826,29 +845,11 @@
     // Navigation
     function goHome() {
       establishmentId = null;
-      
-      // Hide all screens
-      document.getElementById('homeScreen').classList.add('visible');
-      document.getElementById('homeScreen').style.display = '';
-      document.getElementById('clientScreen').classList.remove('active');
-      document.getElementById('clientScreen').style.display = 'none';
-      document.getElementById('successScreen').classList.remove('active');
-      document.getElementById('successScreen').style.display = 'none';
-      document.getElementById('requestModal').classList.remove('active');
-      
-      // Reset tabs
-      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-      document.querySelectorAll('.content').forEach(c => c.classList.remove('active'));
-      const playlistTab = document.getElementById('playlistTab');
-      if (playlistTab) playlistTab.classList.add('active');
-      const playlistBtn = document.querySelector('.tab[onclick*="playlist"]');
-      if (playlistBtn) playlistBtn.classList.add('active');
+      showScreen('home');
     }
     
     function scanAnother() {
-      document.getElementById('successScreen').classList.remove('active');
-      document.getElementById('successScreen').style.display = 'none';
-      startScanner();
+      showScreen('scanner');
     }
     
     // Tab switching
@@ -904,10 +905,7 @@
         }));
         
         closeModal();
-        document.getElementById('clientScreen').classList.remove('active');
-        document.getElementById('clientScreen').style.display = 'none';
-        document.getElementById('successScreen').style.display = 'block';
-        document.getElementById('successScreen').classList.add('active');
+        showScreen('success');
         
       } catch (err) {
         alert('Erreur lors de l\'envoi');
