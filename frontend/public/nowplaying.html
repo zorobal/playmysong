@@ -388,86 +388,135 @@
         },
         events: {
           onReady: function(event) {
-            console.log('Player ready');
+            console.log('Player ready, starting video');
             event.target.playVideo();
+            // Start duration check
+            startDurationCheck();
           },
           onStateChange: function(event) {
+            console.log('Player state changed:', event.data);
+            if (event.data === YT.PlayerState.PLAYING) {
+              startDurationCheck();
+            }
             if (event.data === YT.PlayerState.ENDED) {
+              console.log('Video ended!');
               playNext();
             }
+          },
+          onError: function(event) {
+            console.error('YouTube player error:', event.data);
+            // Skip to next on error
+            playNext();
           }
         }
       });
     }
+    
+    let durationCheckInterval = null;
+    
+    function startDurationCheck() {
+      if (durationCheckInterval) {
+        clearInterval(durationCheckInterval);
+      }
+      
+      durationCheckInterval = setInterval(() => {
+        if (player && player.getCurrentTime && player.getDuration) {
+          try {
+            const currentTime = player.getCurrentTime();
+            const duration = player.getDuration();
+            const state = player.getPlayerState();
+            
+            // Check if video is near the end (within 1 second)
+            if (state === YT.PlayerState.PLAYING && duration > 0 && currentTime >= duration - 0.5) {
+              console.log('Video duration check: near end, calling playNext');
+              clearInterval(durationCheckInterval);
+              playNext();
+            }
+          } catch(e) {}
+        }
+      }, 1000);
+    }
 
     async function playNext() {
+      console.log('playNext called');
+      
+      // Clear duration check
+      if (durationCheckInterval) {
+        clearInterval(durationCheckInterval);
+        durationCheckInterval = null;
+      }
+      
       // Mark current as completed if it was a queue song
       if (currentNowPlaying && !currentNowPlaying.isPlaylistSong && currentNowPlaying.id) {
+        console.log('Marking song as completed:', currentNowPlaying.id);
         try {
           await fetch(`${API_URL}/request/${currentNowPlaying.id}/complete`, { method: 'POST' });
-        } catch(e) {}
+        } catch(e) {
+          console.error('Error marking as completed:', e);
+        }
       }
       
       // Get fresh queue data
       try {
+        console.log('Fetching playlist data...');
         const playlistRes = await fetch(`${API_URL}/request/playlist/current?establishmentId=${establishmentId}`);
         const playlistData = await playlistRes.json();
         
         const queue = playlistData.queue || [];
         establishmentPlaylist = playlistData.establishmentPlaylist || [];
         
+        console.log('Queue:', queue.length, 'Playlist:', establishmentPlaylist.length);
+        
         // If we have queue songs, play first queue song
         if (queue.length > 0) {
           const nextSong = queue[0];
+          console.log('Playing queue song:', nextSong.title);
+          
           // Mark as playing
           await fetch(`${API_URL}/request/${nextSong.id}/play`, { method: 'POST' });
           
-          // Just update player - don't re-render entire UI
+          // Update state
           currentNowPlaying = nextSong;
           currentQueue = queue;
           currentPlaylistIndex = 0;
           
-          // Update queue display only
+          // Update displays
           updateQueueDisplay(queue);
-          
-          // Update song info in DOM without full re-render
           updateNowPlayingDisplay(nextSong);
           
-          // Reinit player if different video
-          if (!player || (player.getVideoData && player.getVideoData().video_id !== nextSong.youtubeId)) {
-            setTimeout(() => initYouTubePlayer(nextSong.youtubeId), 500);
-          }
+          // Play next video
+          console.log('Loading video:', nextSong.youtubeId);
+          initYouTubePlayer(nextSong.youtubeId);
         } 
-        // Otherwise play next playlist song - find it by current youtubeId
+        // Otherwise play next playlist song
         else if (establishmentPlaylist.length > 0) {
-          // Find current song in the refreshed playlist to get correct index
+          // Find current song in the refreshed playlist
           let currentIdx = -1;
           if (currentNowPlaying && currentNowPlaying.youtubeId) {
             currentIdx = establishmentPlaylist.findIndex(s => s.youtubeId === currentNowPlaying.youtubeId);
           }
           
-          // Calculate next index (loop back to 0 if at end)
-          let nextIdx;
-          if (currentIdx >= 0) {
-            nextIdx = (currentIdx + 1) % establishmentPlaylist.length;
-          } else {
-            // Current song not found in playlist (might have been removed), start from beginning
-            nextIdx = 0;
-          }
+          // Calculate next index
+          let nextIdx = currentIdx >= 0 ? (currentIdx + 1) % establishmentPlaylist.length : 0;
           
           const nextSong = { ...establishmentPlaylist[nextIdx], isPlaylistSong: true };
-          currentPlaylistIndex = nextIdx;
+          console.log('Playing playlist song:', nextSong.title, 'Index:', nextIdx);
           
+          currentPlaylistIndex = nextIdx;
           currentNowPlaying = nextSong;
           currentQueue = [];
           
-          // Re-render for playlist song (safer)
+          // Re-render
           lastRenderedSongId = null;
           renderAll(null, nextSong, []);
           
-          setTimeout(() => initYouTubePlayer(nextSong.youtubeId), 500);
+          // Play next video
+          setTimeout(() => {
+            initYouTubePlayer(nextSong.youtubeId);
+          }, 500);
         } else {
           // Nothing to play - show waiting
+          console.log('No songs in queue or playlist');
           currentNowPlaying = null;
           lastRenderedSongId = 'none';
           renderAll(null, null, []);
