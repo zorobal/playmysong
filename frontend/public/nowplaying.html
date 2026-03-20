@@ -239,24 +239,38 @@
   </div>
 
   <script src="https://www.youtube.com/iframe_api"></script>
-  <script src="https://cdn.socket.io/4.7.4/socket.io.min.js"></script>
   <script>
     const API_URL = 'https://playmysong-mu.vercel.app/api';
-    const SOCKET_URL = 'https://playmysong-mu.vercel.app';
     const urlParams = new URLSearchParams(window.location.search);
     const establishmentId = urlParams.get('establishmentId') || 'cmmke5nms0001ik0424nh0517';
 
-    // Socket connection
-    const socket = io(SOCKET_URL, { transports: ['polling'] });
+    // Auto-refresh every 2 seconds instead of Socket.IO (which doesn't work on Vercel)
+    setInterval(() => {
+      console.log('Auto-checking for updates...');
+      checkForUpdates();
+    }, 2000);
     
-    socket.on('connect', () => {
-      console.log('Socket connected');
-      socket.emit('join_establishment', establishmentId);
-    });
-
-    socket.on('now_playing_updated', () => loadData());
-    socket.on('request_validated', () => loadData());
-    socket.on('request_completed', () => loadData());
+    // Check for new songs in queue
+    async function checkForUpdates() {
+      try {
+        const res = await fetch(`${API_URL}/request/playlist/current?establishmentId=${establishmentId}`);
+        const data = await res.json();
+        
+        // If there's a nowPlaying and it's not what we're playing, load it
+        if (data.nowPlaying && data.nowPlaying.id !== currentNowPlaying?.id) {
+          console.log('New song to play:', data.nowPlaying.title);
+          loadData();
+        }
+        
+        // If queue changed, update display
+        if (data.queue && JSON.stringify(data.queue.map(q => q.id)) !== JSON.stringify(currentQueue.map(q => q.id))) {
+          currentQueue = data.queue || [];
+          updateQueueDisplay(currentQueue);
+        }
+      } catch (e) {
+        console.error('Error checking updates:', e);
+      }
+    }
 
     // State
     let currentNowPlaying = null;
