@@ -355,13 +355,29 @@ app.post('/api/users/reset-password', async (req, res) => {
 });
 
 // Playlists
+// Public playlists endpoint for admins (no auth required)
+app.get('/api/playlists/by-establishment/:establishmentId', async (req, res) => {
+  try {
+    const { establishmentId } = req.params;
+    const playlists = await prisma.playlist.findMany({
+      where: { establishmentId },
+      include: { songs: true },
+      orderBy: { createdAt: 'asc' }
+    });
+    res.json(playlists);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 app.get('/api/playlists', async (req, res) => {
   try {
     const { establishmentId } = req.query;
     const where = establishmentId ? { establishmentId } : {};
     const playlists = await prisma.playlist.findMany({
       where,
-      include: { songs: true }
+      include: { songs: true },
+      orderBy: { createdAt: 'asc' }
     });
     res.json(playlists);
   } catch (error) {
@@ -377,7 +393,8 @@ app.get('/api/playlists/public', async (req, res) => {
     }
     const playlists = await prisma.playlist.findMany({
       where: { establishmentId },
-      include: { songs: true }
+      include: { songs: true },
+      orderBy: { createdAt: 'asc' }
     });
     res.json(playlists);
   } catch (error) {

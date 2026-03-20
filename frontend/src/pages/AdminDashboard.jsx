@@ -53,7 +53,7 @@ function AdminDashboard() {
         const usersData = await usersRes.json();
         setUsers(Array.isArray(usersData) ? usersData : []);
 
-        const playlistsRes = await fetch(`${API_URL}/playlists?establishmentId=${adminData.establishmentId}`, { headers });
+        const playlistsRes = await fetch(`${API_URL}/playlists/by-establishment/${adminData.establishmentId}`);
         const playlistsData = await playlistsRes.json();
         setPlaylists(Array.isArray(playlistsData) ? playlistsData : []);
         
@@ -296,7 +296,6 @@ function AdminDashboard() {
                 const res = await fetch(`${API_URL}/playlists`, {
                   method: "POST",
                   headers: { 
-                    Authorization: `Bearer ${token}`,
                     "Content-Type": "application/json"
                   },
                   body: JSON.stringify(playlistData)
@@ -304,12 +303,8 @@ function AdminDashboard() {
                 console.log("Playlist response:", res.status);
                 if (res.ok) {
                   setNewPlaylist({ name: "" });
-                  // Refresh playlists
-                  const playlistsRes = await fetch(`${API_URL}/playlists?establishmentId=${establishmentId}`, { 
-                    headers: { Authorization: `Bearer ${token}` } 
-                  });
-                  const playlistsData = await playlistsRes.json();
-                  setPlaylists(Array.isArray(playlistsData) ? playlistsData : []);
+                  // Refresh all data
+                  loadInitialData();
                 } else {
                   const err = await res.json();
                   alert("Erreur: " + (err.error || "Inconnu"));
@@ -565,12 +560,8 @@ function AdminDashboard() {
                 console.log("Create user response:", data);
                 if (res.ok) {
                   setNewUser({ name: "", email: "", password: "", phoneNumber: "" });
-                  // Refresh users list
-                  const usersRes = await fetch(`${API_URL}/users?establishmentId=${establishmentId}`, { 
-                    headers: { Authorization: `Bearer ${token}` } 
-                  });
-                  const usersData = await usersRes.json();
-                  setUsers(Array.isArray(usersData) ? usersData : []);
+                  // Refresh all data
+                  loadInitialData();
                 } else {
                   alert("Erreur: " + (data.error || "Inconnu"));
                 }
