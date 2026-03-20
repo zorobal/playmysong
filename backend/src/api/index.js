@@ -3,6 +3,7 @@ const cors = require('cors');
 const cookieParser = require('cookie-parser');
 const { PrismaClient } = require('@prisma/client');
 const bcrypt = require('bcryptjs');
+// API v2 - with establishment playlist support
 const jwt = require('jsonwebtoken');
 const QRCode = require('qrcode');
 
