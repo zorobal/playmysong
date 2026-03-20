@@ -34,10 +34,15 @@ function UserDashboard() {
   useEffect(() => {
     if (!establishment?.id) return;
 
-    // Auto-refresh every 3 seconds for real-time updates
+    let lastRefresh = Date.now();
+    
     const refreshInterval = setInterval(() => {
-      console.log("Auto-refreshing data...");
-      loadData();
+      // Skip if refreshed in last 3 seconds (to avoid conflicts after actions)
+      if (Date.now() - lastRefresh > 3000) {
+        console.log("Auto-refreshing data...");
+        loadData();
+        lastRefresh = Date.now();
+      }
     }, 3000);
 
     return () => clearInterval(refreshInterval);
@@ -163,12 +168,21 @@ function UserDashboard() {
   async function validateRequest(requestId) {
     try {
       const token = localStorage.getItem("token");
+      const request = pendingRequests.find(r => r.id === requestId);
+      
+      // Update local state immediately
+      setPendingRequests(prev => prev.filter(r => r.id !== requestId));
+      if (request) {
+        setValidatedRequests(prev => [...prev, { ...request, status: "VALIDATED" }]);
+      }
+      
+      // Send to server
       await fetch(`${API_URL}/request/${requestId}/validate`, {
         method: "POST",
         headers: { Authorization: `Bearer ${token}` }
       });
-      loadData();
     } catch (err) {
+      loadData();
       alert("Erreur lors de la validation");
     }
   }
@@ -176,6 +190,13 @@ function UserDashboard() {
   async function rejectRequest(requestId) {
     try {
       const token = localStorage.getItem("token");
+      
+      // Update local state immediately
+      setPendingRequests(prev => prev.filter(r => r.id !== requestId));
+      setShowRejectModal(null);
+      setRejectReason("");
+      
+      // Send to server
       await fetch(`${API_URL}/request/${requestId}/reject`, {
         method: "POST",
         headers: { 
@@ -184,10 +205,8 @@ function UserDashboard() {
         },
         body: JSON.stringify({ reason: rejectReason })
       });
-      setShowRejectModal(null);
-      setRejectReason("");
-      loadData();
     } catch (err) {
+      loadData();
       alert("Erreur lors du rejet");
     }
   }
