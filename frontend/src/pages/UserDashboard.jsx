@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { io } from "socket.io-client";
-import API_URL, { SOCKET_URL } from "../config";
+import API_URL from "../config";
 
 function UserDashboard() {
   const [user, setUser] = useState(null);
@@ -35,34 +34,13 @@ function UserDashboard() {
   useEffect(() => {
     if (!establishment?.id) return;
 
-    const socket = io(SOCKET_URL, {
-      transports: ["polling", "websocket"],
-      reconnection: true,
-      reconnectionAttempts: 5,
-      reconnectionDelay: 1000
-    });
+    // Auto-refresh every 3 seconds for real-time updates
+    const refreshInterval = setInterval(() => {
+      console.log("Auto-refreshing data...");
+      loadData();
+    }, 3000);
 
-    socket.on("connect", () => {
-      console.log("Socket connected:", socket.id);
-      socket.emit("join_establishment", establishment.id);
-    });
-
-    socket.on("request_validated", ({ request, requestId }) => {
-      setPendingRequests(prev => prev.filter(r => r.id !== requestId));
-      if (request) {
-        setValidatedRequests(prev => [...prev, request]);
-      }
-    });
-
-    socket.on("request_rejected", ({ requestId }) => {
-      setPendingRequests(prev => prev.filter(r => r.id !== requestId));
-    });
-    
-    socket.on("request_completed", ({ requestId }) => {
-      setValidatedRequests(prev => prev.filter(r => r.id !== requestId));
-    });
-
-    return () => socket.disconnect();
+    return () => clearInterval(refreshInterval);
   }, [establishment?.id]);
 
   async function loadData() {

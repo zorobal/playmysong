@@ -1,6 +1,5 @@
 import React, { useEffect, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import { io } from "socket.io-client";
 import API_URL, { SOCKET_URL } from "../config";
 
 function AdminDashboard() {
@@ -33,51 +32,13 @@ function AdminDashboard() {
   useEffect(() => {
     if (!establishmentId) return;
 
-    const socket = io(SOCKET_URL, {
-      transports: ["polling", "websocket"],
-      reconnection: true,
-      reconnectionAttempts: 5,
-      reconnectionDelay: 1000
-    });
+    // Auto-refresh every 3 seconds for real-time updates
+    const refreshInterval = setInterval(() => {
+      console.log("Auto-refreshing data...");
+      loadInitialData();
+    }, 3000);
 
-    socket.on("connect", () => {
-      console.log("Socket connected:", socket.id);
-      socket.emit("join_establishment", establishmentId);
-    });
-
-    socket.on("new_request", (data) => {
-      console.log("New request received:", data);
-      setPendingRequests(prev => [...prev, data.request || data]);
-      setStats(prev => ({ ...prev, total: prev.total + 1 }));
-    });
-
-    socket.on("request_validated", ({ requestId }) => {
-      const request = pendingRequests.find(r => r.id === requestId);
-      if (request) {
-        setPendingRequests(prev => prev.filter(r => r.id !== requestId));
-        setValidatedRequests(prev => [...prev, { ...request, status: "VALIDATED" }]);
-        setStats(prev => ({ ...prev, validated: prev.validated + 1 }));
-      }
-    });
-
-    socket.on("request_rejected", ({ requestId }) => {
-      setPendingRequests(prev => prev.filter(r => r.id !== requestId));
-      setStats(prev => ({ ...prev, rejected: prev.rejected + 1 }));
-    });
-
-    socket.on("now_playing_updated", (song) => {
-      setNowPlaying(song);
-    });
-
-    socket.on("request_completed", ({ requestId }) => {
-      setValidatedRequests(prev => prev.filter(r => r.id !== requestId));
-    });
-
-    socket.on("playlist_updated", () => {
-      loadPlaylist();
-    });
-
-    return () => socket.disconnect();
+    return () => clearInterval(refreshInterval);
   }, [establishmentId]);
 
   async function loadInitialData() {
