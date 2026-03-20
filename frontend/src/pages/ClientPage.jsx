@@ -170,6 +170,7 @@ export default function ClientPage() {
         title: selectedSong.title,
         artist: selectedSong.artist || "",
         youtubeId: selectedSong.youtubeId || null,
+        thumbnail: selectedSong.thumbnail || null,
         filePath: selectedSong.filePath || null,
         durationSec: selectedSong.duration || 0,
         message: message.trim() || null,
@@ -303,31 +304,40 @@ export default function ClientPage() {
             </div>
           )}
 
+          <div style={{
+            background: 'rgba(59, 130, 246, 0.2)',
+            border: '1px solid rgba(59, 130, 246, 0.4)',
+            borderRadius: '12px',
+            padding: '16px',
+            marginBottom: '16px'
+          }}>
+            <p style={{color:'#93c5fd',fontSize:'13px',marginBottom:'8px'}}>
+              Vous avez déjà une demande en cours.
+            </p>
+            <p style={{color:'#cbd5e1',fontSize:'12px'}}>
+              Scannez le QR Code pour faire une nouvelle demande.
+            </p>
+          </div>
+
           <button
             onClick={() => {
-              localStorage.removeItem(`pms_request_${establishmentId}`);
-              setSuccess(false);
-              setSelectedSong(null);
-              setShowForm(false);
-              setMessage("");
-              setSelfieFile(null);
-              setSelfiePreview(null);
-              setError("");
+              // Redirect to client home to see options
+              window.location.href = '/clienthome';
             }}
             style={{
               width: '100%',
               padding: '14px',
               borderRadius: '12px',
               border: 'none',
-              background: 'linear-gradient(135deg, #7c3aed, #db2777)',
+              background: 'linear-gradient(135deg, #3b82f6, #2563eb)',
               color: 'white',
               fontSize: '15px',
               fontWeight: '600',
               cursor: 'pointer',
-              marginTop: '16px'
+              marginTop: '8px'
             }}
           >
-            ➕ Nouvelle demande
+            📱 Scanner QR Code
           </button>
 
           <p style={{color:'#64748b',fontSize:'12px',marginTop:'24px'}}>{establishmentName}</p>

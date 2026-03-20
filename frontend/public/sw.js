@@ -1,74 +1,74 @@
-// Basic service worker for PWA - handles caching safely
-const CACHE_NAME = 'playmysong-v1';
+const CACHE_NAME = 'playmysong-pwa-v1';
+const urlsToCache = [
+  '/pwa/',
+  '/pwa/index.html',
+  '/pwa/styles.css',
+  '/pwa/app.js'
+];
 
-self.addEventListener('install', (event) => {
-  console.log('Service Worker installing.');
+// Install event
+self.addEventListener('install', event => {
+  event.waitUntil(
+    caches.open(CACHE_NAME)
+      .then(cache => {
+        console.log('Opened cache');
+        return cache.addAll(urlsToCache);
+      })
+      .catch(err => console.log('Cache error:', err))
+  );
   self.skipWaiting();
 });
 
-self.addEventListener('activate', (event) => {
-  console.log('Service Worker activating.');
-  event.waitUntil(
-    caches.keys().then((names) => Promise.all(
-      names.filter(n => n !== CACHE_NAME).map(caches.delete)
-    ))
-  );
-  self.clients.claim();
-});
-
-// Safely handle fetch events - skip problematic requests
-self.addEventListener('fetch', (event) => {
-  // Skip non-GET requests
-  if (event.request.method !== 'GET') return;
-
-  // Skip API calls, socket connections, and problematic URLs
-  const url = new URL(event.request.url);
-  if (url.hostname === 'localhost' && url.port === '4000' ||
-      url.protocol === 'chrome-extension:' ||
-      event.request.url.includes('socket.io') ||
-      event.request.url.includes('/api/')) {
-    return; // Don't handle these requests
-  }
-
-  // For HTML pages, try network first
-  if (event.request.headers.get('accept')?.includes('text/html')) {
-    event.respondWith(
-      fetch(event.request)
-        .then(response => {
-          // Only cache successful responses
-          if (response.ok && response.status === 200) {
-            const responseClone = response.clone();
-            caches.open(CACHE_NAME).then(cache => {
-              cache.put(event.request, responseClone);
-            });
-          }
-          return response;
-        })
-        .catch(() => {
-          // Fallback to cache or offline page
-          return caches.match(event.request) || caches.match('/index.html');
-        })
-    );
-    return;
-  }
-
-  // For other assets, try cache first then network
+// Fetch event
+self.addEventListener('fetch', event => {
   event.respondWith(
     caches.match(event.request)
       .then(response => {
         if (response) {
           return response;
         }
-        return fetch(event.request).then(response => {
-          // Only cache successful responses
-          if (response.ok && response.status === 200) {
-            const responseClone = response.clone();
-            caches.open(CACHE_NAME).then(cache => {
-              cache.put(event.request, responseClone);
-            });
-          }
-          return response;
-        });
+        return fetch(event.request)
+          .then(response => {
+            // Don't cache non-GET requests
+            if (event.request.method !== 'GET') {
+              return response;
+            }
+            
+            // Clone response for caching
+            const responseToCache = response.clone();
+            caches.open(CACHE_NAME)
+              .then(cache => {
+                cache.put(event.request, responseToCache);
+              });
+            
+            return response;
+          })
+          .catch(err => {
+            console.log('Fetch error:', err);
+          });
       })
   );
+});
+
+// Activate event
+self.addEventListener('activate', event => {
+  event.waitUntil(
+    caches.keys().then(cacheNames => {
+      return Promise.all(
+        cacheNames.map(cacheName => {
+          if (cacheName !== CACHE_NAME) {
+            return caches.delete(cacheName);
+          }
+        })
+      );
+    })
+  );
+  self.clients.claim();
+});
+
+// Handle messages from the app
+self.addEventListener('message', event => {
+  if (event.data && event.data.type === 'SKIP_WAITING') {
+    self.skipWaiting();
+  }
 });

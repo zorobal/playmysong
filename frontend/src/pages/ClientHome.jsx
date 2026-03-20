@@ -14,27 +14,45 @@ export default function ClientHome() {
   }, [establishmentId, navigate]);
 
   return (
-    <main style={{ padding: 20, textAlign: "center" }}>
-      <h1 style={{ fontSize: "2rem", marginBottom: 10 }}>🎵 PlayMySong</h1>
-      <p style={{ marginBottom: 30 }}>La musique collaborative pour votre établissement</p>
+    <main style={{ 
+      padding: 20, 
+      textAlign: "center",
+      minHeight: "100vh",
+      background: "linear-gradient(135deg, #1e1b4b 0%, #312e81 50%, #4c1d95 100%)",
+      color: "white",
+      fontFamily: "system-ui, -apple-system, sans-serif"
+    }}>
+      <h1 style={{ fontSize: "2.5rem", marginBottom: 10, marginTop: 40 }}>🎵 PlayMySong</h1>
+      <p style={{ marginBottom: 40, color: "#cbd5e1" }}>La musique collaborative pour votre établissement</p>
       
-      <div style={{ display: "flex", flexDirection: "column", gap: 15, maxWidth: 300, margin: "0 auto" }}>
-        <Link to="/request">
-          <button style={{ padding: "15px 20px", fontSize: "1rem", width: "100%" }}>
-            🔍 Rechercher & Proposer
-          </button>
-        </Link>
-        
-        <Link to="/playlist">
-          <button style={{ padding: "15px 20px", fontSize: "1rem", width: "100%" }}>
-            📋 Voir la playlist
-          </button>
-        </Link>
+      <div style={{ 
+        background: "rgba(255,255,255,0.1)", 
+        borderRadius: "20px", 
+        padding: "30px",
+        marginBottom: 30,
+        border: "1px solid rgba(255,255,255,0.2)"
+      }}>
+        <div style={{ fontSize: "4rem", marginBottom: 20 }}>📱</div>
+        <h2 style={{ fontSize: "1.3rem", marginBottom: 15 }}>Comment ça marche ?</h2>
+        <ol style={{ textAlign: "left", paddingLeft: 20, lineHeight: 2, color: "#e2e8f0" }}>
+          <li>Scannez le QR Code affiché dans votre établissement</li>
+          <li> Recherchez une chanson sur YouTube</li>
+          <li>Envoyez votre demande</li>
+          <li>Attendez la validation par le staff</li>
+        </ol>
       </div>
 
-      <div style={{ marginTop: 40, fontSize: "0.85rem", color: "#666" }}>
-        <p>Scannez le QR Code de votre établissement pour une expérience personnalisée</p>
+      <div style={{ 
+        background: "rgba(59, 130, 246, 0.2)", 
+        borderRadius: "16px", 
+        padding: "20px",
+        border: "1px solid rgba(59, 130, 246, 0.4)"
+      }}>
+        <p style={{ color: "#93c5fd", fontSize: "15px" }}>
+          🏪 Demandez le QR Code à votre serveur pour proposer vos chansons préférées !
+        </p>
       </div>
+
     </main>
   );
 }

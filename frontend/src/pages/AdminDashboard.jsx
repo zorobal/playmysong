@@ -219,7 +219,13 @@ function AdminDashboard() {
           className={`tab ${activeTab === "playlist" ? "active" : ""}`}
           onClick={() => setActiveTab("playlist")}
         >
-          🎵 Playlist
+          📁 Playlist
+        </button>
+        <button 
+          className={`tab ${activeTab === "playlistEtab" ? "active" : ""}`}
+          onClick={() => setActiveTab("playlistEtab")}
+        >
+          🎼 Playlist Établissement
         </button>
         <button 
           className={`tab ${activeTab === "users" ? "active" : ""}`}
@@ -289,7 +295,7 @@ function AdminDashboard() {
 
         {activeTab === "playlist" && (
           <div className="playlist-panel">
-            <h2>Gestion des playlists</h2>
+            <h2>Gestion Playlist - {admin?.establishment?.name || 'Établissement'}</h2>
             
             <div className="create-playlist">
               <input 
@@ -395,6 +401,79 @@ function AdminDashboard() {
                 </div>
               ))}
             </div>
+          </div>
+        )}
+
+        {activeTab === "playlistEtab" && (
+          <div className="playlist-panel">
+            <h2>🎼 Playlist Établissement - {admin?.establishment?.name || 'Établissement'}</h2>
+            <p style={{marginBottom: 20, color: '#666'}}>
+              Cette playlist est jouée automatiquement quand la file d'attente est vide.
+            </p>
+            
+            {playlists.length === 0 ? (
+              <div style={{textAlign: 'center', padding: 40}}>
+                <p>Aucune playlist trouvée.</p>
+                <p>Créez d'abord une playlist dans l'onglet "Playlist"</p>
+              </div>
+            ) : (
+              <div className="playlists-list">
+                {playlists.map(pl => (
+                  <div key={pl.id} className="playlist-card" style={{marginBottom: 20, padding: 15, background: '#f9f9f9', borderRadius: 12}}>
+                    <div className="playlist-header" style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 15}}>
+                      <h3 style={{margin: 0}}>{pl.name}</h3>
+                      <span style={{fontSize: '0.85rem', color: '#666'}}>{pl.songs?.length || 0} chanson(s)</span>
+                    </div>
+                    
+                    <div className="playlist-songs">
+                      {(pl.songs || []).map(song => (
+                        <div key={song.id} className="playlist-song-item" style={{display: 'flex', alignItems: 'center', gap: 12, padding: '8px 0', borderBottom: '1px solid #eee'}}>
+                          {song.thumbnail && <img src={song.thumbnail} alt="" style={{width: 50, height: 50, borderRadius: 8, objectFit: 'cover'}} />}
+                          <div style={{flex: 1, minWidth: 0}}>
+                            <p style={{fontWeight: 600, margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap'}}>{song.title}</p>
+                            <p style={{fontSize: '0.85rem', color: '#666', margin: 0}}>{song.artist || 'Artiste inconnu'}</p>
+                          </div>
+                          <button 
+                            onClick={async () => {
+                              if (!confirm('Supprimer cette chanson ?')) return;
+                              const token = localStorage.getItem("token");
+                              await fetch(`${API_URL}/songs/${song.id}`, {
+                                method: 'DELETE',
+                                headers: { Authorization: `Bearer ${token}` }
+                              });
+                              loadInitialData();
+                            }}
+                            style={{background: '#ef4444', color: 'white', border: 'none', padding: '8px 12px', borderRadius: 6, cursor: 'pointer'}}
+                          >
+                            🗑️
+                          </button>
+                        </div>
+                      ))}
+                      {(!pl.songs || pl.songs.length === 0) && (
+                        <p style={{color: '#999', textAlign: 'center', padding: 20}}>Aucune chanson dans cette playlist</p>
+                      )}
+                    </div>
+                    
+                    <div style={{marginTop: 15}}>
+                      <button 
+                        onClick={() => handleFileSelect(pl.id)} 
+                        style={{
+                          background: 'linear-gradient(135deg, #10b981, #059669)',
+                          color: 'white',
+                          border: 'none',
+                          padding: '12px 24px',
+                          borderRadius: 8,
+                          cursor: 'pointer',
+                          fontSize: '1rem'
+                        }}
+                      >
+                        ➕ Ajouter une chanson YouTube
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         )}
 
@@ -631,6 +710,15 @@ function AdminDashboard() {
           padding: 25px;
           border-radius: 12px;
           box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        .playlist-song-item {
+          display: flex;
+          align-items: center;
+          gap: 12px;
+          padding: 12px;
+          background: #f8f9fa;
+          border-radius: 8px;
+          margin-bottom: 8px;
         }
         .stats-grid {
           display: grid;

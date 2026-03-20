@@ -842,8 +842,12 @@
         document.getElementById('establishmentName').textContent = establishment.name || 'Établissement';
         
         showScreen('client');
-        switchTab('playlist');
-        loadPlaylists();
+        
+        // Wait for DOM to update then load playlists
+        setTimeout(() => {
+          switchTab('playlist');
+          loadPlaylists();
+        }, 100);
       } catch (err) {
         alert('Établissement non trouvé');
         showScreen('home');
@@ -852,19 +856,30 @@
     
     async function loadPlaylists() {
       const container = document.getElementById('playlistsContainer');
+      console.log('loadPlaylists called, establishmentId:', establishmentId);
       container.innerHTML = '<div class="loading"><div class="loading-spinner">⏳</div>Chargement...</div>';
       
       try {
-        const res = await fetch(`${API_URL}/playlists/public?establishmentId=${establishmentId}`);
-        const playlists = await res.json();
+        const url = `${API_URL}/playlists/public?establishmentId=${establishmentId}`;
+        console.log('Fetching:', url);
+        const res = await fetch(url);
+        console.log('Response status:', res.status);
         
-        if (!playlists.length) {
+        if (!res.ok) {
+          throw new Error('Failed to fetch playlists');
+        }
+        
+        const playlists = await res.json();
+        console.log('Playlists loaded:', playlists);
+        
+        if (!playlists || !playlists.length) {
           container.innerHTML = '<div class="playlist-empty"><div class="playlist-empty-icon">🎵</div>Aucune chanson dans la playlist.<br>Utilisez l\'onglet Recherche.</div>';
           return;
         }
         
         let html = '<div class="song-list">';
         playlists.forEach(playlist => {
+          console.log('Playlist:', playlist.name, 'Songs:', playlist.songs?.length);
           playlist.songs?.forEach(song => {
             html += `
               <div class="song-item" onclick="selectSong(${JSON.stringify(song).replace(/"/g, '&quot;')})">
@@ -881,7 +896,8 @@
         html += '</div>';
         container.innerHTML = html;
       } catch (err) {
-        container.innerHTML = '<div class="loading">Erreur de chargement</div>';
+        console.error('Error loading playlists:', err);
+        container.innerHTML = '<div class="loading">Erreur de chargement<br><small>' + err.message + '</small></div>';
       }
     }
     
