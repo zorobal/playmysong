@@ -23,12 +23,14 @@ const __dirname = path.dirname(__filename);
 dotenv.config();
 
 const app = express();
+const httpServer = createServer(app);
 
 const io = new Server(httpServer, {
   cors: {
     origin: process.env.FRONTEND_ORIGIN || "http://localhost:5173",
     credentials: true
-  }
+  },
+  transports: ["polling", "websocket"]
 });
 
 const prisma = new PrismaClient();
@@ -76,8 +78,6 @@ app.use("/establishments", establishmentsRouter);
 app.use("/admins", adminsRoutes);
 app.use("/users", usersRoutes);
 app.use("/stats", statsRoutes);
-
-const httpServer = createServer(app);
 
 const PORT = process.env.PORT || 3000;
 httpServer.listen(PORT, () => console.log(`Server running on port ${PORT}`));
