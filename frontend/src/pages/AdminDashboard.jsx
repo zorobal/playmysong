@@ -95,10 +95,17 @@ function AdminDashboard() {
     // Just refresh playlists without full reload
     try {
       const token = localStorage.getItem("token");
-      const adminId = admin?.establishmentId;
-      if (!adminId) return;
+      if (!token) return;
       
-      const playlistsRes = await fetch(`${API_URL}/playlists/by-establishment/${adminId}`);
+      // First get the establishment ID
+      const adminRes = await fetch(`${API_URL}/admins/me`, { 
+        headers: { Authorization: `Bearer ${token}` } 
+      });
+      const adminData = await adminRes.json();
+      
+      if (!adminData || !adminData.establishmentId) return;
+      
+      const playlistsRes = await fetch(`${API_URL}/playlists/by-establishment/${adminData.establishmentId}`);
       const playlistsData = await playlistsRes.json();
       setPlaylists(Array.isArray(playlistsData) ? playlistsData : []);
       
@@ -368,7 +375,7 @@ function AdminDashboard() {
                 const playlistData = {
                   name: newPlaylist.name,
                   establishmentId: establishmentId,
-                  createdBy: admin?.id
+                  createdBy: admin?.name || admin?.id
                 };
                 console.log("Creating playlist:", playlistData);
                 const res = await fetch(`${API_URL}/playlists`, {
