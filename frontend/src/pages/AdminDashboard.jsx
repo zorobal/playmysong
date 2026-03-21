@@ -566,7 +566,8 @@ function AdminDashboard() {
 
         {activeTab === "users" && (
           <div className="users-panel">
-            <h2>Utilisateurs ({users.length})</h2>
+            <h2>Utilisateurs ({users.filter(u => u.role === 'USER').length})</h2>
+            <p style={{color: '#666', marginBottom: 20}}>Liste des utilisateurs clients de l'établissement (créés par l'administrateur)</p>
             
             <div className="add-user-form">
               <input placeholder="Nom" value={newUser.name} onChange={e => setNewUser({ ...newUser, name: e.target.value })} />
@@ -597,7 +598,6 @@ function AdminDashboard() {
                 console.log("Create user response:", data);
                 if (res.ok) {
                   setNewUser({ name: "", email: "", password: "", phoneNumber: "" });
-                  // Refresh all data
                   loadInitialData();
                 } else {
                   alert("Erreur: " + (data.error || "Inconnu"));
@@ -606,9 +606,9 @@ function AdminDashboard() {
             </div>
 
             <ul className="users-list">
-              {users.map(u => (
+              {users.filter(u => u.role === 'USER').map(u => (
                 <li key={u.id}>
-                  <span>👤 {u.name} ({u.email}) {u.createdBy && <span className="created-by">Créé par: {u.createdBy}</span>}</span>
+                  <span>👤 {u.name} ({u.email}) <span style={{fontSize: '0.75rem', background: '#e3f2fd', padding: '2px 8px', borderRadius: 10, marginLeft: 8}}>USER</span> {u.createdBy && <span className="created-by">Créé par: {u.createdBy}</span>}</span>
                   <button onClick={async () => {
                     if (!confirm("Supprimer cet utilisateur?")) return;
                     const token = localStorage.getItem("token");
@@ -626,6 +626,10 @@ function AdminDashboard() {
                 </li>
               ))}
             </ul>
+            
+            {users.filter(u => u.role === 'USER').length === 0 && (
+              <p style={{textAlign: 'center', color: '#999', padding: 40}}>Aucun utilisateur client pour le moment</p>
+            )}
           </div>
         )}
 
