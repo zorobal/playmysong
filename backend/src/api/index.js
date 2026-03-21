@@ -174,7 +174,24 @@ app.get('/api/establishments', async (req, res) => {
         playlists: { include: { songs: true } }
       }
     });
-    res.json(establishments);
+    
+    // Get all users to resolve creator names
+    const users = await prisma.user.findMany({
+      select: { id: true, name: true }
+    });
+    const userMap = {};
+    users.forEach(u => { userMap[u.id] = u.name; });
+    
+    // Resolve createdBy IDs to names in all playlists
+    const establishmentsWithNames = establishments.map(est => ({
+      ...est,
+      playlists: est.playlists.map(pl => ({
+        ...pl,
+        createdBy: pl.createdBy ? (userMap[pl.createdBy] || pl.createdBy) : null
+      }))
+    }));
+    
+    res.json(establishmentsWithNames);
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -368,7 +385,22 @@ app.get('/api/playlists/by-establishment/:establishmentId', async (req, res) => 
       include: { songs: true },
       orderBy: { createdAt: 'asc' }
     });
-    res.json(playlists);
+    
+    // Get users to resolve creator names
+    const users = await prisma.user.findMany({
+      where: { establishmentId },
+      select: { id: true, name: true }
+    });
+    const userMap = {};
+    users.forEach(u => { userMap[u.id] = u.name; });
+    
+    // Resolve createdBy IDs to names
+    const playlistsWithNames = playlists.map(pl => ({
+      ...pl,
+      createdBy: pl.createdBy ? (userMap[pl.createdBy] || pl.createdBy) : null
+    }));
+    
+    res.json(playlistsWithNames);
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -383,6 +415,26 @@ app.get('/api/playlists', async (req, res) => {
       include: { songs: true },
       orderBy: { createdAt: 'asc' }
     });
+    
+    // Get users to resolve creator names
+    const users = await prisma.user.findMany({
+      where: establishmentId ? { establishmentId } : {},
+      select: { id: true, name: true }
+    });
+    const userMap = {};
+    users.forEach(u => { userMap[u.id] = u.name; });
+    
+    // Resolve createdBy IDs to names
+    const playlistsWithNames = playlists.map(pl => ({
+      ...pl,
+      createdBy: pl.createdBy ? (userMap[pl.createdBy] || pl.createdBy) : null
+    }));
+    
+    res.json(playlistsWithNames);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
     res.json(playlists);
   } catch (error) {
     res.status(500).json({ error: error.message });
