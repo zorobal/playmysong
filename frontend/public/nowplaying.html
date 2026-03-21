@@ -37,11 +37,38 @@
       display: flex; 
       gap: 20px; 
       overflow: hidden;
+      min-height: 0;
+    }
+    
+    .left-section {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      min-height: 0;
+      min-width: 0;
+    }
+    
+    .middle-section {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      min-height: 0;
+      min-width: 0;
+    }
+    
+    .right-section {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      min-height: 0;
+      min-width: 0;
+      overflow: hidden;
     }
     
     /* LEFT SIDE - Selfie and Message (BIG) */
     .client-display {
-      flex: 1.2;
+      flex: 1;
       display: flex;
       flex-direction: column;
       justify-content: center;
@@ -52,16 +79,18 @@
       box-shadow: 0 20px 60px rgba(233,69,96,0.4);
       position: relative;
       overflow: hidden;
+      min-height: 0;
     }
     
     .selfie-container {
-      width: 350px;
-      height: 350px;
+      width: 80%;
+      max-width: 300px;
+      aspect-ratio: 1;
       border-radius: 50%;
       overflow: hidden;
       border: 8px solid white;
       box-shadow: 0 0 50px rgba(0,0,0,0.5);
-      margin-bottom: 30px;
+      margin-bottom: 20px;
       position: relative;
     }
     .selfie-container img { 
@@ -112,15 +141,23 @@
       font-weight: bold;
     }
     
-    /* RIGHT SIDE - Song Info (SMALL) */
+    /* Video Section */
     .song-display {
-      flex: 0.8;
+      flex: 1;
       display: flex;
       flex-direction: column;
       background: rgba(255,255,255,0.05);
       border-radius: 20px;
       padding: 20px;
       overflow: hidden;
+      min-height: 0;
+    }
+    
+    .video-section {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      min-height: 0;
     }
     
     .song-info-mini {
@@ -128,16 +165,18 @@
       margin-bottom: 15px;
     }
     .song-thumbnail-mini {
-      width: 120px;
-      height: 120px;
+      width: 150px;
+      height: 150px;
       border-radius: 15px;
       margin: 0 auto 15px;
       overflow: hidden;
       box-shadow: 0 5px 20px rgba(0,0,0,0.3);
     }
     .song-thumbnail-mini img { width: 100%; height: 100%; object-fit: cover; }
-    .song-title-mini { font-size: 1.2rem; font-weight: bold; margin-bottom: 5px; }
-    .artist-mini { font-size: 1rem; opacity: 0.8; }
+    .song-title-mini { font-size: 1.4rem; font-weight: bold; margin-bottom: 8px; }
+    .artist-mini { font-size: 1.1rem; opacity: 0.9; margin-bottom: 5px; }
+    .album-mini { font-size: 0.95rem; opacity: 0.7; margin-bottom: 5px; }
+    .duration-mini { font-size: 0.9rem; opacity: 0.6; }
     
     .player-mini { 
       flex: 1; 
@@ -152,6 +191,17 @@
       height: 100%;
       border-radius: 15px;
       overflow: hidden;
+    }
+    #youtubePlayer {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+    }
+    #youtubePlayer iframe {
+      width: 100%;
+      height: 100%;
     }
     
     .controls-mini { 
@@ -170,14 +220,18 @@
       font-weight: bold;
     }
     
-    /* Queue */
+    /* Queue Container */
     .queue-container {
-      flex: 0.6;
       background: rgba(255,255,255,0.05);
       border-radius: 20px;
       padding: 15px;
       overflow-y: auto;
-      max-height: 100%;
+      flex: 1;
+      min-height: 0;
+    }
+    .queue-section {
+      overflow-y: auto;
+      min-height: 0;
     }
     .queue-container h3 { 
       font-size: 1.2rem; 
@@ -220,6 +274,7 @@
       justify-content: center;
       align-items: center;
       padding: 40px;
+      min-height: 0;
     }
     .waiting-icon {
       font-size: 6rem;
@@ -250,6 +305,73 @@
     .qr-instruction { font-size: 0.9rem; opacity: 0.8; }
     
     .loading { text-align: center; padding: 50px; font-size: 1.5rem; opacity: 0.7; }
+    
+    /* Advertisement Carousel */
+    .ads-carousel {
+      flex: 1;
+      min-height: 0;
+      background: linear-gradient(135deg, #1e3a5f 0%, #0d1b2a 100%);
+      border-radius: 15px;
+      overflow: hidden;
+      position: relative;
+    }
+    .ads-carousel-inner {
+      display: flex;
+      transition: transform 0.5s ease-in-out;
+      height: 100%;
+    }
+    .ad-slide {
+      min-width: 100%;
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+    }
+    .ad-slide img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      cursor: pointer;
+    }
+    .ad-slide-title {
+      position: absolute;
+      bottom: 10px;
+      left: 10px;
+      background: rgba(0,0,0,0.7);
+      padding: 5px 15px;
+      border-radius: 20px;
+      font-size: 0.9rem;
+      font-weight: bold;
+      color: white;
+    }
+    .ad-indicators {
+      position: absolute;
+      bottom: 8px;
+      right: 15px;
+      display: flex;
+      gap: 8px;
+    }
+    .ad-indicator {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.4);
+      transition: all 0.3s;
+    }
+    .ad-indicator.active {
+      background: #e94560;
+      width: 20px;
+      border-radius: 4px;
+    }
+    .ads-empty {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 100%;
+      color: rgba(255,255,255,0.5);
+      font-size: 1rem;
+    }
     
     /* Hide scrollbar */
     ::-webkit-scrollbar { width: 6px; }
@@ -310,12 +432,16 @@
     let currentEstablishment = null;
     let currentPlaylistIndex = 0;
     let player = null;
-    let isPlayerReady = false;
     let lastRenderedSongId = null;
+    
+    // Advertisement state
+    let advertisements = [];
+    let currentAdIndex = 0;
+    let songCountSinceLastAd = 0;
+    let adCarouselInterval = null;
 
     function onYouTubeIframeAPIReady() {
       console.log('YouTube API ready');
-      isPlayerReady = true;
     }
 
     async function loadData() {
@@ -331,6 +457,22 @@
         const nowPlaying = playlistData.nowPlaying;
         const queue = playlistData.queue || [];
         establishmentPlaylist = playlistData.establishmentPlaylist || [];
+        
+        // Load advertisements
+        try {
+          const adsRes = await fetch(`${API_URL}/advertisements?establishmentId=${establishmentId}`);
+          console.log('Ads response status:', adsRes.status);
+          const adsData = await adsRes.json();
+          console.log('Ads data:', adsData);
+          if (Array.isArray(adsData)) {
+            advertisements = adsData;
+            console.log('Setting advertisements:', advertisements.length);
+          } else {
+            console.log('Ads data is not an array');
+          }
+        } catch(e) {
+          console.error('Error loading ads:', e);
+        }
         
         let songToPlay = nowPlaying;
         
@@ -378,14 +520,18 @@
     function initYouTubePlayer(videoId) {
       if (!videoId) return;
       
+      const container = document.getElementById('youtubePlayer');
+      if (!container) {
+        console.log('Player container not ready');
+        setTimeout(() => initYouTubePlayer(videoId), 500);
+        return;
+      }
+      
       if (player && player.getVideoData) {
         try {
           const currentVideo = player.getVideoData();
           if (currentVideo && currentVideo.video_id === videoId) {
             console.log('Same video already playing');
-            if (player.getPlayerState() !== 1) {
-              player.playVideo();
-            }
             return;
           }
         } catch(e) {}
@@ -393,13 +539,6 @@
 
       if (player) {
         try { player.destroy(); } catch(e) {}
-        player = null;
-      }
-
-      const container = document.getElementById('youtubePlayer');
-      if (!container) {
-        console.log('Container not ready');
-        return;
       }
 
       console.log('Creating player for:', videoId);
@@ -418,20 +557,14 @@
         },
         events: {
           onReady: function(event) {
-            console.log('Player ready, starting video');
-            event.target.mute();
-            event.target.playVideo();
+            console.log('Player ready');
+            player = event.target;
+            player.playVideo();
             startDurationCheck();
           },
           onStateChange: function(event) {
-            console.log('Player state changed:', event.data);
             if (event.data === YT.PlayerState.PLAYING) {
               startDurationCheck();
-              setTimeout(() => {
-                if (player && player.unmute) {
-                  player.unmute();
-                }
-              }, 3000);
             }
             if (event.data === YT.PlayerState.ENDED) {
               console.log('Video ended!');
@@ -461,7 +594,7 @@
             const state = player.getPlayerState();
             
             if (state === YT.PlayerState.PLAYING && duration > 0 && currentTime >= duration - 0.5) {
-              console.log('Video duration check: near end, calling playNext');
+              console.log('Video near end');
               clearInterval(durationCheckInterval);
               playNext();
             }
@@ -469,7 +602,64 @@
         }
       }, 1000);
     }
-
+    
+    function updateAdsCarousel() {
+      const container = document.getElementById('adsCarousel');
+      if (!container) return;
+      
+      if (advertisements.length === 0) {
+        container.innerHTML = '<div class="ads-empty">Pas de publicités</div>';
+        if (adCarouselInterval) {
+          clearInterval(adCarouselInterval);
+          adCarouselInterval = null;
+        }
+        return;
+      }
+      
+      // Reset index if out of bounds
+      if (currentAdIndex >= advertisements.length) {
+        currentAdIndex = 0;
+      }
+      
+      let html = '<div class="ads-carousel-inner" style="transform: translateX(-' + (currentAdIndex * 100) + '%)">';
+      advertisements.forEach((ad, idx) => {
+        const linkAttr = ad.linkUrl ? `onclick="window.open('${escapeHtml(ad.linkUrl)}', '_blank')"` : '';
+        html += `
+          <div class="ad-slide">
+            <img src="${escapeHtml(ad.imageUrl)}" alt="${escapeHtml(ad.title || 'Publicité')}" ${linkAttr}>
+            ${ad.title ? `<div class="ad-slide-title">${escapeHtml(ad.title)}</div>` : ''}
+          </div>
+        `;
+      });
+      html += '</div>';
+      
+      // Add indicators
+      html += '<div class="ad-indicators">';
+      advertisements.forEach((_, idx) => {
+        html += `<div class="ad-indicator ${idx === currentAdIndex ? 'active' : ''}"></div>`;
+      });
+      html += '</div>';
+      
+      container.innerHTML = html;
+      
+      // Auto-rotate ads every 10 seconds if multiple ads
+      if (adCarouselInterval) clearInterval(adCarouselInterval);
+      if (advertisements.length > 1) {
+        adCarouselInterval = setInterval(() => {
+          currentAdIndex = (currentAdIndex + 1) % advertisements.length;
+          const inner = container.querySelector('.ads-carousel-inner');
+          if (inner) {
+            inner.style.transform = 'translateX(-' + (currentAdIndex * 100) + '%)';
+          }
+          // Update indicators
+          const indicators = container.querySelectorAll('.ad-indicator');
+          indicators.forEach((ind, idx) => {
+            ind.className = 'ad-indicator' + (idx === currentAdIndex ? ' active' : '');
+          });
+        }, 10000);
+      }
+    }
+    
     async function playNext() {
       console.log('playNext called');
       
@@ -499,6 +689,17 @@
         
         const queue = playlistData.queue || [];
         establishmentPlaylist = playlistData.establishmentPlaylist || [];
+        
+        // Increment song counter for ad rotation
+        songCountSinceLastAd++;
+        console.log('Song count since last ad:', songCountSinceLastAd);
+        
+        // Change ad every 2 songs
+        if (songCountSinceLastAd >= 2 && advertisements.length > 0) {
+          songCountSinceLastAd = 0;
+          currentAdIndex = (currentAdIndex + 1) % advertisements.length;
+          updateAdsCarousel();
+        }
         
         if (queue.length > 0) {
           const nextSong = queue[0];
@@ -570,12 +771,13 @@
       
       const hasClientContent = nowPlaying && (nowPlaying.message || nowPlaying.selfieUrl);
       
-      // LEFT SIDE - Client Display (Selfie + Message)
+      // LEFT - Client Display (Selfie + Message)
+      html += '<div class="left-section">';
       if (hasClientContent) {
         const isRequest = !nowPlaying.isPlaylistSong;
         html += `
           <div class="client-display">
-            ${isRequest ? '<div class="request-badge">📩 Demande Client</div>' : ''}
+            ${isRequest ? '<div class="request-badge">🎵 Chanson Demandée</div>' : ''}
             <div class="selfie-container">
               ${nowPlaying.selfieUrl 
                 ? `<img src="${nowPlaying.selfieUrl}" alt="Selfie">`
@@ -590,7 +792,6 @@
           </div>
         `;
       } else if (!nowPlaying) {
-        // Waiting screen
         html += `
           <div class="waiting-screen">
             <div class="waiting-icon">🎵</div>
@@ -605,12 +806,11 @@
           </div>
         `;
       } else {
-        // Playlist playing - show establishment logo from database
         const logoUrl = currentEstablishment?.logoUrl;
         const playlistMsg = currentEstablishment?.playlistMessage || currentEstablishment?.name || 'Playlist Établissement';
         html += `
           <div class="client-display">
-            <div class="request-badge">🎼 Playlist Établissement</div>
+            <div class="request-badge">🎼 Playlist de l'Établissement</div>
             <div class="selfie-container">
               ${logoUrl 
                 ? `<img src="${logoUrl}" alt="Logo" style="width:100%;height:100%;object-fit:cover;">`
@@ -623,71 +823,89 @@
           </div>
         `;
       }
+      html += '</div>';
       
-      // MIDDLE - Song Info (SMALL)
+      // MIDDLE - Video
       html += `
-        <div class="song-display">
-          <div class="song-info-mini">
-            <div class="song-thumbnail-mini">
-              ${nowPlaying?.thumbnail 
-                ? `<img src="${escapeHtml(nowPlaying.thumbnail)}" alt="Thumbnail">`
-                : '<div style="width:100%;height:100%;background:#333;display:flex;align-items:center;justify-content:center;">🎵</div>'
-              }
-            </div>
-            <div class="song-title-mini">${escapeHtml(nowPlaying?.title || 'Aucune chanson')}</div>
-            <div class="artist-mini">${escapeHtml(nowPlaying?.artist || 'Artiste inconnu')}</div>
-          </div>
-          <div class="player-mini">
-            <div class="youtube-container">
-              <div id="youtubePlayer"></div>
-            </div>
-          </div>
-          <div class="controls-mini">
-            <button onclick="skipSong()">⏭️ ${nowPlaying?.isPlaylistSong ? 'Suivante' : 'Terminer'}</button>
-          </div>
-        </div>
-      `;
-      
-      // RIGHT - Queue
-      html += `
-        <div class="queue-container">
-          <h3>📋 File d'attente (${queue.length})</h3>
-          ${queue.length > 0 ? queue.map((item, index) => `
-            <div class="queue-item">
-              <div class="queue-number">${index + 1}</div>
-              <div class="queue-thumb">
-                ${item.thumbnail 
-                  ? `<img src="${escapeHtml(item.thumbnail)}" alt="">`
-                  : '<div style="width:100%;height:100%;background:#333;"></div>'
+        <div class="middle-section">
+          <div class="song-display">
+            <div class="song-info-mini">
+              <div class="song-thumbnail-mini">
+                ${nowPlaying?.thumbnail 
+                  ? `<img src="${escapeHtml(nowPlaying.thumbnail)}" alt="Couverture">`
+                  : '<div style="width:100%;height:100%;background:#333;display:flex;align-items:center;justify-content:center;">🎵</div>'
                 }
               </div>
-              <div class="queue-info">
-                <div class="queue-title">${escapeHtml(item.title)}</div>
-                <div class="queue-artist">${escapeHtml(item.artist || 'Artiste inconnu')}</div>
+              <div class="song-title-mini">${escapeHtml(nowPlaying?.title || 'Aucune chanson')}</div>
+              <div class="artist-mini">${escapeHtml(nowPlaying?.artist || 'Artiste inconnu')}</div>
+              ${nowPlaying?.album ? `<div class="album-mini">💿 ${escapeHtml(nowPlaying.album)}</div>` : ''}
+              ${nowPlaying?.duration ? `<div class="duration-mini">⏱️ ${formatDuration(nowPlaying.duration)}</div>` : ''}
+            </div>
+            <div class="player-mini">
+              <div class="youtube-container">
+                <div id="youtubePlayer"></div>
               </div>
             </div>
-          `).join('') : `
-            <div class="queue-empty">
-              <p style="margin-bottom:10px;">Aucune demande en attente</p>
-              <p style="font-size:0.9rem;opacity:0.8;">📱 Scannez le QR Code pour faire une demande!</p>
+            <div class="controls-mini">
+              <button onclick="skipSong()">⏭️ ${nowPlaying?.isPlaylistSong ? 'Suivante' : 'Terminer'}</button>
             </div>
-          `}
+          </div>
         </div>
       `;
       
-      html += '</div>';
+      // RIGHT - Queue + Ads
+      html += `
+        <div class="right-section">
+          <div class="queue-container">
+            <h3>📋 File d'attente (${queue.length})</h3>
+            <div class="queue-section">
+              ${queue.length > 0 ? queue.map((item, index) => `
+                <div class="queue-item">
+                  <div class="queue-number">${index + 1}</div>
+                  <div class="queue-thumb">
+                    ${item.thumbnail 
+                      ? `<img src="${escapeHtml(item.thumbnail)}" alt="">`
+                      : '<div style="width:100%;height:100%;background:#333;"></div>'
+                    }
+                  </div>
+                  <div class="queue-info">
+                    <div class="queue-title">${escapeHtml(item.title)}</div>
+                    <div class="queue-artist">${escapeHtml(item.artist || 'Artiste inconnu')}</div>
+                  </div>
+                </div>
+              `).join('') : `
+                <div class="queue-empty">
+                  <p style="margin-bottom:10px;">Aucune demande en attente</p>
+                  <p style="font-size:0.9rem;opacity:0.8;">📱 Scannez le QR Code!</p>
+                </div>
+              `}
+            </div>
+          </div>
+          
+          <div id="adsCarousel" class="ads-carousel">
+            <div class="ads-empty">Pas de publicités</div>
+          </div>
+        </div>
+      `;
 
       document.getElementById('content').innerHTML = html;
+      
+      // Update ads carousel after HTML is rendered
+      if (advertisements.length > 0) {
+        updateAdsCarousel();
+      }
     }
 
     function updateQueueDisplay(queue) {
-      const queueContainer = document.querySelector('.queue-container');
-      if (!queueContainer) return;
+      const queueSection = document.querySelector('.queue-section');
+      const queueTitle = document.querySelector('.queue-container h3');
+      if (!queueSection) return;
       
-      let html = `<h3>📋 File d'attente (${queue.length})</h3>`;
+      if (queueTitle) queueTitle.textContent = `📋 File d'attente (${queue.length})`;
       
+      let html = '';
       if (queue.length > 0) {
-        html += queue.map((item, index) => `
+        html = queue.map((item, index) => `
           <div class="queue-item">
             <div class="queue-number">${index + 1}</div>
             <div class="queue-thumb">
@@ -703,15 +921,22 @@
           </div>
         `).join('');
       } else {
-        html += `
+        html = `
           <div class="queue-empty">
             <p style="margin-bottom:10px;">Aucune demande en attente</p>
-            <p style="font-size:0.9rem;opacity:0.8;">📱 Scannez le QR Code pour faire une demande!</p>
+            <p style="font-size:0.9rem;opacity:0.8;">📱 Scannez le QR Code!</p>
           </div>
         `;
       }
       
-      queueContainer.innerHTML = html;
+      queueSection.innerHTML = html;
+    }
+
+    function formatDuration(seconds) {
+      if (!seconds) return '';
+      const mins = Math.floor(seconds / 60);
+      const secs = Math.floor(seconds % 60);
+      return `${mins}:${secs.toString().padStart(2, '0')}`;
     }
 
     function escapeHtml(text) {

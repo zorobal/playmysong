@@ -51,6 +51,7 @@ model Establishment {
   playlists       Playlist[]
   users           User[]
   songRequests    SongRequest[]
+  advertisements  Advertisement[]
 }
 
 model Playlist {
@@ -118,4 +119,17 @@ model Invite {
   used            Boolean  @default(false)
   expiresAt       DateTime
   createdAt       DateTime @default(now())
+}
+
+model Advertisement {
+  id              String   @id @default(cuid())
+  establishment   Establishment @relation(fields: [establishmentId], references: [id])
+  establishmentId String
+  imageUrl        String
+  linkUrl         String?
+  title           String?
+  isActive        Boolean  @default(true)
+  displayOrder    Int      @default(0)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
 }

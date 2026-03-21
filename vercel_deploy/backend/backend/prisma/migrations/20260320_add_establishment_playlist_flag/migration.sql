@@ -1,0 +1,2 @@
+ALTER TABLE "Playlist"
+ADD COLUMN IF NOT EXISTS "isEstablishmentPlaylist" BOOLEAN NOT NULL DEFAULT false;

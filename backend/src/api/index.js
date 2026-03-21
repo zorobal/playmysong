@@ -981,4 +981,102 @@ app.get('/api/request/playlist/establishment/next', async (req, res) => {
   }
 });
 
+// ============ ADVERTISEMENTS ============
+
+app.get('/api/advertisements', async (req, res) => {
+  try {
+    const { establishmentId } = req.query;
+    if (!establishmentId) {
+      return res.status(400).json({ error: "establishmentId requis" });
+    }
+    
+    const advertisements = await prisma.advertisement.findMany({
+      where: { establishmentId, isActive: true },
+      orderBy: { displayOrder: 'asc' }
+    });
+    
+    res.json(advertisements);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.post('/api/advertisements', async (req, res) => {
+  try {
+    const { establishmentId, imageUrl, linkUrl, title, displayOrder } = req.body;
+    
+    if (!establishmentId || !imageUrl) {
+      return res.status(400).json({ error: "establishmentId et imageUrl requis" });
+    }
+    
+    const advertisement = await prisma.advertisement.create({
+      data: {
+        establishmentId,
+        imageUrl,
+        linkUrl: linkUrl || null,
+        title: title || null,
+        displayOrder: displayOrder || 0,
+        isActive: true
+      }
+    });
+    
+    res.json(advertisement);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.put('/api/advertisements/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { imageUrl, linkUrl, title, displayOrder, isActive } = req.body;
+    
+    const advertisement = await prisma.advertisement.update({
+      where: { id },
+      data: {
+        ...(imageUrl && { imageUrl }),
+        ...(linkUrl !== undefined && { linkUrl }),
+        ...(title !== undefined && { title }),
+        ...(displayOrder !== undefined && { displayOrder }),
+        ...(isActive !== undefined && { isActive })
+      }
+    });
+    
+    res.json(advertisement);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.delete('/api/advertisements/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    await prisma.advertisement.delete({ where: { id } });
+    res.json({ message: "Publicité supprimée" });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.get('/api/advertisements/all', async (req, res) => {
+  try {
+    const ads = await prisma.advertisement.findMany({
+      include: {
+        establishment: {
+          select: {
+            id: true,
+            name: true
+          }
+        }
+      },
+      orderBy: {
+        createdAt: 'desc'
+      }
+    });
+    res.json(ads);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 module.exports = app;

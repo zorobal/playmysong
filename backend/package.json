@@ -6,7 +6,8 @@
   "type": "commonjs",
   "scripts": {
     "start": "node src/server.js",
-    "postinstall": "npx prisma generate && npx prisma migrate deploy"
+    "postinstall": "npx prisma generate",
+    "migrate": "npx prisma migrate deploy"
   },
   "engines": {
     "node": "20.x"

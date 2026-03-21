@@ -20,6 +20,8 @@ function AdminDashboard() {
   const [currentTime, setCurrentTime] = useState(new Date());
   const [establishmentLogo, setEstablishmentLogo] = useState(null);
   const [playlistMessage, setPlaylistMessage] = useState("");
+  const [advertisements, setAdvertisements] = useState([]);
+  const [newAd, setNewAd] = useState({ imageUrl: "", linkUrl: "", title: "" });
   const navigate = useNavigate();
   
   const accessToken = localStorage.getItem("token");
@@ -123,6 +125,11 @@ function AdminDashboard() {
         const playlistData = await playlistRes.json();
         setNowPlaying(playlistData.nowPlaying);
         setValidatedRequests(playlistData.queue || []);
+
+        // Load advertisements
+        const adsRes = await fetch(`${API_URL}/advertisements?establishmentId=${adminData.establishmentId}`);
+        const adsData = await adsRes.json();
+        setAdvertisements(Array.isArray(adsData) ? adsData : []);
       }
     } catch (err) {
       console.error("Erreur chargement:", err);
@@ -274,6 +281,67 @@ function AdminDashboard() {
     setShowUploadModal(true);
   }
 
+  function handleAdImageUpload(e) {
+    const file = e.target.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setNewAd({...newAd, imageUrl: reader.result});
+      };
+      reader.readAsDataURL(file);
+    }
+  }
+
+  async function handleAddAd() {
+    if (!newAd.imageUrl || !establishmentId) return;
+    
+    try {
+      const token = localStorage.getItem("token");
+      const res = await fetch(`${API_URL}/advertisements`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          establishmentId,
+          imageUrl: newAd.imageUrl,
+          linkUrl: newAd.linkUrl || null,
+          title: newAd.title.trim(),
+          displayOrder: advertisements.length
+        })
+      });
+      
+      if (res.ok) {
+        const ad = await res.json();
+        setAdvertisements([...advertisements, ad]);
+        setNewAd({ imageUrl: "", linkUrl: "", title: "" });
+      }
+    } catch (err) {
+      console.error("Error adding ad:", err);
+      alert("Erreur lors de l'ajout de la publicité");
+    }
+  }
+
+  async function handleDeleteAd(adId) {
+    if (!confirm("Supprimer cette publicité?")) return;
+    
+    try {
+      const token = localStorage.getItem("token");
+      const res = await fetch(`${API_URL}/advertisements/${adId}`, {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      
+      if (res.ok) {
+        setAdvertisements(advertisements.filter(a => a.id !== adId));
+      }
+    } catch (err) {
+      console.error("Error deleting ad:", err);
+      alert("Erreur lors de la suppression");
+    }
+  }
+
   function logout() {
     localStorage.removeItem("token");
     localStorage.removeItem("user");
@@ -363,6 +431,12 @@ function AdminDashboard() {
           onClick={() => setActiveTab("settings")}
         >
           ⚙️ Paramètres
+        </button>
+        <button 
+          className={`tab ${activeTab === "ads" ? "active" : ""}`}
+          onClick={() => setActiveTab("ads")}
+        >
+          📢 Publicités ({advertisements.length})
         </button>
         <button 
           className={`tab ${activeTab === "stats" ? "active" : ""}`}
@@ -814,6 +888,146 @@ function AdminDashboard() {
                 💾 Sauvegarder le message
               </button>
             </div>
+          </div>
+        )}
+
+        {activeTab === "ads" && (
+          <div className="ads-panel">
+            <h2>📢 Gestion des Publicités</h2>
+            <p style={{color: '#666', marginBottom: 20}}>
+              Ajoutez des images publicitaires qui défileront sur NowPlaying (1 pub toutes les 2 chansons).
+            </p>
+            
+            <div className="ads-add-section" style={{
+              background: '#f5f5f5',
+              padding: 20,
+              borderRadius: 15,
+              marginBottom: 30
+            }}>
+              <h3 style={{marginBottom: 15}}>➕ Ajouter une publicité</h3>
+              
+              <div style={{display: 'flex', gap: 15, flexWrap: 'wrap', marginBottom: 15}}>
+                <input
+                  type="text"
+                  placeholder="Titre de la publicité *"
+                  value={newAd.title}
+                  onChange={e => setNewAd({...newAd, title: e.target.value})}
+                  style={{
+                    flex: 1,
+                    minWidth: 200,
+                    padding: 12,
+                    borderRadius: 8,
+                    border: '1px solid #ddd',
+                    fontSize: 14
+                  }}
+                />
+                <input
+                  type="url"
+                  placeholder="Lien URL (optionnel)"
+                  value={newAd.linkUrl}
+                  onChange={e => setNewAd({...newAd, linkUrl: e.target.value})}
+                  style={{
+                    flex: 1,
+                    minWidth: 200,
+                    padding: 12,
+                    borderRadius: 8,
+                    border: '1px solid #ddd',
+                    fontSize: 14
+                  }}
+                />
+              </div>
+              
+              <div style={{marginBottom: 15}}>
+                <label style={{display: 'block', marginBottom: 8, fontWeight: 'bold'}}>
+                  Image de la publicité *
+                </label>
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleAdImageUpload}
+                  style={{fontSize: 14}}
+                />
+                {newAd.imageUrl && (
+                  <div style={{marginTop: 10}}>
+                    <img 
+                      src={newAd.imageUrl} 
+                      alt="Preview" 
+                      style={{maxWidth: 200, maxHeight: 120, borderRadius: 8, objectFit: 'cover'}} 
+                    />
+                  </div>
+                )}
+              </div>
+              
+              <button 
+                className="btn-primary"
+                onClick={handleAddAd}
+                disabled={!newAd.imageUrl || !newAd.title.trim()}
+                style={{
+                  opacity: (newAd.imageUrl && newAd.title.trim()) ? 1 : 0.5,
+                  cursor: (newAd.imageUrl && newAd.title.trim()) ? 'pointer' : 'not-allowed'
+                }}
+              >
+                ➕ Ajouter la publicité
+              </button>
+            </div>
+            
+            <h3 style={{marginBottom: 15}}>📋 Publicités actives ({advertisements.length})</h3>
+            {advertisements.length === 0 ? (
+              <p style={{textAlign: 'center', color: '#999', padding: 40}}>
+                Aucune publicité. Ajoutez-en une ci-dessus!
+              </p>
+            ) : (
+              <div className="ads-list" style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
+                gap: 20
+              }}>
+                {advertisements.map(ad => (
+                  <div key={ad.id} className="ad-card" style={{
+                    background: 'white',
+                    borderRadius: 15,
+                    overflow: 'hidden',
+                    boxShadow: '0 2px 10px rgba(0,0,0,0.1)'
+                  }}>
+                    <div style={{height: 160, overflow: 'hidden', background: '#eee'}}>
+                      <img 
+                        src={ad.imageUrl} 
+                        alt={ad.title || 'Publicité'}
+                        style={{width: '100%', height: '100%', objectFit: 'cover'}}
+                      />
+                    </div>
+                    <div style={{padding: 15}}>
+                      {ad.title && (
+                        <h4 style={{margin: '0 0 8px 0', fontSize: 16}}>{ad.title}</h4>
+                      )}
+                      {ad.linkUrl && (
+                        <p style={{margin: '0 0 10px 0', fontSize: 12, color: '#666'}}>
+                          🔗 {ad.linkUrl}
+                        </p>
+                      )}
+                      <div style={{display: 'flex', gap: 10, flexWrap: 'wrap'}}>
+                        <button 
+                          className="btn-danger"
+                          onClick={() => handleDeleteAd(ad.id)}
+                          style={{
+                            flex: 1,
+                            padding: '10px 15px',
+                            background: '#e74c3c',
+                            color: 'white',
+                            border: 'none',
+                            borderRadius: 8,
+                            cursor: 'pointer',
+                            fontSize: 14
+                          }}
+                        >
+                          🗑️ Supprimer
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         )}
 

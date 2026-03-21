@@ -1,0 +1,135 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  SUPER_ADMIN
+  ADMIN
+  OPERATOR
+  USER
+}
+
+enum RequestStatus {
+  PENDING
+  VALIDATED
+  REJECTED
+  PLAYING
+  COMPLETED
+}
+
+model User {
+  id              String   @id @default(cuid())
+  email           String   @unique
+  password        String   @default("") 
+  role            Role     @default(OPERATOR)
+  name            String?
+  phoneNumber     String?
+  establishmentId String?
+  createdBy       String?
+  isActive        Boolean  @default(true)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @default(now()) @updatedAt
+  establishment   Establishment? @relation(fields: [establishmentId], references: [id])
+}
+
+model Establishment {
+  id              String   @id @default(cuid())
+  name            String
+  city            String?
+  district        String?
+  phoneNumber     String?
+  additionalInfo  String?
+  ownerId         String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @default(now()) @updatedAt
+
+  playlists       Playlist[]
+  users           User[]
+  songRequests    SongRequest[]
+  advertisements  Advertisement[]
+}
+
+model Playlist {
+  id                    String        @id @default(cuid())
+  establishment         Establishment @relation(fields: [establishmentId], references: [id])
+  establishmentId       String
+  name                  String
+  createdBy             String?
+  createdAt             DateTime      @default(now())
+  isEstablishmentPlaylist Boolean      @default(false)
+
+  songs Song[]
+}
+
+model Song {
+  id         String   @id @default(cuid())
+  playlist   Playlist @relation(fields: [playlistId], references: [id])
+  playlistId String
+  title      String
+  artist     String?
+  filePath   String?
+  youtubeId  String?
+  thumbnail  String?
+  duration   Int      @default(0)
+  createdAt  DateTime @default(now())
+}
+
+model SongRequest {
+  id                String        @id @default(cuid())
+  establishment     Establishment @relation(fields: [establishmentId], references: [id])
+  establishmentId  String
+  youtubeId         String?
+  title             String
+  artist            String?
+  thumbnail         String?
+  durationSec       Int           @default(0)
+  message           String?
+  selfieUrl         String?
+  filePath          String?
+  position          Int           @default(0)
+  status            RequestStatus @default(PENDING)
+  rejectionReason   String?
+  createdByUserId   String?
+  handledByUserId   String?
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
+
+  playlistItems     PlaylistItem[]
+}
+
+model PlaylistItem {
+  id              String      @id @default(cuid())
+  songRequest     SongRequest @relation(fields: [songRequestId], references: [id])
+  songRequestId   String
+  order           Int         @default(0)
+  createdAt       DateTime    @default(now())
+}
+
+model Invite {
+  id              String   @id @default(cuid())
+  token           String   @unique
+  email           String?
+  establishmentId String
+  role            Role     @default(USER)
+  used            Boolean  @default(false)
+  expiresAt       DateTime
+  createdAt       DateTime @default(now())
+}
+
+model Advertisement {
+  id              String   @id @default(cuid())
+  establishment   Establishment @relation(fields: [establishmentId], references: [id])
+  establishmentId String
+  imageUrl        String
+  linkUrl         String?
+  title           String?
+  isActive        Boolean  @default(true)
+  displayOrder    Int      @default(0)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}

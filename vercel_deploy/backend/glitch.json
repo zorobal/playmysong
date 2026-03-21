@@ -1,0 +1,7 @@
+{
+  "install": "npm install && npx prisma generate",
+  "start": "node src/server.js",
+  "prod": {
+    "disallowed": []
+  }
+}

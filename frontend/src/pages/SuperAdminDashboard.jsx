@@ -6,6 +6,7 @@ function SuperAdminDashboard() {
   const [activeTab, setActiveTab] = useState("establishments");
   const [establishments, setEstablishments] = useState([]);
   const [selectedEstablishment, setSelectedEstablishment] = useState(null);
+  const [allAdvertisements, setAllAdvertisements] = useState([]);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showAdminModal, setShowAdminModal] = useState(false);
   const [showQRModal, setShowQRModal] = useState(false);
@@ -43,8 +44,10 @@ function SuperAdminDashboard() {
       const headers = { Authorization: `Bearer ${accessToken}` };
       
       const estsData = await fetch(`${API_URL}/establishments`, { headers }).then(r => r.json());
+      const adsData = await fetch(`${API_URL}/advertisements/all`, { headers }).then(r => r.json());
       
       setEstablishments(estsData || []);
+      setAllAdvertisements(Array.isArray(adsData) ? adsData : []);
     } catch (err) {
       console.error("Erreur:", err);
     } finally {
@@ -114,6 +117,26 @@ function SuperAdminDashboard() {
       setShowQRModal(true);
     } catch (err) {
       alert("Erreur lors de la génération du QR Code");
+    }
+  }
+
+  async function deleteAd(adId) {
+    if (!confirm("Êtes-vous sûr de vouloir supprimer cette publicité?")) return;
+    try {
+      const res = await fetch(`${API_URL}/advertisements/${adId}`, {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${accessToken}` }
+      });
+      
+      if (res.ok) {
+        alert("Publicité supprimée avec succès!");
+        setAllAdvertisements(allAdvertisements.filter(ad => ad.id !== adId));
+      } else {
+        const data = await res.json();
+        alert("Erreur: " + (data.error || "Impossible de supprimer la publicité"));
+      }
+    } catch (err) {
+      alert("Erreur lors de la suppression");
     }
   }
 
@@ -199,6 +222,12 @@ function SuperAdminDashboard() {
           onClick={() => setActiveTab("establishments")}
         >
           🏪 Établissements ({establishments.length})
+        </button>
+        <button 
+          className={`tab ${activeTab === "advertisements" ? "active" : ""}`}
+          onClick={() => setActiveTab("advertisements")}
+        >
+          📢 Publicités ({allAdvertisements.length})
         </button>
       </nav>
 
@@ -307,6 +336,95 @@ function SuperAdminDashboard() {
                 <button onClick={() => setShowCreateModal(true)}>
                   Créer le premier établissement
                 </button>
+              </div>
+            )}
+          </div>
+        )}
+
+        {activeTab === "advertisements" && (
+          <div className="advertisements-panel">
+            <div className="panel-header">
+              <h2>📢 Gestion des Publicités</h2>
+              <p style={{color: '#666', marginTop: 5}}>Toutes les publicités de tous les établissements</p>
+            </div>
+
+            {allAdvertisements.length > 0 ? (
+              <div className="ads-table-container">
+                <table className="ads-table">
+                  <thead>
+                    <tr>
+                      <th>Établissement</th>
+                      <th>Titre</th>
+                      <th>Lien</th>
+                      <th>Date d'ajout</th>
+                      <th>Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {allAdvertisements.map(ad => (
+                      <tr key={ad.id}>
+                        <td>
+                          <div style={{display: 'flex', alignItems: 'center', gap: 10}}>
+                            {establishments.find(e => e.id === ad.establishmentId)?.additionalInfo?.logoUrl ? (
+                              <img 
+                                src={establishments.find(e => e.id === ad.establishmentId)?.additionalInfo?.logoUrl} 
+                                alt="" 
+                                style={{width: 30, height: 30, borderRadius: '50%', objectFit: 'cover'}}
+                              />
+                            ) : (
+                              <div style={{width: 30, height: 30, borderRadius: '50%', background: '#e94560', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontSize: 12}}>🏪</div>
+                            )}
+                            <span>{ad.establishment?.name || 'N/A'}</span>
+                          </div>
+                        </td>
+                        <td>
+                          <div style={{display: 'flex', alignItems: 'center', gap: 10}}>
+                            <img src={ad.imageUrl} alt={ad.title} style={{width: 40, height: 40, borderRadius: 8, objectFit: 'cover'}} />
+                            <span style={{fontWeight: 'bold'}}>{ad.title}</span>
+                          </div>
+                        </td>
+                        <td>
+                          {ad.linkUrl ? (
+                            <a href={ad.linkUrl} target="_blank" rel="noopener noreferrer" style={{color: '#1976d2'}}>
+                              🔗 Ouvrir
+                            </a>
+                          ) : (
+                            <span style={{color: '#999'}}>-</span>
+                          )}
+                        </td>
+                        <td>
+                          {new Date(ad.createdAt).toLocaleDateString('fr-FR', {
+                            day: '2-digit',
+                            month: '2-digit',
+                            year: 'numeric',
+                            hour: '2-digit',
+                            minute: '2-digit'
+                          })}
+                        </td>
+                        <td>
+                          <button 
+                            className="btn-danger"
+                            onClick={() => deleteAd(ad.id)}
+                            style={{
+                              background: '#e74c3c',
+                              color: 'white',
+                              border: 'none',
+                              padding: '8px 16px',
+                              borderRadius: 6,
+                              cursor: 'pointer'
+                            }}
+                          >
+                            🗑️ Supprimer
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            ) : (
+              <div className="empty-state">
+                <p>Aucune publicité enregistrée</p>
               </div>
             )}
           </div>
@@ -616,6 +734,47 @@ function SuperAdminDashboard() {
           cursor: pointer;
         }
         .no-user { color: #999; font-style: italic; }
+        
+        .advertisements-panel {
+          padding: 20px;
+        }
+        .advertisements-panel .panel-header {
+          margin-bottom: 25px;
+        }
+        .advertisements-panel h2 {
+          margin: 0;
+          color: #1a1a2e;
+        }
+        
+        .ads-table-container {
+          background: white;
+          border-radius: 16px;
+          overflow: hidden;
+          box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .ads-table {
+          width: 100%;
+          border-collapse: collapse;
+        }
+        .ads-table th {
+          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+          color: white;
+          padding: 15px 12px;
+          text-align: left;
+          font-weight: 600;
+          font-size: 0.9rem;
+        }
+        .ads-table td {
+          padding: 12px;
+          border-bottom: 1px solid #eee;
+          vertical-align: middle;
+        }
+        .ads-table tr:last-child td {
+          border-bottom: none;
+        }
+        .ads-table tr:hover {
+          background: #f8f9fa;
+        }
         
         .btn-small {
           background: #e3f2fd;

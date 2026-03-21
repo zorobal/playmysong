@@ -1,0 +1,31 @@
+app = "playmysong-backend"
+
+[build]
+  builder = "paketo-buildpacks/nodeshift"
+  buildpacks = ["nodejs"]
+
+[deploy]
+  healthcheck = "/health"
+
+[[services]]
+  http_port = 3000
+  internal_port = 3000
+  protocol = "tcp"
+
+  [services.concurrency]
+    soft_limit = 100
+    hard_limit = 200
+
+  [[services.ports]]
+    port = "3000"
+
+  [[services.env]]
+    key = "NODE_ENV"
+    value = "production"
+
+  [[services.env]]
+    key = "PORT"
+    value = "3000"
+
+[[services]]
+  command = "npx prisma migrate deploy && npm start"
