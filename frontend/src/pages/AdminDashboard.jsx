@@ -19,6 +19,7 @@ function AdminDashboard() {
   const [loading, setLoading] = useState(true);
   const [currentTime, setCurrentTime] = useState(new Date());
   const [establishmentLogo, setEstablishmentLogo] = useState(null);
+  const [playlistMessage, setPlaylistMessage] = useState("");
   const navigate = useNavigate();
   
   const accessToken = localStorage.getItem("token");
@@ -40,7 +41,38 @@ function AdminDashboard() {
     loadInitialData();
   }, [accessToken, navigate]);
 
-  // Pas de polling - mise à jour locale immédiate
+  // Auto-refresh all data every 5 seconds
+  useEffect(() => {
+    if (!admin?.establishmentId) return;
+    
+    const interval = setInterval(async () => {
+      try {
+        const token = localStorage.getItem("token");
+        if (!token) return;
+        
+        const headers = { Authorization: `Bearer ${token}` };
+        
+        // Refresh pending requests
+        const requestsRes = await fetch(`${API_URL}/request/pending?establishmentId=${admin.establishmentId}`, { headers });
+        const requestsData = await requestsRes.json();
+        if (Array.isArray(requestsData)) {
+          setPendingRequests(requestsData);
+        }
+        
+        // Refresh current playlist (validated requests + now playing)
+        const playlistRes = await fetch(`${API_URL}/request/playlist/current?establishmentId=${admin.establishmentId}`);
+        const playlistData = await playlistRes.json();
+        if (playlistData) {
+          setNowPlaying(playlistData.nowPlaying);
+          setValidatedRequests(playlistData.queue || []);
+        }
+      } catch (err) {
+        console.error("Auto-refresh error:", err);
+      }
+    }, 5000);
+    
+    return () => clearInterval(interval);
+  }, [admin?.establishmentId]);
 
   async function loadInitialData() {
     try {
@@ -59,6 +91,14 @@ function AdminDashboard() {
       setAdmin(adminData);
 
       if (adminData.establishmentId) {
+        // Load establishment details (logo and message)
+        const estRes = await fetch(`${API_URL}/establishments/${adminData.establishmentId}`);
+        const estData = await estRes.json();
+        if (estData) {
+          setEstablishmentLogo(estData.logoUrl || null);
+          setPlaylistMessage(estData.playlistMessage || "");
+        }
+        
         // Load users
         const usersRes = await fetch(`${API_URL}/users?establishmentId=${adminData.establishmentId}`, { headers });
         const usersData = await usersRes.json();
@@ -128,25 +168,52 @@ function AdminDashboard() {
     }
   }
 
-  function handleLogoUpload(e) {
+  async function handleLogoUpload(e) {
     const file = e.target.files[0];
-    if (file) {
+    if (file && establishmentId) {
       const reader = new FileReader();
-      reader.onloadend = () => {
-        setEstablishmentLogo(reader.result);
-        localStorage.setItem('establishmentLogo', reader.result);
+      reader.onloadend = async () => {
+        const logoUrl = reader.result;
+        setEstablishmentLogo(logoUrl);
+        
+        // Save to database
+        try {
+          const token = localStorage.getItem("token");
+          await fetch(`${API_URL}/establishments/${establishmentId}/logo`, {
+            method: "PUT",
+            headers: { 
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`
+            },
+            body: JSON.stringify({ logoUrl })
+          });
+        } catch (err) {
+          console.error("Error saving logo:", err);
+        }
       };
       reader.readAsDataURL(file);
     }
   }
 
-  // Load logo from localStorage on mount
-  useEffect(() => {
-    const savedLogo = localStorage.getItem('establishmentLogo');
-    if (savedLogo) {
-      setEstablishmentLogo(savedLogo);
+  async function handlePlaylistMessageSave() {
+    if (!establishmentId) return;
+    try {
+      const token = localStorage.getItem("token");
+      const res = await fetch(`${API_URL}/establishments/${establishmentId}/playlist-message`, {
+        method: "PUT",
+        headers: { 
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify({ playlistMessage })
+      });
+      if (res.ok) {
+        alert("Message sauvegardé!");
+      }
+    } catch (err) {
+      console.error("Error saving message:", err);
     }
-  }, []);
+  }
 
   async function validateRequest(requestId) {
     try {
@@ -255,7 +322,7 @@ function AdminDashboard() {
             🖼️
           </button>
           <input type="file" id="logo-upload" accept="image/*" style={{display: 'none'}} onChange={handleLogoUpload} />
-          <button className="btn-refresh" onClick={loadPlaylistsOnly} title="Actualiser">🔄</button>
+          <button className="btn-refresh" onClick={loadInitialData} title="Actualiser">🔄</button>
           <button className="btn-logout" onClick={logout}>Déconnexion</button>
         </div>
       </header>
@@ -290,6 +357,12 @@ function AdminDashboard() {
           onClick={() => setActiveTab("users")}
         >
           👥 Utilisateurs
+        </button>
+        <button 
+          className={`tab ${activeTab === "settings" ? "active" : ""}`}
+          onClick={() => setActiveTab("settings")}
+        >
+          ⚙️ Paramètres
         </button>
         <button 
           className={`tab ${activeTab === "stats" ? "active" : ""}`}
@@ -697,6 +770,53 @@ function AdminDashboard() {
           </div>
         )}
 
+        {activeTab === "settings" && (
+          <div className="settings-panel">
+            <h2>⚙️ Paramètres de l'établissement</h2>
+            
+            <div className="settings-section">
+              <h3>🖼️ Logo de l'établissement</h3>
+              <p style={{color: '#666', marginBottom: 15}}>Ce logo sera affiché sur NowPlaying et dans les dashboards.</p>
+              <div className="logo-preview">
+                {establishmentLogo ? (
+                  <img src={establishmentLogo} alt="Logo" style={{maxWidth: 150, maxHeight: 150, borderRadius: 10}} />
+                ) : (
+                  <div style={{width: 150, height: 150, background: '#eee', borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center'}}>
+                    Pas de logo
+                  </div>
+                )}
+              </div>
+              <button className="btn-primary" onClick={() => document.getElementById('logo-upload').click()} style={{marginTop: 15}}>
+                📷 Changer le logo
+              </button>
+              <input type="file" id="logo-upload" accept="image/*" style={{display: 'none'}} onChange={handleLogoUpload} />
+            </div>
+
+            <div className="settings-section">
+              <h3>📢 Message Playlist Établissement</h3>
+              <p style={{color: '#666', marginBottom: 15}}>Ce message sera affiché quand la Playlist Établissement joue.</p>
+              <textarea
+                value={playlistMessage}
+                onChange={e => setPlaylistMessage(e.target.value)}
+                placeholder="Ex: Bonne fête Marie! 🎉"
+                style={{
+                  width: '100%',
+                  minHeight: 100,
+                  padding: 15,
+                  borderRadius: 10,
+                  border: '1px solid #ddd',
+                  fontSize: 16,
+                  marginBottom: 15,
+                  fontFamily: 'inherit'
+                }}
+              />
+              <button className="btn-primary" onClick={handlePlaylistMessageSave}>
+                💾 Sauvegarder le message
+              </button>
+            </div>
+          </div>
+        )}
+
         {activeTab === "stats" && (
           <div className="stats-panel">
             <h2>Statistiques</h2>
@@ -964,11 +1084,39 @@ function AdminDashboard() {
           border-radius: 8px;
           cursor: pointer;
         }
-        .playlist-card, .users-panel, .stats-panel {
+        .playlist-card, .users-panel, .stats-panel, .settings-panel {
           background: white;
           padding: 25px;
           border-radius: 12px;
           box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        .settings-section {
+          margin-bottom: 30px;
+          padding-bottom: 30px;
+          border-bottom: 1px solid #eee;
+        }
+        .settings-section:last-child {
+          border-bottom: none;
+          margin-bottom: 0;
+        }
+        .settings-section h3 {
+          margin-bottom: 10px;
+          color: #333;
+        }
+        .logo-preview {
+          margin: 15px 0;
+        }
+        .btn-primary {
+          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+          color: white;
+          border: none;
+          padding: 12px 24px;
+          border-radius: 8px;
+          cursor: pointer;
+          font-size: 1rem;
+        }
+        .btn-primary:hover {
+          opacity: 0.9;
         }
         .playlist-song-item {
           display: flex;

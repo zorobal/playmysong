@@ -269,6 +269,40 @@ app.delete('/api/establishments/:id', async (req, res) => {
   }
 });
 
+// Update establishment logo
+app.put('/api/establishments/:id/logo', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { logoUrl } = req.body;
+    
+    const establishment = await prisma.establishment.update({
+      where: { id },
+      data: { logoUrl }
+    });
+    
+    res.json(establishment);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Update establishment playlist message
+app.put('/api/establishments/:id/playlist-message', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { playlistMessage } = req.body;
+    
+    const establishment = await prisma.establishment.update({
+      where: { id },
+      data: { playlistMessage }
+    });
+    
+    res.json(establishment);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 app.post('/api/establishments/:id/admins', async (req, res) => {
   try {
     const { id } = req.params;

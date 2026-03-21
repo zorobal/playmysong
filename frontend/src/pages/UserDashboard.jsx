@@ -49,7 +49,63 @@ function UserDashboard() {
     loadData();
   }, [accessToken, navigate]);
 
-  // Pas de polling - mise à jour locale immédiate
+  // Load establishment data (logo) on mount
+  useEffect(() => {
+    if (!user?.establishmentId) return;
+    
+    const loadEstablishment = async () => {
+      try {
+        const estRes = await fetch(`${API_URL}/establishments/${user.establishmentId}`);
+        const estData = await estRes.json();
+        if (estData?.logoUrl) {
+          setEstablishmentLogo(estData.logoUrl);
+        }
+      } catch (err) {
+        console.error("Error loading establishment:", err);
+      }
+    };
+    
+    loadEstablishment();
+  }, [user?.establishmentId]);
+
+  // Auto-refresh all data every 5 seconds
+  useEffect(() => {
+    if (!user?.establishmentId) return;
+    
+    const interval = setInterval(async () => {
+      try {
+        const token = localStorage.getItem("token");
+        if (!token) return;
+        
+        const headers = { Authorization: `Bearer ${token}` };
+        
+        // Refresh pending requests
+        const pendingRes = await fetch(`${API_URL}/requests?establishmentId=${user.establishmentId}&status=PENDING`, { headers });
+        const pendingData = await pendingRes.json();
+        if (Array.isArray(pendingData)) {
+          setPendingRequests(pendingData);
+        }
+        
+        // Refresh validated requests (file d'attente)
+        const validatedRes = await fetch(`${API_URL}/requests?establishmentId=${user.establishmentId}&status=VALIDATED`, { headers });
+        const validatedData = await validatedRes.json();
+        if (Array.isArray(validatedData)) {
+          setValidatedRequests(validatedData);
+        }
+        
+        // Refresh current playlist/now playing
+        const playlistRes = await fetch(`${API_URL}/request/playlist/current?establishmentId=${user.establishmentId}`);
+        const playlistData = await playlistRes.json();
+        if (playlistData.nowPlaying) {
+          setNowPlaying(playlistData.nowPlaying);
+        }
+      } catch (err) {
+        console.error("Auto-refresh error:", err);
+      }
+    }, 5000);
+    
+    return () => clearInterval(interval);
+  }, [user?.establishmentId]);
 
   async function loadData() {
     try {
@@ -489,7 +545,7 @@ function UserDashboard() {
                       {req.message && <p className="message">💬 {req.message}</p>}
                       {req.selfieUrl && (
                         <img 
-                          src={`${API_URL}${req.selfieUrl}`} 
+                          src={req.selfieUrl.startsWith('data:') ? req.selfieUrl : `${API_URL}${req.selfieUrl}`} 
                           alt="Selfie" 
                           className="selfie-thumbnail"
                         />
