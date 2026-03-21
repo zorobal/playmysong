@@ -45,8 +45,6 @@ model Establishment {
   phoneNumber     String?
   additionalInfo  String?
   ownerId         String?
-  logoUrl         String?
-  playlistMessage String?
   createdAt       DateTime @default(now())
   updatedAt       DateTime @default(now()) @updatedAt
 

@@ -165,6 +165,16 @@ app.post('/api/seed', async (req, res) => {
   }
 });
 
+// Helper function to parse additionalInfo
+function parseAdditionalInfo(additionalInfo) {
+  try {
+    if (additionalInfo) {
+      return JSON.parse(additionalInfo);
+    }
+  } catch (e) {}
+  return {};
+}
+
 // Establishments
 app.get('/api/establishments', async (req, res) => {
   try {
@@ -183,13 +193,18 @@ app.get('/api/establishments', async (req, res) => {
     users.forEach(u => { userMap[u.id] = u.name || u.email; });
     
     // Resolve createdBy IDs to names in all playlists
-    const establishmentsWithNames = establishments.map(est => ({
-      ...est,
-      playlists: est.playlists.map(pl => ({
-        ...pl,
-        createdBy: pl.createdBy ? (userMap[pl.createdBy] || 'Utilisateur inconnu') : null
-      }))
-    }));
+    const establishmentsWithNames = establishments.map(est => {
+      const extraInfo = parseAdditionalInfo(est.additionalInfo);
+      return {
+        ...est,
+        logoUrl: extraInfo.logoUrl || null,
+        playlistMessage: extraInfo.playlistMessage || null,
+        playlists: est.playlists.map(pl => ({
+          ...pl,
+          createdBy: pl.createdBy ? (userMap[pl.createdBy] || 'Utilisateur inconnu') : null
+        }))
+      };
+    });
     
     res.json(establishmentsWithNames);
   } catch (error) {
@@ -247,7 +262,14 @@ app.get('/api/establishments/:id', async (req, res) => {
     if (!establishment) {
       return res.status(404).json({ error: "Établissement non trouvé" });
     }
-    res.json(establishment);
+    
+    // Parse additionalInfo for logoUrl and playlistMessage
+    const extraInfo = parseAdditionalInfo(establishment.additionalInfo);
+    res.json({
+      ...establishment,
+      logoUrl: extraInfo.logoUrl || null,
+      playlistMessage: extraInfo.playlistMessage || null
+    });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -269,15 +291,32 @@ app.delete('/api/establishments/:id', async (req, res) => {
   }
 });
 
-// Update establishment logo
+// Update establishment logo (stored in additionalInfo as JSON)
 app.put('/api/establishments/:id/logo', async (req, res) => {
   try {
     const { id } = req.params;
     const { logoUrl } = req.body;
     
+    // Get current establishment
+    const current = await prisma.establishment.findUnique({ where: { id } });
+    if (!current) {
+      return res.status(404).json({ error: "Établissement non trouvé" });
+    }
+    
+    // Parse existing additionalInfo
+    let info = {};
+    try {
+      if (current.additionalInfo) {
+        info = JSON.parse(current.additionalInfo);
+      }
+    } catch (e) {}
+    
+    // Update logo URL
+    info.logoUrl = logoUrl;
+    
     const establishment = await prisma.establishment.update({
       where: { id },
-      data: { logoUrl }
+      data: { additionalInfo: JSON.stringify(info) }
     });
     
     res.json(establishment);
@@ -286,15 +325,32 @@ app.put('/api/establishments/:id/logo', async (req, res) => {
   }
 });
 
-// Update establishment playlist message
+// Update establishment playlist message (stored in additionalInfo as JSON)
 app.put('/api/establishments/:id/playlist-message', async (req, res) => {
   try {
     const { id } = req.params;
     const { playlistMessage } = req.body;
     
+    // Get current establishment
+    const current = await prisma.establishment.findUnique({ where: { id } });
+    if (!current) {
+      return res.status(404).json({ error: "Établissement non trouvé" });
+    }
+    
+    // Parse existing additionalInfo
+    let info = {};
+    try {
+      if (current.additionalInfo) {
+        info = JSON.parse(current.additionalInfo);
+      }
+    } catch (e) {}
+    
+    // Update playlist message
+    info.playlistMessage = playlistMessage;
+    
     const establishment = await prisma.establishment.update({
       where: { id },
-      data: { playlistMessage }
+      data: { additionalInfo: JSON.stringify(info) }
     });
     
     res.json(establishment);
