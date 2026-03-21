@@ -435,11 +435,6 @@ app.get('/api/playlists', async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 });
-    res.json(playlists);
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-});
 
 app.get('/api/playlists/public', async (req, res) => {
   try {
