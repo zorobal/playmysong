@@ -206,8 +206,6 @@ function AdminDashboard() {
     navigate("/login");
   }
 
-  if (loading) return <div className="loading">Chargement...</div>;
-
   return (
     <div className="admin-dashboard">
       {showUploadModal && (
@@ -232,8 +230,8 @@ function AdminDashboard() {
             <h1>{admin?.establishment?.name || "PlayMySong"}</h1>
             <div className="header-meta">
               <span className="user-info">
-                <span className="role-badge">{admin?.role || "ADMIN"}</span>
-                {admin?.name && <span>• {admin.name}</span>}
+                <span className="role-badge">{admin?.role || "Chargement..."}</span>
+                {admin?.name && <span> • {admin.name}</span>}
               </span>
             </div>
           </div>
@@ -253,6 +251,12 @@ function AdminDashboard() {
           <button className="btn-logout" onClick={logout}>Déconnexion</button>
         </div>
       </header>
+
+      {loading && (
+        <div className="loading-overlay">
+          <div className="loading-spinner">Chargement...</div>
+        </div>
+      )}
 
       <nav className="dashboard-tabs">
         <button 
@@ -1024,6 +1028,26 @@ function AdminDashboard() {
           height: 100vh;
           font-size: 1.2rem;
           color: #666;
+        }
+        .loading-overlay {
+          position: absolute;
+          top: 0;
+          left: 0;
+          right: 0;
+          bottom: 0;
+          background: rgba(0,0,0,0.3);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          z-index: 100;
+        }
+        .loading-spinner {
+          background: white;
+          padding: 20px 40px;
+          border-radius: 12px;
+          font-size: 1.1rem;
+          color: #333;
+          box-shadow: 0 4px 20px rgba(0,0,0,0.2);
         }
         .modal-overlay {
           position: fixed;
