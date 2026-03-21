@@ -175,12 +175,12 @@ app.get('/api/establishments', async (req, res) => {
       }
     });
     
-    // Get all users to resolve creator names
+    // Get ALL users to resolve creator names (not just from establishment)
     const users = await prisma.user.findMany({
-      select: { id: true, name: true }
+      select: { id: true, name: true, email: true }
     });
     const userMap = {};
-    users.forEach(u => { userMap[u.id] = u.name; });
+    users.forEach(u => { userMap[u.id] = u.name || u.email; });
     
     // Resolve createdBy IDs to names in all playlists
     const establishmentsWithNames = establishments.map(est => ({
@@ -386,13 +386,12 @@ app.get('/api/playlists/by-establishment/:establishmentId', async (req, res) => 
       orderBy: { createdAt: 'asc' }
     });
     
-    // Get users to resolve creator names
+    // Get ALL users to resolve creator names
     const users = await prisma.user.findMany({
-      where: { establishmentId },
-      select: { id: true, name: true }
+      select: { id: true, name: true, email: true }
     });
     const userMap = {};
-    users.forEach(u => { userMap[u.id] = u.name; });
+    users.forEach(u => { userMap[u.id] = u.name || u.email; });
     
     // Resolve createdBy IDs to names
     const playlistsWithNames = playlists.map(pl => ({
@@ -416,13 +415,12 @@ app.get('/api/playlists', async (req, res) => {
       orderBy: { createdAt: 'asc' }
     });
     
-    // Get users to resolve creator names
+    // Get ALL users to resolve creator names
     const users = await prisma.user.findMany({
-      where: establishmentId ? { establishmentId } : {},
-      select: { id: true, name: true }
+      select: { id: true, name: true, email: true }
     });
     const userMap = {};
-    users.forEach(u => { userMap[u.id] = u.name; });
+    users.forEach(u => { userMap[u.id] = u.name || u.email; });
     
     // Resolve createdBy IDs to names
     const playlistsWithNames = playlists.map(pl => ({
