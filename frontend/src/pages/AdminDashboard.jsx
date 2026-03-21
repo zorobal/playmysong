@@ -228,13 +228,14 @@ function AdminDashboard() {
 
       <header className="dashboard-header">
         <div className="header-left">
+          <div className="app-logo">🎵 PlayMySong</div>
           {establishmentLogo ? (
             <img src={establishmentLogo} alt="Logo" className="establishment-logo" />
           ) : (
-            <div className="establishment-logo-placeholder">🎵</div>
+            <div className="establishment-logo-placeholder">🏪</div>
           )}
           <div className="header-info">
-            <h1>{admin?.establishment?.name || "PlayMySong"}</h1>
+            <h1>{admin?.establishment?.name || "Mon Établissement"}</h1>
             <div className="header-meta">
               <span className="user-info">
                 <span className="role-badge">{admin?.role || "Chargement..."}</span>
@@ -760,6 +761,12 @@ function AdminDashboard() {
           display: flex;
           align-items: center;
           gap: 15px;
+        }
+        .app-logo {
+          font-size: 1rem;
+          font-weight: 600;
+          color: #4caf50;
+          white-space: nowrap;
         }
         .establishment-logo {
           width: 50px;

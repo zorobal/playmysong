@@ -224,6 +224,7 @@ function SuperAdminDashboard() {
                     <p><strong>Ville:</strong> {est.city || "-"}</p>
                     <p><strong>Quartier:</strong> {est.district || "-"}</p>
                     <p><strong>Téléphone:</strong> {est.phoneNumber || "-"}</p>
+                    {est.additionalInfo && <p><strong>Infos:</strong> {est.additionalInfo}</p>}
                     <p><strong>Admins:</strong> {est.users?.filter(u => u.role === "ADMIN").length || 0}</p>
                     <p><strong>Users:</strong> {est.users?.filter(u => u.role === "USER").length || 0}</p>
                     <p><strong>Playlists:</strong> {est.playlists?.length || 0}</p>

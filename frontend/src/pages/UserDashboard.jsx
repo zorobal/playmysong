@@ -11,6 +11,8 @@ function UserDashboard() {
   const [validatedRequests, setValidatedRequests] = useState([]);
   const [stats, setStats] = useState({ total: 0, pending: 0, validated: 0, rejected: 0 });
   const [loading, setLoading] = useState(true);
+  const [currentTime, setCurrentTime] = useState(new Date());
+  const [establishmentLogo, setEstablishmentLogo] = useState(null);
   const [activeTab, setActiveTab] = useState("playlists");
   const [showRejectModal, setShowRejectModal] = useState(null);
   const [rejectReason, setRejectReason] = useState("");
@@ -22,6 +24,22 @@ function UserDashboard() {
   const navigate = useNavigate();
   
   const accessToken = localStorage.getItem("token");
+
+  // Clock update every second
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentTime(new Date());
+    }, 1000);
+    return () => clearInterval(timer);
+  }, []);
+
+  // Load logo from localStorage
+  useEffect(() => {
+    const savedLogo = localStorage.getItem('establishmentLogo');
+    if (savedLogo) {
+      setEstablishmentLogo(savedLogo);
+    }
+  }, []);
 
   useEffect(() => {
     if (!accessToken) {
@@ -296,10 +314,27 @@ function UserDashboard() {
 
       <header className="dashboard-header">
         <div className="header-left">
-          <h1>🎵 PlayMySong</h1>
-          <span className="establishment-name">
-            {establishment?.name || "Mon Établissement"}
-          </span>
+          <div className="app-logo">🎵 PlayMySong</div>
+          {establishmentLogo ? (
+            <img src={establishmentLogo} alt="Logo" className="establishment-logo" />
+          ) : (
+            <div className="establishment-logo-placeholder">🏪</div>
+          )}
+          <div className="header-info">
+            <h1>{establishment?.name || "Mon Établissement"}</h1>
+            <div className="header-meta">
+              <span className="user-info">
+                <span className="role-badge">{user?.role || "USER"}</span>
+                {user?.name && <span> • {user.name}</span>}
+              </span>
+            </div>
+          </div>
+        </div>
+        <div className="header-center">
+          <div className="clock">
+            <span className="clock-time">{currentTime.toLocaleTimeString('fr-FR')}</span>
+            <span className="clock-date">{currentTime.toLocaleDateString('fr-FR', { weekday: 'short', day: 'numeric', month: 'short' })}</span>
+          </div>
         </div>
         <div className="header-right">
           <button className="btn-refresh" onClick={loadData} title="Actualiser">🔄</button>
@@ -530,35 +565,117 @@ function UserDashboard() {
           background: #f0f2f5;
         }
         .dashboard-header {
-          background: linear-gradient(135deg, #4caf50 0%, #2e7d32 100%);
+          background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
           color: white;
-          padding: 20px 30px;
+          padding: 15px 30px;
           display: flex;
           justify-content: space-between;
           align-items: center;
+          gap: 20px;
         }
-        .header-left h1 { margin: 0; font-size: 1.5rem; }
-        .establishment-name { opacity: 0.9; }
-        .btn-logout {
+        .header-left {
+          display: flex;
+          align-items: center;
+          gap: 15px;
+        }
+        .app-logo {
+          font-size: 1rem;
+          font-weight: 600;
+          color: #4caf50;
+          white-space: nowrap;
+        }
+        .establishment-logo {
+          width: 45px;
+          height: 45px;
+          border-radius: 10px;
+          object-fit: cover;
+          border: 2px solid rgba(255,255,255,0.3);
+        }
+        .establishment-logo-placeholder {
+          width: 45px;
+          height: 45px;
+          border-radius: 10px;
+          background: rgba(255,255,255,0.1);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-size: 1.5rem;
+          border: 2px solid rgba(255,255,255,0.3);
+        }
+        .header-info h1 {
+          margin: 0;
+          font-size: 1.2rem;
+          font-weight: 600;
+        }
+        .header-meta {
+          font-size: 0.85rem;
+          opacity: 0.85;
+          margin-top: 2px;
+        }
+        .user-info {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+        }
+        .role-badge {
           background: rgba(255,255,255,0.2);
+          padding: 2px 10px;
+          border-radius: 12px;
+          font-size: 0.75rem;
+          font-weight: 500;
+        }
+        .header-center {
+          flex: 1;
+          display: flex;
+          justify-content: center;
+        }
+        .clock {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          background: rgba(255,255,255,0.1);
+          padding: 10px 25px;
+          border-radius: 12px;
+        }
+        .clock-time {
+          font-size: 1.6rem;
+          font-weight: 700;
+          font-family: 'Courier New', monospace;
+          letter-spacing: 2px;
+        }
+        .clock-date {
+          font-size: 0.8rem;
+          opacity: 0.8;
+          text-transform: capitalize;
+        }
+        .header-right {
+          display: flex;
+          align-items: center;
+          gap: 10px;
+        }
+        .btn-logout {
+          background: rgba(255,255,255,0.15);
           border: none;
           color: white;
           padding: 8px 16px;
-          border-radius: 6px;
+          border-radius: 8px;
           cursor: pointer;
+          font-size: 0.9rem;
+        }
+        .btn-logout:hover {
+          background: rgba(255,255,255,0.25);
         }
         .btn-refresh {
-          background: rgba(255,255,255,0.2);
+          background: rgba(255,255,255,0.15);
           border: none;
           color: white;
-          padding: 8px 12px;
-          border-radius: 6px;
+          padding: 10px 12px;
+          border-radius: 8px;
           cursor: pointer;
           font-size: 1.2rem;
-          margin-right: 10px;
         }
         .btn-refresh:hover {
-          background: rgba(255,255,255,0.3);
+          background: rgba(255,255,255,0.25);
         }
         .dashboard-tabs {
           display: flex;
