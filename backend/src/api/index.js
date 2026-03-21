@@ -175,7 +175,7 @@ app.get('/api/establishments', async (req, res) => {
       }
     });
     
-    // Get ALL users to resolve creator names (not just from establishment)
+    // Get ALL users to resolve creator names
     const users = await prisma.user.findMany({
       select: { id: true, name: true, email: true }
     });
@@ -187,7 +187,7 @@ app.get('/api/establishments', async (req, res) => {
       ...est,
       playlists: est.playlists.map(pl => ({
         ...pl,
-        createdBy: pl.createdBy ? (userMap[pl.createdBy] || pl.createdBy) : null
+        createdBy: pl.createdBy ? (userMap[pl.createdBy] || 'Utilisateur inconnu') : null
       }))
     }));
     
@@ -396,7 +396,7 @@ app.get('/api/playlists/by-establishment/:establishmentId', async (req, res) => 
     // Resolve createdBy IDs to names
     const playlistsWithNames = playlists.map(pl => ({
       ...pl,
-      createdBy: pl.createdBy ? (userMap[pl.createdBy] || pl.createdBy) : null
+      createdBy: pl.createdBy ? (userMap[pl.createdBy] || 'Utilisateur inconnu') : null
     }));
     
     res.json(playlistsWithNames);
@@ -425,7 +425,7 @@ app.get('/api/playlists', async (req, res) => {
     // Resolve createdBy IDs to names
     const playlistsWithNames = playlists.map(pl => ({
       ...pl,
-      createdBy: pl.createdBy ? (userMap[pl.createdBy] || pl.createdBy) : null
+      createdBy: pl.createdBy ? (userMap[pl.createdBy] || 'Utilisateur inconnu') : null
     }));
     
     res.json(playlistsWithNames);
@@ -445,7 +445,21 @@ app.get('/api/playlists/public', async (req, res) => {
       include: { songs: true },
       orderBy: { createdAt: 'asc' }
     });
-    res.json(playlists);
+    
+    // Get ALL users to resolve creator names
+    const users = await prisma.user.findMany({
+      select: { id: true, name: true, email: true }
+    });
+    const userMap = {};
+    users.forEach(u => { userMap[u.id] = u.name || u.email; });
+    
+    // Resolve createdBy IDs to names
+    const playlistsWithNames = playlists.map(pl => ({
+      ...pl,
+      createdBy: pl.createdBy ? (userMap[pl.createdBy] || 'Utilisateur inconnu') : null
+    }));
+    
+    res.json(playlistsWithNames);
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
