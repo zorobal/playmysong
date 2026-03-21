@@ -340,12 +340,18 @@ function AdminDashboard() {
                   <div className="playlist-header">
                     <h4>🎶 {pl.name} {pl.createdBy && <span className="created-by">par: {pl.createdBy}</span>}</h4>
                     <button onClick={async () => {
+                      if (!confirm("Supprimer cette playlist?")) return;
                       const token = localStorage.getItem("token");
-                      await fetch(`${API_URL}/playlists/${pl.id}`, {
+                      const res = await fetch(`${API_URL}/playlists/${pl.id}`, {
                         method: "DELETE",
                         headers: { Authorization: `Bearer ${token}` }
                       });
-                      loadInitialData();
+                      if (res.ok) {
+                        loadInitialData();
+                      } else {
+                        const data = await res.json();
+                        alert("Erreur: " + (data.error || "Inconnu"));
+                      }
                     }}>Supprimer</button>
                   </div>
                   <ul className="songs-list">
@@ -353,12 +359,18 @@ function AdminDashboard() {
                       <li key={song.id}>
                         {song.title} - {song.artist}
                         <button onClick={async () => {
+                          if (!confirm("Supprimer cette chanson?")) return;
                           const token = localStorage.getItem("token");
-                          await fetch(`${API_URL}/playlists/${pl.id}/musics/${song.id}`, {
+                          const res = await fetch(`${API_URL}/playlists/${pl.id}/musics/${song.id}`, {
                             method: "DELETE",
                             headers: { Authorization: `Bearer ${token}` }
                           });
-                          loadInitialData();
+                          if (res.ok) {
+                            loadInitialData();
+                          } else {
+                            const data = await res.json();
+                            alert("Erreur: " + (data.error || "Inconnu"));
+                          }
                         }}>×</button>
                       </li>
                     ))}
@@ -598,12 +610,18 @@ function AdminDashboard() {
                 <li key={u.id}>
                   <span>👤 {u.name} ({u.email}) {u.createdBy && <span className="created-by">Créé par: {u.createdBy}</span>}</span>
                   <button onClick={async () => {
+                    if (!confirm("Supprimer cet utilisateur?")) return;
                     const token = localStorage.getItem("token");
-                    await fetch(`${API_URL}/users/${u.id}`, {
+                    const res = await fetch(`${API_URL}/users/${u.id}`, {
                       method: "DELETE",
                       headers: { Authorization: `Bearer ${token}` }
                     });
-                    loadInitialData();
+                    if (res.ok) {
+                      loadInitialData();
+                    } else {
+                      const data = await res.json();
+                      alert("Erreur: " + (data.error || "Inconnu"));
+                    }
                   }}>Supprimer</button>
                 </li>
               ))}

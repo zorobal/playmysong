@@ -85,15 +85,22 @@ function SuperAdminDashboard() {
   }
 
   async function deleteEstablishment(id) {
-    if (!confirm("Êtes-vous sûr de vouloir supprimer cet établissement?")) return;
+    if (!confirm("Êtes-vous sûr de vouloir supprimer cet établissement? Cette action est irréversible.")) return;
     try {
-      await fetch(`${API_URL}/establishments/${id}`, {
+      const res = await fetch(`${API_URL}/establishments/${id}`, {
         method: "DELETE",
         headers: { Authorization: `Bearer ${accessToken}` }
       });
-      loadData();
+      
+      if (res.ok) {
+        alert("Établissement supprimé avec succès!");
+        loadData();
+      } else {
+        const data = await res.json();
+        alert("Erreur: " + (data.error || "Impossible de supprimer l'établissement"));
+      }
     } catch (err) {
-      alert("Erreur lors de la suppression");
+      alert("Erreur lors de la suppression: " + err.message);
     }
   }
 
