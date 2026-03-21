@@ -160,6 +160,19 @@ function SuperAdminDashboard() {
     }
   }
 
+  async function deleteUser(userId) {
+    if (!confirm("Supprimer cet utilisateur?")) return;
+    try {
+      await fetch(`${API_URL}/users/${userId}`, {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${accessToken}` }
+      });
+      loadData();
+    } catch (err) {
+      alert("Erreur lors de la suppression");
+    }
+  }
+
   function logout() {
     localStorage.removeItem("token");
     localStorage.removeItem("user");
@@ -207,10 +220,12 @@ function SuperAdminDashboard() {
                   </div>
                   
                   <div className="card-info">
+                    <p><strong>Nom:</strong> {est.name}</p>
                     <p><strong>Ville:</strong> {est.city || "-"}</p>
                     <p><strong>Quartier:</strong> {est.district || "-"}</p>
                     <p><strong>Téléphone:</strong> {est.phoneNumber || "-"}</p>
-                    <p><strong> Admins:</strong> {est.users?.length || 0}</p>
+                    <p><strong>Admins:</strong> {est.users?.filter(u => u.role === "ADMIN").length || 0}</p>
+                    <p><strong>Users:</strong> {est.users?.filter(u => u.role === "USER").length || 0}</p>
                     <p><strong>Playlists:</strong> {est.playlists?.length || 0}</p>
                   </div>
 
@@ -263,6 +278,22 @@ function SuperAdminDashboard() {
                       </ul>
                     ) : (
                       <p className="no-playlist">Aucune playlist</p>
+                    )}
+                  </div>
+
+                  <div className="users-section">
+                    <h4>Utilisateurs (Clients)</h4>
+                    {est.users && est.users.filter(u => u.role === "USER").length > 0 ? (
+                      <ul>
+                        {est.users.filter(u => u.role === "USER").map(user => (
+                          <li key={user.id}>
+                            <span>👤 {user.name || user.email} {user.createdBy && <span className="created-by">par: {user.createdBy}</span>}</span>
+                            <button onClick={() => deleteUser(user.id)}>×</button>
+                          </li>
+                        ))}
+                      </ul>
+                    ) : (
+                      <p className="no-user">Aucun utilisateur</p>
                     )}
                   </div>
                 </div>
@@ -560,6 +591,31 @@ function SuperAdminDashboard() {
           padding: 8px 0;
           border-bottom: 1px solid #f5f5f5;
         }
+        
+        .users-section {
+          border-top: 1px solid #eee;
+          padding-top: 15px;
+          margin-top: 15px;
+        }
+        .users-section h4 { margin: 0 0 10px 0; color: #666; }
+        .users-section ul { list-style: none; padding: 0; }
+        .users-section li {
+          display: flex;
+          justify-content: space-between;
+          padding: 8px 0;
+          border-bottom: 1px solid #f5f5f5;
+        }
+        .users-section li button {
+          background: #f44336;
+          color: white;
+          border: none;
+          border-radius: 4px;
+          width: 24px;
+          height: 24px;
+          cursor: pointer;
+        }
+        .no-user { color: #999; font-style: italic; }
+        
         .btn-small {
           background: #e3f2fd;
           color: #1976d2;
