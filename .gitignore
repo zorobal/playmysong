@@ -41,3 +41,5 @@ selfuploads/.ies/*
 !selfies/.gitkeep
 qrcodes/*
 !qrcodes/.gitkeep
+
+.vercel

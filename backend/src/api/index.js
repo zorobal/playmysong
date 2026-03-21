@@ -18,8 +18,12 @@ app.use(cors({
 app.use(express.json());
 app.use(cookieParser());
 
+app.get('/', (req, res) => {
+  res.json({ status: 'ok', message: 'PlayMySong API is running' });
+});
+
 app.get('/api', (req, res) => {
-  res.json({ status: 'ok', message: 'Backend is alive' });
+  res.json({ status: 'ok', message: 'PlayMySong API is running' });
 });
 
 app.get('/api/youtube/search', async (req, res) => {

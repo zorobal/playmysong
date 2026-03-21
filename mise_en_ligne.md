@@ -60,7 +60,7 @@ git push -u origin main
 
 ### Service utilisé
 - **Nom**: Vercel
-- **URL**: https://playmysong-backend.vercel.app
+- **URL**: https://playmysong-mu.vercel.app
 - **Prix**: Gratuit ( Hobby: 100GB bandwidth/mois)
 
 ### Configuration Vercel
@@ -228,7 +228,7 @@ Vercel ne supporte pas bien Socket.IO pour le temps réel. Solutions:
 | Service | URL |
 |---------|-----|
 | Frontend | https://playmysong-998d4.web.app/ |
-| Backend API | https://playmysong-backend.vercel.app/ |
+| Backend API | https://playmysong-mu.vercel.app/ |
 | GitHub | https://github.com/zorobal/playmysong |
 
 ---

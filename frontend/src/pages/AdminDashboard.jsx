@@ -453,6 +453,9 @@ function AdminDashboard() {
                       if (res.ok) {
                         setNewPlaylist({ name: "" });
                         loadInitialData();
+                      } else {
+                        const errorData = await res.json().catch(() => ({}));
+                        alert("Erreur lors de la creation de la playlist etablissement: " + (errorData.error || "Inconnue"));
                       }
                     }}
                     style={{
