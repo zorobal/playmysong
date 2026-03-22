@@ -489,12 +489,17 @@
           const adsRes = await fetch(`${API_URL}/advertisements?establishmentId=${establishmentId}`);
           console.log('Ads response status:', adsRes.status);
           const adsData = await adsRes.json();
+          console.log('Ads data type:', typeof adsData, 'isArray:', Array.isArray(adsData));
           console.log('Ads data:', adsData);
           if (Array.isArray(adsData)) {
             advertisements = adsData;
             console.log('Setting advertisements:', advertisements.length);
           } else {
-            console.log('Ads data is not an array');
+            console.log('Ads data is not an array, trying error check');
+            if (adsData.error) {
+              console.error('Ads API error:', adsData.error);
+            }
+            advertisements = [];
           }
         } catch(e) {
           console.error('Error loading ads:', e);
@@ -956,8 +961,16 @@
       document.getElementById('content').innerHTML = html;
       
       // Update ads carousel after HTML is rendered
+      console.log('Checking ads carousel - ads count:', advertisements.length);
       if (advertisements.length > 0) {
+        console.log('Calling updateAdsCarousel');
         updateAdsCarousel();
+      } else {
+        // Check if there are ads in the container
+        setTimeout(() => {
+          const container = document.getElementById('adsCarousel');
+          console.log('Container content:', container ? container.innerHTML.substring(0, 100) : 'not found');
+        }, 1000);
       }
     }
 
