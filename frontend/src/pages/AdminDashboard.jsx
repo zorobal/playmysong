@@ -284,12 +284,42 @@ function AdminDashboard() {
   function handleAdImageUpload(e) {
     const file = e.target.files[0];
     if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setNewAd({...newAd, imageUrl: reader.result});
-      };
-      reader.readAsDataURL(file);
+      resizeAndSetImage(file);
     }
+  }
+
+  function resizeAndSetImage(file, maxWidth = 800, maxHeight = 600, quality = 0.8) {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        let width = img.width;
+        let height = img.height;
+
+        if (width > height) {
+          if (width > maxWidth) {
+            height = Math.round((height * maxWidth) / width);
+            width = maxWidth;
+          }
+        } else {
+          if (height > maxHeight) {
+            width = Math.round((width * maxHeight) / height);
+            height = maxHeight;
+          }
+        }
+
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, width, height);
+
+        const resizedDataUrl = canvas.toDataURL('image/jpeg', quality);
+        setNewAd({...newAd, imageUrl: resizedDataUrl});
+      };
+      img.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
   }
 
   async function handleAddAd() {
@@ -941,21 +971,60 @@ function AdminDashboard() {
                 <label style={{display: 'block', marginBottom: 8, fontWeight: 'bold'}}>
                   Image de la publicité *
                 </label>
+                <div
+                  onDragOver={(e) => { e.preventDefault(); e.currentTarget.style.borderColor = '#667eea'; e.currentTarget.style.background = '#f0f4ff'; }}
+                  onDragLeave={(e) => { e.currentTarget.style.borderColor = '#ccc'; e.currentTarget.style.background = '#fafafa'; }}
+                  onDrop={(e) => {
+                    e.preventDefault();
+                    e.currentTarget.style.borderColor = '#ccc';
+                    e.currentTarget.style.background = '#fafafa';
+                    const file = e.dataTransfer.files[0];
+                    if (file && file.type.startsWith('image/')) {
+                      resizeAndSetImage(file);
+                    }
+                  }}
+                  style={{
+                    border: '2px dashed #ccc',
+                    borderRadius: 12,
+                    padding: 30,
+                    textAlign: 'center',
+                    background: '#fafafa',
+                    cursor: 'pointer',
+                    transition: 'all 0.2s ease'
+                  }}
+                  onClick={() => document.getElementById('ad-image-input').click()}
+                >
+                  {newAd.imageUrl ? (
+                    <div>
+                      <img 
+                        src={newAd.imageUrl} 
+                        alt="Preview" 
+                        style={{maxWidth: 200, maxHeight: 120, borderRadius: 8, objectFit: 'cover'}} 
+                      />
+                      <p style={{margin: '10px 0 0 0', color: '#666', fontSize: 12}}>Cliquez ou glissez pour changer</p>
+                    </div>
+                  ) : (
+                    <>
+                      <div style={{fontSize: 40, marginBottom: 10}}>📷</div>
+                      <p style={{margin: 0, color: '#666'}}>
+                        Glissez une image ici ou <span style={{color: '#667eea', fontWeight: 'bold'}}>cliquez pour sélectionner</span>
+                      </p>
+                      <p style={{margin: '8px 0 0 0', color: '#999', fontSize: 11}}>
+                        PNG, JPG, GIF • Max 2MB • Redimensionnement automatique
+                      </p>
+                    </>
+                  )}
+                </div>
                 <input
                   type="file"
+                  id="ad-image-input"
                   accept="image/*"
-                  onChange={handleAdImageUpload}
-                  style={{fontSize: 14}}
+                  onChange={(e) => {
+                    const file = e.target.files[0];
+                    if (file) resizeAndSetImage(file);
+                  }}
+                  style={{display: 'none'}}
                 />
-                {newAd.imageUrl && (
-                  <div style={{marginTop: 10}}>
-                    <img 
-                      src={newAd.imageUrl} 
-                      alt="Preview" 
-                      style={{maxWidth: 200, maxHeight: 120, borderRadius: 8, objectFit: 'cover'}} 
-                    />
-                  </div>
-                )}
               </div>
               
               <button 
