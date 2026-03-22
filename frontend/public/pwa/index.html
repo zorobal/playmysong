@@ -1343,13 +1343,20 @@
     }
     
     async function submitRequest() {
-      if (!selectedSong) return;
+      if (!selectedSong) {
+        alert('Aucune chanson sélectionnée');
+        return;
+      }
       
       const message = document.getElementById('messageInput').value.trim();
       const submitBtn = document.querySelector('#requestModal .btn-primary');
       const originalText = submitBtn.textContent;
       submitBtn.textContent = 'Envoi...';
       submitBtn.disabled = true;
+      
+      console.log('Submitting request...');
+      console.log('establishmentId:', establishmentId);
+      console.log('selectedSong:', selectedSong);
       
       try {
         const response = await fetch(`${API_URL}/requests`, {
@@ -1366,7 +1373,11 @@
           })
         });
         
+        console.log('Response status:', response.status);
+        
         if (!response.ok) {
+          const errorText = await response.text();
+          console.error('Error response:', errorText);
           throw new Error('Server error: ' + response.status);
         }
         
@@ -1389,7 +1400,7 @@
         startStatusCheck(); // Start checking for status updates
       } catch (err) {
         console.error('Submit error:', err);
-        alert('Erreur lors de l\'envoi. Veuillez réessayer.');
+        alert('Erreur lors de l\'envoi: ' + err.message);
         submitBtn.textContent = originalText;
         submitBtn.disabled = false;
       }
