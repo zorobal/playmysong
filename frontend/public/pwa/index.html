@@ -1524,17 +1524,19 @@
       if (allRequests.length === 0) return;
       
       try {
-        const res = await fetch(`${API_URL}/request/pending?establishmentId=${establishmentId}`);
-        const pending = await res.json();
+        // Get current playlist status
+        const playlistRes = await fetch(`${API_URL}/request/playlist/current?establishmentId=${establishmentId}`);
+        const playlistData = await playlistRes.json();
+        
+        const nowPlayingId = playlistData.nowPlaying?.id;
+        const queueIds = new Set((playlistData.queue || []).map(r => r.id));
+        
+        // Get pending requests
+        const pendingRes = await fetch(`${API_URL}/request/pending?establishmentId=${establishmentId}`);
+        const pending = await pendingRes.json();
         const pendingIds = new Set((pending || []).map(r => r.id));
         
-        const validatedRes = await fetch(`${API_URL}/request/validated?establishmentId=${establishmentId}`);
-        const validated = await validatedRes.json();
-        const validatedIds = new Set((validated || []).map(r => r.id));
-        
-        const nowRes = await fetch(`${API_URL}/request/playlist/current?establishmentId=${establishmentId}`);
-        const nowData = await nowRes.json();
-        const nowPlayingId = nowData.nowPlaying?.id;
+        let hasChanges = false;
         
         allRequests.forEach(req => {
           const oldStatus = req.status || 'PENDING';
@@ -1542,34 +1544,38 @@
           
           if (nowPlayingId === req.requestId) {
             newStatus = 'PLAYING';
-          } else if (validatedIds.has(req.requestId)) {
+          } else if (queueIds.has(req.requestId)) {
             newStatus = 'VALIDATED';
-          } else if (!pendingIds.has(req.requestId) && oldStatus !== 'PLAYING' && oldStatus !== 'COMPLETED') {
-            // Check if it was validated but is now completed
-            if (oldStatus === 'VALIDATED' || oldStatus === 'PLAYING') {
-              newStatus = 'COMPLETED';
-            } else {
-              newStatus = 'COMPLETED'; // Removed from queue, likely played
-            }
+          } else if (pendingIds.has(req.requestId)) {
+            newStatus = 'PENDING';
+          } else if (oldStatus === 'PLAYING' || oldStatus === 'VALIDATED') {
+            // It was in the queue but now it's gone - it was completed/played
+            newStatus = 'COMPLETED';
+          } else if (oldStatus === 'PENDING' && !pendingIds.has(req.requestId) && !queueIds.has(req.requestId) && nowPlayingId !== req.requestId) {
+            // It was pending but now it's neither pending nor in queue - likely rejected
+            newStatus = 'REJECTED';
           }
           
           if (newStatus !== oldStatus) {
+            hasChanges = true;
             req.status = newStatus;
             localStorage.setItem(`pms_request_${establishmentId}_${req.requestId}`, JSON.stringify(req));
             
-            // Show notification for validated
+            // Show notification for status changes
             if (newStatus === 'VALIDATED') {
               showStatusToast(`✅ Votre chanson "${req.title}" a été validée!`);
             } else if (newStatus === 'PLAYING') {
               showStatusToast(`🎵 "${req.title}" est en cours de lecture!`);
             } else if (newStatus === 'COMPLETED') {
               showStatusToast(`✔️ "${req.title}" a été jouée`);
+            } else if (newStatus === 'REJECTED') {
+              showStatusToast(`❌ "${req.title}" n'a pas été acceptée`);
             }
           }
         });
         
-        // Update history display if on history screen
-        if (document.getElementById('historyScreen').classList.contains('active')) {
+        // Update history display if on history screen or if there were changes
+        if (hasChanges && document.getElementById('historyScreen').classList.contains('active')) {
           loadHistory();
         }
       } catch (err) {
