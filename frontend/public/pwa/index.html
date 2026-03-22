@@ -1317,14 +1317,34 @@
     function captureSelfie() {
       const video = document.getElementById('selfieVideo');
       const canvas = document.getElementById('selfieCanvas');
-      canvas.width = video.videoWidth;
-      canvas.height = video.videoHeight;
-      canvas.getContext('2d').drawImage(video, 0, 0);
-      selfieData = canvas.toDataURL('image/jpeg', 0.7);
+      
+      // Resize to max 400x400 for better performance
+      const maxSize = 400;
+      let width = video.videoWidth;
+      let height = video.videoHeight;
+      
+      if (width > height) {
+        if (width > maxSize) {
+          height = Math.round((height * maxSize) / width);
+          width = maxSize;
+        }
+      } else {
+        if (height > maxSize) {
+          width = Math.round((width * maxSize) / height);
+          height = maxSize;
+        }
+      }
+      
+      canvas.width = width;
+      canvas.height = height;
+      canvas.getContext('2d').drawImage(video, 0, 0, width, height);
+      selfieData = canvas.toDataURL('image/jpeg', 0.5); // 50% quality to reduce size
       
       // Show preview
       document.getElementById('selfiePreview').src = selfieData;
       document.getElementById('selfiePreviewContainer').style.display = 'block';
+      
+      console.log('Selfie captured, size:', selfieData.length, 'bytes');
       
       closeSelfieCamera();
     }
@@ -1359,18 +1379,28 @@
       console.log('selectedSong:', selectedSong);
       
       try {
+        const payload = {
+          establishmentId,
+          youtubeId: selectedSong.youtubeId,
+          title: selectedSong.title,
+          artist: selectedSong.artist,
+          thumbnail: selectedSong.thumbnail,
+          message: message || null
+        };
+        
+        // Only add selfie if it exists and is not too large
+        if (selfieData && selfieData.length < 500000) { // 500KB limit
+          payload.selfieUrl = selfieData;
+        } else if (selfieData) {
+          console.log('Selfie too large, skipping...');
+        }
+        
+        console.log('Payload size:', JSON.stringify(payload).length, 'bytes');
+        
         const response = await fetch(`${API_URL}/requests`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            establishmentId,
-            youtubeId: selectedSong.youtubeId,
-            title: selectedSong.title,
-            artist: selectedSong.artist,
-            thumbnail: selectedSong.thumbnail,
-            message,
-            selfieUrl: selfieData
-          })
+          body: JSON.stringify(payload)
         });
         
         console.log('Response status:', response.status);
@@ -1400,7 +1430,7 @@
         startStatusCheck(); // Start checking for status updates
       } catch (err) {
         console.error('Submit error:', err);
-        alert('Erreur lors de l\'envoi: ' + err.message);
+        alert('Erreur lors de l\'envoi: ' + err.message + '. Vérifiez votre connexion internet.');
         submitBtn.textContent = originalText;
         submitBtn.disabled = false;
       }
