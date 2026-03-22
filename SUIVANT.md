@@ -23,6 +23,12 @@
   - Support drag & drop
   - Redimensionnement automatique (800x600 max)
 
+- [x] **Rotation des publicités sur NowPlaying** ✅
+  - Configuration du nombre de chansons avant une pub (1, 2, 3, 5, 10)
+  - Configuration de la durée d'affichage (5, 10, 15, 20, 30 secondes)
+  - Compteur de rotations affiché (1/3, 2/3, etc.)
+  - Info "prochaine pub dans X chansons"
+
 - [ ] **Rotation des publicités sur NowPlaying**
   - Configurer la durée d'affichage
   - Intégrer avec le player
