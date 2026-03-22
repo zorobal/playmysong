@@ -364,6 +364,27 @@
       width: 20px;
       border-radius: 4px;
     }
+    .ad-counter {
+      position: absolute;
+      top: 10px;
+      right: 15px;
+      background: rgba(0,0,0,0.7);
+      padding: 5px 12px;
+      border-radius: 15px;
+      font-size: 0.8rem;
+      color: white;
+      z-index: 10;
+    }
+    .ad-song-info {
+      position: absolute;
+      top: 10px;
+      left: 15px;
+      background: rgba(0,0,0,0.7);
+      padding: 5px 12px;
+      border-radius: 15px;
+      font-size: 0.8rem;
+      color: #fbbf24;
+    }
     .ads-empty {
       display: flex;
       align-items: center;
@@ -439,6 +460,11 @@
     let currentAdIndex = 0;
     let songCountSinceLastAd = 0;
     let adCarouselInterval = null;
+    let adsConfig = {
+      songsBeforeAd: 2,
+      adDisplayDuration: 10,
+      showAdCounter: true
+    };
 
     function onYouTubeIframeAPIReady() {
       console.log('YouTube API ready');
@@ -472,6 +498,21 @@
           }
         } catch(e) {
           console.error('Error loading ads:', e);
+        }
+        
+        // Load ads configuration from establishment settings
+        if (establishment.additionalInfo) {
+          try {
+            const estInfo = typeof establishment.additionalInfo === 'string' 
+              ? JSON.parse(establishment.additionalInfo) 
+              : establishment.additionalInfo;
+            if (estInfo.adsConfig) {
+              adsConfig = { ...adsConfig, ...estInfo.adsConfig };
+              console.log('Ads config loaded:', adsConfig);
+            }
+          } catch(e) {
+            console.error('Error parsing establishment info:', e);
+          }
         }
         
         let songToPlay = nowPlaying;
@@ -633,6 +674,17 @@
       });
       html += '</div>';
       
+      // Add counter
+      if (adsConfig.showAdCounter !== false) {
+        html += `<div id="adCounter" class="ad-counter">1/${advertisements.length}</div>`;
+      }
+      
+      // Add song count info
+      if (songCountSinceLastAd > 0 || advertisements.length > 0) {
+        const songsUntilNext = Math.max(0, adsConfig.songsBeforeAd - songCountSinceLastAd);
+        html += `<div class="ad-song-info">📢 Prochaine pub dans ${songsUntilNext} chanson${songsUntilNext !== 1 ? 's' : ''}</div>`;
+      }
+      
       // Add indicators
       html += '<div class="ad-indicators">';
       advertisements.forEach((_, idx) => {
@@ -642,7 +694,11 @@
       
       container.innerHTML = html;
       
-      // Auto-rotate ads every 10 seconds if multiple ads
+      // Update counter display
+      updateAdCounter();
+      
+      // Auto-rotate ads every configured seconds if multiple ads
+      const adDuration = (adsConfig.adDisplayDuration || 10) * 1000;
       if (adCarouselInterval) clearInterval(adCarouselInterval);
       if (advertisements.length > 1) {
         adCarouselInterval = setInterval(() => {
@@ -656,7 +712,16 @@
           indicators.forEach((ind, idx) => {
             ind.className = 'ad-indicator' + (idx === currentAdIndex ? ' active' : '');
           });
-        }, 10000);
+          // Update counter display
+          updateAdCounter();
+        }, adDuration);
+      }
+    }
+    
+    function updateAdCounter() {
+      const counterEl = document.getElementById('adCounter');
+      if (counterEl && advertisements.length > 0) {
+        counterEl.textContent = `${currentAdIndex + 1}/${advertisements.length}`;
       }
     }
     
@@ -692,10 +757,10 @@
         
         // Increment song counter for ad rotation
         songCountSinceLastAd++;
-        console.log('Song count since last ad:', songCountSinceLastAd);
+        console.log('Song count since last ad:', songCountSinceLastAd, '/ config:', adsConfig.songsBeforeAd);
         
-        // Change ad every 2 songs
-        if (songCountSinceLastAd >= 2 && advertisements.length > 0) {
+        // Change ad after configured number of songs
+        if (songCountSinceLastAd >= adsConfig.songsBeforeAd && advertisements.length > 0) {
           songCountSinceLastAd = 0;
           currentAdIndex = (currentAdIndex + 1) % advertisements.length;
           updateAdsCarousel();

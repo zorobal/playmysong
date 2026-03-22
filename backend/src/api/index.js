@@ -359,6 +359,72 @@ app.put('/api/establishments/:id/playlist-message', async (req, res) => {
   }
 });
 
+// Get ads configuration for an establishment
+app.get('/api/establishments/:id/ads-config', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const establishment = await prisma.establishment.findUnique({ where: { id } });
+    if (!establishment) {
+      return res.status(404).json({ error: "Établissement non trouvé" });
+    }
+    
+    let info = {};
+    try {
+      if (establishment.additionalInfo) {
+        info = JSON.parse(establishment.additionalInfo);
+      }
+    } catch (e) {}
+    
+    const adsConfig = info.adsConfig || {
+      songsBeforeAd: 2,
+      adDisplayDuration: 10,
+      showAdCounter: true
+    };
+    
+    res.json(adsConfig);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Update ads configuration for an establishment
+app.put('/api/establishments/:id/ads-config', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { songsBeforeAd, adDisplayDuration, showAdCounter } = req.body;
+    
+    // Get current establishment
+    const current = await prisma.establishment.findUnique({ where: { id } });
+    if (!current) {
+      return res.status(404).json({ error: "Établissement non trouvé" });
+    }
+    
+    // Parse existing additionalInfo
+    let info = {};
+    try {
+      if (current.additionalInfo) {
+        info = JSON.parse(current.additionalInfo);
+      }
+    } catch (e) {}
+    
+    // Update ads config
+    info.adsConfig = {
+      songsBeforeAd: songsBeforeAd !== undefined ? parseInt(songsBeforeAd) : 2,
+      adDisplayDuration: adDisplayDuration !== undefined ? parseInt(adDisplayDuration) : 10,
+      showAdCounter: showAdCounter !== undefined ? Boolean(showAdCounter) : true
+    };
+    
+    const establishment = await prisma.establishment.update({
+      where: { id },
+      data: { additionalInfo: JSON.stringify(info) }
+    });
+    
+    res.json(info.adsConfig);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 app.post('/api/establishments/:id/admins', async (req, res) => {
   try {
     const { id } = req.params;

@@ -22,6 +22,7 @@ function AdminDashboard() {
   const [playlistMessage, setPlaylistMessage] = useState("");
   const [advertisements, setAdvertisements] = useState([]);
   const [newAd, setNewAd] = useState({ imageUrl: "", linkUrl: "", title: "" });
+  const [adsConfig, setAdsConfig] = useState({ songsBeforeAd: 2, adDisplayDuration: 10, showAdCounter: true });
   const navigate = useNavigate();
   
   const accessToken = localStorage.getItem("token");
@@ -130,6 +131,13 @@ function AdminDashboard() {
         const adsRes = await fetch(`${API_URL}/advertisements?establishmentId=${adminData.establishmentId}`);
         const adsData = await adsRes.json();
         setAdvertisements(Array.isArray(adsData) ? adsData : []);
+        
+        // Load ads configuration
+        const adsConfigRes = await fetch(`${API_URL}/establishments/${adminData.establishmentId}/ads-config`);
+        if (adsConfigRes.ok) {
+          const config = await adsConfigRes.json();
+          setAdsConfig(config);
+        }
       }
     } catch (err) {
       console.error("Erreur chargement:", err);
@@ -219,6 +227,28 @@ function AdminDashboard() {
       }
     } catch (err) {
       console.error("Error saving message:", err);
+    }
+  }
+
+  async function handleAdsConfigSave() {
+    if (!establishmentId) return;
+    try {
+      const token = localStorage.getItem("token");
+      const res = await fetch(`${API_URL}/establishments/${establishmentId}/ads-config`, {
+        method: "PUT",
+        headers: { 
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify(adsConfig)
+      });
+      if (res.ok) {
+        const savedConfig = await res.json();
+        setAdsConfig(savedConfig);
+        alert("Configuration des publicités sauvegardée!");
+      }
+    } catch (err) {
+      console.error("Error saving ads config:", err);
     }
   }
 
@@ -918,6 +948,77 @@ function AdminDashboard() {
                 💾 Sauvegarder le message
               </button>
             </div>
+
+            <div className="settings-section">
+              <h3>📢 Configuration des Publicités sur NowPlaying</h3>
+              <p style={{color: '#666', marginBottom: 15}}>
+                Configurez comment les publicités apparaissent sur l'écran NowPlaying.
+              </p>
+              
+              <div style={{display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 20, marginBottom: 20}}>
+                <div>
+                  <label style={{display: 'block', marginBottom: 8, fontWeight: 'bold'}}>
+                    📊 Chansons avant une pub
+                  </label>
+                  <select
+                    value={adsConfig.songsBeforeAd}
+                    onChange={e => setAdsConfig({...adsConfig, songsBeforeAd: parseInt(e.target.value)})}
+                    style={{
+                      width: '100%',
+                      padding: 12,
+                      borderRadius: 8,
+                      border: '1px solid #ddd',
+                      fontSize: 14
+                    }}
+                  >
+                    <option value={1}>Toutes les 1 chanson</option>
+                    <option value={2}>Toutes les 2 chansons</option>
+                    <option value={3}>Toutes les 3 chansons</option>
+                    <option value={5}>Toutes les 5 chansons</option>
+                    <option value={10}>Toutes les 10 chansons</option>
+                  </select>
+                </div>
+                
+                <div>
+                  <label style={{display: 'block', marginBottom: 8, fontWeight: 'bold'}}>
+                    ⏱️ Durée d'affichage (secondes)
+                  </label>
+                  <select
+                    value={adsConfig.adDisplayDuration}
+                    onChange={e => setAdsConfig({...adsConfig, adDisplayDuration: parseInt(e.target.value)})}
+                    style={{
+                      width: '100%',
+                      padding: 12,
+                      borderRadius: 8,
+                      border: '1px solid #ddd',
+                      fontSize: 14
+                    }}
+                  >
+                    <option value={5}>5 secondes</option>
+                    <option value={10}>10 secondes</option>
+                    <option value={15}>15 secondes</option>
+                    <option value={20}>20 secondes</option>
+                    <option value={30}>30 secondes</option>
+                  </select>
+                </div>
+              </div>
+              
+              <div style={{marginBottom: 20}}>
+                <label style={{display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer'}}>
+                  <input
+                    type="checkbox"
+                    checked={adsConfig.showAdCounter}
+                    onChange={e => setAdsConfig({...adsConfig, showAdCounter: e.target.checked})}
+                    style={{width: 20, height: 20}}
+                  />
+                  <span>Afficher le compteur de publicités sur NowPlaying</span>
+                </label>
+              </div>
+              
+              <button className="btn-primary" onClick={handleAdsConfigSave}>
+                💾 Sauvegarder la configuration
+              </button>
+            </div>
           </div>
         )}
 
@@ -925,7 +1026,7 @@ function AdminDashboard() {
           <div className="ads-panel">
             <h2>📢 Gestion des Publicités</h2>
             <p style={{color: '#666', marginBottom: 20}}>
-              Ajoutez des images publicitaires qui défileront sur NowPlaying (1 pub toutes les 2 chansons).
+              Ajoutez des images publicitaires qui défileront sur NowPlaying. Configurez la fréquence dans ⚙️ Paramètres.
             </p>
             
             <div className="ads-add-section" style={{
