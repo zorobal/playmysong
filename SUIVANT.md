@@ -18,10 +18,10 @@
 ### 2. Fonctionnalités Manquantes ou à Compléter
 
 #### Advertisement Feature
-- [ ] **Upload d'images pour les publicités**
+- [x] **Upload d'images pour les publicités** ✅
   - Interface d'upload dans Admin Dashboard
   - Support drag & drop
-  - Redimensionnement automatique
+  - Redimensionnement automatique (800x600 max)
 
 - [ ] **Rotation des publicités sur NowPlaying**
   - Configurer la durée d'affichage
