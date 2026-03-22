@@ -650,8 +650,13 @@
     }
     
     function updateAdsCarousel() {
+      console.log('updateAdsCarousel started');
       const container = document.getElementById('adsCarousel');
-      if (!container) return;
+      if (!container) {
+        console.log('adsCarousel container not found!');
+        return;
+      }
+      console.log('container found, ads count:', advertisements.length);
       
       if (advertisements.length === 0) {
         container.innerHTML = '<div class="ads-empty">Pas de publicités</div>';
@@ -698,6 +703,17 @@
       html += '</div>';
       
       container.innerHTML = html;
+      console.log('Container innerHTML set, length:', html.length);
+      console.log('First ad image URL length:', advertisements[0]?.imageUrl?.length || 0);
+      
+      // Check if images are actually loaded
+      setTimeout(() => {
+        const imgs = container.querySelectorAll('img');
+        console.log('Images in container:', imgs.length);
+        if (imgs.length > 0) {
+          console.log('First image natural size:', imgs[0].naturalWidth, 'x', imgs[0].naturalHeight);
+        }
+      }, 2000);
       
       // Update counter display
       updateAdCounter();

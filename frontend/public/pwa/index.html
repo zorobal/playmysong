@@ -809,6 +809,46 @@
     let selectedSong = null;
     let selfieStream = null;
     let selfieData = null;
+    let deferredPrompt = null;
+    
+    // PWA Install prompt
+    window.addEventListener('beforeinstallprompt', (e) => {
+      e.preventDefault();
+      deferredPrompt = e;
+      showInstallBanner();
+    });
+    
+    function showInstallBanner() {
+      if (document.getElementById('installBanner')) return;
+      const banner = document.createElement('div');
+      banner.id = 'installBanner';
+      banner.innerHTML = `
+        <div style="position:fixed;bottom:0;left:0;right:0;background:linear-gradient(135deg,#e94560,#ff6b6b);padding:15px 20px;display:flex;align-items:center;justify-content:space-between;z-index:1000;gap:15px;">
+          <div style="flex:1;">
+            <div style="font-weight:bold;font-size:1rem;">📱 Installer PlayMySong</div>
+            <div style="font-size:0.85rem;opacity:0.9;">Pour une meilleure expérience</div>
+          </div>
+          <div style="display:flex;gap:10px;">
+            <button onclick="installApp()" style="background:#fff;color:#e94560;border:none;padding:10px 20px;border-radius:25px;font-weight:bold;cursor:pointer;">Installer</button>
+            <button onclick="dismissInstallBanner()" style="background:rgba(255,255,255,0.2);color:#fff;border:none;padding:10px 15px;border-radius:25px;cursor:pointer;">✕</button>
+          </div>
+        </div>
+      `;
+      document.body.appendChild(banner);
+    }
+    
+    async function installApp() {
+      if (!deferredPrompt) return;
+      deferredPrompt.prompt();
+      const { outcome } = await deferredPrompt.userChoice;
+      deferredPrompt = null;
+      dismissInstallBanner();
+    }
+    
+    function dismissInstallBanner() {
+      const banner = document.getElementById('installBanner');
+      if (banner) banner.remove();
+    }
     
     window.addEventListener('load', () => {
       const urlParams = new URLSearchParams(window.location.search);
@@ -820,6 +860,10 @@
         openClient(id);
       } else {
         showScreen('home');
+        // Show install prompt after 3 seconds if available
+        setTimeout(() => {
+          if (deferredPrompt) showInstallBanner();
+        }, 3000);
       }
     });
     
@@ -1155,9 +1199,13 @@
       if (!selectedSong) return;
       
       const message = document.getElementById('messageInput').value.trim();
+      const submitBtn = document.querySelector('#requestModal .btn-primary');
+      const originalText = submitBtn.textContent;
+      submitBtn.textContent = 'Envoi...';
+      submitBtn.disabled = true;
       
       try {
-        await fetch(`${API_URL}/requests`, {
+        const response = await fetch(`${API_URL}/requests`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -1171,17 +1219,28 @@
           })
         });
         
+        if (!response.ok) {
+          throw new Error('Server error: ' + response.status);
+        }
+        
+        const result = await response.json();
+        console.log('Request sent successfully:', result);
+        
         localStorage.setItem(`pms_request_${establishmentId}`, JSON.stringify({
           ...selectedSong,
           message,
           selfieUrl: selfieData,
-          timestamp: Date.now()
+          timestamp: Date.now(),
+          requestId: result.id
         }));
         
         closeModal();
         showScreen('success');
       } catch (err) {
-        alert('Erreur lors de l\'envoi');
+        console.error('Submit error:', err);
+        alert('Erreur lors de l\'envoi. Veuillez réessayer.');
+        submitBtn.textContent = originalText;
+        submitBtn.disabled = false;
       }
     }
     
