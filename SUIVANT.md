@@ -49,10 +49,10 @@
   - Mode plein écran
 
 #### Client PWA
-- [ ] **Amélioration de l'expérience utilisateur**
-  - Indicateur de statut (demande envoyée, en attente, validée)
-  - Notifications quand la chanson est validée
-  - Historique de ses demandes
+- [x] **Amélioration de l'expérience utilisateur** ✅
+  - Indicateur de statut (En attente ⏳, Validée ✅, En cours 🎵, Jouée ✔️)
+  - Notifications toast quand le statut change
+  - Historique de ses demandes accessible depuis l'accueil
 
 - [ ] **QR Code Scanner**
   - Page `/pwa/` pour scanner le QR code
